@@ -36,6 +36,26 @@ class SubjectController extends Controller
             ->make(true);
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'ma_mon_hoc' => 'required|string|max:50|unique:subjects,ma_mon_hoc',
+            'ten_mon_hoc' => 'required|string|max:255',
+        ], [
+            'ma_mon_hoc.required' => 'Vui lòng nhập mã môn học.',
+            'ma_mon_hoc.unique' => 'Mã môn học đã tồn tại trong hệ thống.',
+            'ten_mon_hoc.required' => 'Vui lòng nhập tên môn học.',
+        ]);
+
+        $subject = Subject::create($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tạo môn học mới thành công!',
+            'data' => $subject
+        ]);
+    }
+
     public function show($id)
     {
         $subject = Subject::findOrFail($id);

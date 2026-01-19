@@ -11,6 +11,9 @@
                 <div class="card-body p-0">
                     <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                         <h5 class="fw-bold">Quản lý môn học</h5>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSubjectModal">
+                            <i class="fas fa-plus"></i> Tạo môn học mới
+                        </button>
                     </div>
                 </div>
             </div>
@@ -61,6 +64,34 @@
                 <tbody>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Create Subject -->
+<div class="modal fade" id="createSubjectModal" tabindex="-1" aria-labelledby="createSubjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createSubjectModalLabel">Tạo môn học mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createSubjectForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="create_ma_mon_hoc" class="form-label">Mã môn học <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="create_ma_mon_hoc" name="ma_mon_hoc" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create_ten_mon_hoc" class="form-label">Tên môn học <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="create_ten_mon_hoc" name="ten_mon_hoc" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Tạo mới</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -174,6 +205,48 @@
         
         $('.dt-search').on('keyup', function() {
             table.search(this.value).draw();
+        });
+
+        // Reset create form when modal is closed
+        $('#createSubjectModal').on('hidden.bs.modal', function() {
+            $('#createSubjectForm')[0].reset();
+        });
+
+        // Create form submit
+        $('#createSubjectForm').on('submit', function(e) {
+            e.preventDefault();
+            var formData = $(this).serialize();
+
+            $.ajax({
+                url: '{{ route("admin.subjects.store") }}',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    var createModal = bootstrap.Modal.getInstance(document.getElementById('createSubjectModal'));
+                    createModal.hide();
+                    table.ajax.reload();
+                    alert('Tạo môn học mới thành công!');
+                },
+                error: function(xhr) {
+                    var errors = xhr.responseJSON?.errors || {};
+                    var errorMsg = '';
+                    
+                    if (Object.keys(errors).length === 0) {
+                        errorMsg = xhr.responseJSON?.message || 'Có lỗi xảy ra khi tạo môn học mới!';
+                    } else {
+                        errorMsg = 'Vui lòng kiểm tra lại thông tin:\n\n';
+                        for (var field in errors) {
+                            var fieldName = field === 'ma_mon_hoc' ? 'Mã môn học' : 
+                                          field === 'ten_mon_hoc' ? 'Tên môn học' : field;
+                            errorMsg += '• ' + fieldName + ': ' + errors[field][0] + '\n';
+                        }
+                    }
+                    alert(errorMsg);
+                }
+            });
         });
 
         // Edit button click

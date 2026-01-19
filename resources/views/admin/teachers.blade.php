@@ -11,6 +11,9 @@
                 <div class="card-body p-0">
                     <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                         <h5 class="fw-bold">Quản lý giáo viên</h5>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTeacherModal">
+                            <i class="fas fa-plus"></i> Tạo giáo viên mới
+                        </button>
                     </div>
                 </div>
             </div>
@@ -65,6 +68,49 @@
                 <tbody>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Create Teacher -->
+<div class="modal fade" id="createTeacherModal" tabindex="-1" aria-labelledby="createTeacherModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createTeacherModalLabel">Tạo giáo viên mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createTeacherForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_msgv" class="form-label">Mã số giáo viên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="create_msgv" name="msgv" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="create_email" name="email" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_ho_ten" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="create_ho_ten" name="ho_ten" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_chuyen_mon" class="form-label">Chuyên môn <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="create_chuyen_mon" name="chuyen_mon" required>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <small><i class="fas fa-info-circle"></i> Các thông tin khác (số điện thoại, ngày sinh, địa chỉ...) giáo viên có thể tự cập nhật sau.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Tạo mới</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -220,6 +266,85 @@
         
         $('.dt-search').on('keyup', function() {
             table.search(this.value).draw();
+        });
+
+        // Reset create form when modal is closed
+        $('#createTeacherModal').on('hidden.bs.modal', function() {
+            $('#createTeacherForm')[0].reset();
+        });
+
+        // Create form submit
+        $('#createTeacherForm').on('submit', function(e) {
+            e.preventDefault();
+            var formData = $(this).serialize();
+
+            $.ajax({
+                url: '{{ route("admin.teachers.store") }}',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    var createModal = bootstrap.Modal.getInstance(document.getElementById('createTeacherModal'));
+                    createModal.hide();
+                    table.ajax.reload();
+                    alert('Tạo giáo viên mới thành công!');
+                },
+                error: function(xhr) {
+                    var errors = xhr.responseJSON?.errors || {};
+                    var errorMsg = '';
+                    
+                    if (Object.keys(errors).length === 0) {
+                        errorMsg = xhr.responseJSON?.message || 'Có lỗi xảy ra khi tạo giáo viên mới!';
+                    } else {
+                        errorMsg = 'Vui lòng kiểm tra lại thông tin:\n\n';
+                        for (var field in errors) {
+                            var fieldName = field === 'msgv' ? 'Mã số giáo viên' : 
+                                          field === 'email' ? 'Email' : 
+                                          field === 'ho_ten' ? 'Họ và tên' : 
+                                          field === 'chuyen_mon' ? 'Chuyên môn' : field;
+                            errorMsg += '• ' + fieldName + ': ' + errors[field][0] + '\n';
+                        }
+                    }
+                    alert(errorMsg);
+                }
+            });
+        });
+
+        // Send email button click
+        $(document).on('click', '.send-email-btn', function() {
+            var teacherId = $(this).data('id');
+            var teacherEmail = $(this).data('email');
+            
+            if (!teacherEmail) {
+                alert('Giáo viên này chưa có email!');
+                return;
+            }
+            
+            if (!confirm('Bạn có chắc muốn gửi email chào mừng đến ' + teacherEmail + '?')) {
+                return;
+            }
+            
+            var btn = $(this);
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            
+            $.ajax({
+                url: '{{ url("admin/teachers") }}/' + teacherId + '/send-email',
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    btn.prop('disabled', false).html('<i class="fas fa-envelope"></i>');
+                    alert(response.message || 'Email đã được gửi thành công!');
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).html('<i class="fas fa-envelope"></i>');
+                    var errorMsg = xhr.responseJSON?.message || 'Không thể gửi email!';
+                    alert(errorMsg);
+                }
+            });
         });
 
         // Edit button click

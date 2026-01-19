@@ -11,6 +11,9 @@
                 <div class="card-body p-0">
                     <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                         <h5 class="fw-bold">Quản lý lớp học</h5>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClassModal">
+                            <i class="fas fa-plus"></i> Tạo lớp học mới
+                        </button>
                     </div>
                 </div>
             </div>
@@ -63,6 +66,52 @@
                 <tbody>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Create Class -->
+<div class="modal fade" id="createClassModal" tabindex="-1" aria-labelledby="createClassModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createClassModalLabel">Tạo lớp học mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createClassForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="create_ma_lop" class="form-label">Mã lớp <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="create_ma_lop" name="ma_lop" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create_ten_lop" class="form-label">Tên lớp <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="create_ten_lop" name="ten_lop" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create_giao_vien_chu_nhiem_id" class="form-label">Giáo viên chủ nhiệm</label>
+                        <select class="form-select" id="create_giao_vien_chu_nhiem_id" name="giao_vien_chu_nhiem_id">
+                            <option value="">-- Chọn giáo viên --</option>
+                            @foreach(\App\Models\Teacher::all() as $teacher)
+                                <option value="{{ $teacher->id }}">{{ $teacher->ho_ten }} ({{ $teacher->msgv }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create_subject_id" class="form-label">Môn học</label>
+                        <select class="form-select" id="create_subject_id" name="subject_id">
+                            <option value="">-- Chọn môn học --</option>
+                            @foreach(\App\Models\Subject::all() as $subject)
+                                <option value="{{ $subject->id }}">{{ $subject->ten_mon_hoc }} ({{ $subject->ma_mon_hoc }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Tạo mới</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -204,6 +253,50 @@
         
         $('.dt-search').on('keyup', function() {
             table.search(this.value).draw();
+        });
+
+        // Reset create form when modal is closed
+        $('#createClassModal').on('hidden.bs.modal', function() {
+            $('#createClassForm')[0].reset();
+        });
+
+        // Create form submit
+        $('#createClassForm').on('submit', function(e) {
+            e.preventDefault();
+            var formData = $(this).serialize();
+
+            $.ajax({
+                url: '{{ route("admin.classes.store") }}',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    var createModal = bootstrap.Modal.getInstance(document.getElementById('createClassModal'));
+                    createModal.hide();
+                    table.ajax.reload();
+                    alert('Tạo lớp học mới thành công!');
+                },
+                error: function(xhr) {
+                    var errors = xhr.responseJSON?.errors || {};
+                    var errorMsg = '';
+                    
+                    if (Object.keys(errors).length === 0) {
+                        errorMsg = xhr.responseJSON?.message || 'Có lỗi xảy ra khi tạo lớp học mới!';
+                    } else {
+                        errorMsg = 'Vui lòng kiểm tra lại thông tin:\n\n';
+                        for (var field in errors) {
+                            var fieldName = field === 'ma_lop' ? 'Mã lớp' : 
+                                          field === 'ten_lop' ? 'Tên lớp' : 
+                                          field === 'giao_vien_chu_nhiem_id' ? 'Giáo viên chủ nhiệm' : 
+                                          field === 'subject_id' ? 'Môn học' : field;
+                            errorMsg += '• ' + fieldName + ': ' + errors[field][0] + '\n';
+                        }
+                    }
+                    alert(errorMsg);
+                }
+            });
         });
 
         // Edit button click

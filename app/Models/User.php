@@ -16,19 +16,12 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
+        'username',
         'email',
         'password',
-        'mssv',
-        'ho_ten',
-        'lop',
-        'so_dien_thoai',
-        'ngay_sinh',
-        'dia_chi',
-        'ho_ten_cha',
-        'sdt_cha',
-        'ho_ten_me',
-        'sdt_me',
+        'last_login_at',
+        'role',
+        'status',
     ];
 
     /**
@@ -51,7 +44,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'ngay_sinh' => 'date',
+            'last_login_at' => 'datetime',
+            'status' => 'boolean',
         ];
     }
 }

@@ -20,6 +20,7 @@ class Student extends Model
     protected $fillable = [
         'mssv',
         'ho_ten',
+        'email',
         'lop',
         'so_dien_thoai',
         'ngay_sinh',

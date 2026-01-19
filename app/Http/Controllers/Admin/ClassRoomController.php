@@ -45,6 +45,30 @@ class ClassRoomController extends Controller
             ->make(true);
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'ma_lop' => 'required|string|max:50|unique:classes,ma_lop',
+            'ten_lop' => 'required|string|max:255',
+            'giao_vien_chu_nhiem_id' => 'nullable|exists:teachers,id',
+            'subject_id' => 'nullable|exists:subjects,id',
+        ], [
+            'ma_lop.required' => 'Vui lòng nhập mã lớp.',
+            'ma_lop.unique' => 'Mã lớp đã tồn tại trong hệ thống.',
+            'ten_lop.required' => 'Vui lòng nhập tên lớp.',
+            'giao_vien_chu_nhiem_id.exists' => 'Giáo viên không tồn tại.',
+            'subject_id.exists' => 'Môn học không tồn tại.',
+        ]);
+
+        $class = ClassRoom::create($request->all());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tạo lớp học mới thành công!',
+            'data' => $class
+        ]);
+    }
+
     public function show($id)
     {
         $class = ClassRoom::with(['giaoVienChuNhiem', 'monHoc'])->findOrFail($id);

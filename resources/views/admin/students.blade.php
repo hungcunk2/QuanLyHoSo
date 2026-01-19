@@ -11,6 +11,9 @@
                 <div class="card-body p-0">
                     <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
                         <h5 class="fw-bold">Quản lý học sinh</h5>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStudentModal">
+                            <i class="fas fa-plus"></i> Tạo học sinh mới
+                        </button>
                     </div>
                 </div>
             </div>
@@ -55,6 +58,7 @@
                         </th>
                         <th>Mã học sinh</th>
                         <th>Họ và tên</th>
+                        <th>Email</th>
                         <th>Lớp</th>
                         <th>Số điện thoại</th>
                         <th>Ngày sinh</th>
@@ -64,6 +68,49 @@
                 <tbody>
                 </tbody>
             </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Create Student -->
+<div class="modal fade" id="createStudentModal" tabindex="-1" aria-labelledby="createStudentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createStudentModalLabel">Tạo học sinh mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="createStudentForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_mssv" class="form-label">Mã số học sinh <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="create_mssv" name="mssv" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="create_email" name="email" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_ho_ten" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="create_ho_ten" name="ho_ten" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_lop" class="form-label">Lớp <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="create_lop" name="lop" required>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <small><i class="fas fa-info-circle"></i> Các thông tin khác (số điện thoại, ngày sinh, địa chỉ, thông tin phụ huynh...) học sinh có thể tự cập nhật sau.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Tạo mới</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -194,6 +241,10 @@
                     name: 'ho_ten'
                 },
                 {
+                    data: 'email',
+                    name: 'email'
+                },
+                {
                     data: 'lop',
                     name: 'lop'
                 },
@@ -212,7 +263,7 @@
                     searchable: false
                 }
             ],
-            order: [[5, 'desc']],
+            order: [[6, 'desc']],
             pageLength: 10,
             language: {
                 processing: "Đang xử lý...",
@@ -235,6 +286,50 @@
         
         $('.dt-search').on('keyup', function() {
             table.search(this.value).draw();
+        });
+
+        // Reset create form when modal is closed
+        $('#createStudentModal').on('hidden.bs.modal', function() {
+            $('#createStudentForm')[0].reset();
+        });
+
+        // Create form submit
+        $('#createStudentForm').on('submit', function(e) {
+            e.preventDefault();
+            var formData = $(this).serialize();
+
+            $.ajax({
+                url: '{{ route("admin.students.store") }}',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    var createModal = bootstrap.Modal.getInstance(document.getElementById('createStudentModal'));
+                    createModal.hide();
+                    table.ajax.reload();
+                    alert('Tạo học sinh mới thành công!');
+                },
+                error: function(xhr) {
+                    var errors = xhr.responseJSON?.errors || {};
+                    var errorMsg = '';
+                    
+                    if (Object.keys(errors).length === 0) {
+                        errorMsg = xhr.responseJSON?.message || 'Có lỗi xảy ra khi tạo học sinh mới!';
+                    } else {
+                        errorMsg = 'Vui lòng kiểm tra lại thông tin:\n\n';
+                        for (var field in errors) {
+                            var fieldName = field === 'mssv' ? 'Mã số học sinh' : 
+                                          field === 'email' ? 'Email' : 
+                                          field === 'ho_ten' ? 'Họ và tên' : 
+                                          field === 'lop' ? 'Lớp' : field;
+                            errorMsg += '• ' + fieldName + ': ' + errors[field][0] + '\n';
+                        }
+                    }
+                    alert(errorMsg);
+                }
+            });
         });
 
         // Edit button click
@@ -292,6 +387,41 @@
                     for (var field in errors) {
                         errorMsg += errors[field][0] + '\n';
                     }
+                    alert(errorMsg);
+                }
+            });
+        });
+
+        // Send email button click
+        $(document).on('click', '.send-email-btn', function() {
+            var studentId = $(this).data('id');
+            var studentEmail = $(this).data('email');
+            
+            if (!studentEmail) {
+                alert('Học sinh này chưa có email!');
+                return;
+            }
+            
+            if (!confirm('Bạn có chắc muốn gửi email chào mừng đến ' + studentEmail + '?')) {
+                return;
+            }
+            
+            var btn = $(this);
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            
+            $.ajax({
+                url: '{{ url("admin/students") }}/' + studentId + '/send-email',
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    btn.prop('disabled', false).html('<i class="fas fa-envelope"></i>');
+                    alert(response.message || 'Email đã được gửi thành công!');
+                },
+                error: function(xhr) {
+                    btn.prop('disabled', false).html('<i class="fas fa-envelope"></i>');
+                    var errorMsg = xhr.responseJSON?.message || 'Không thể gửi email!';
                     alert(errorMsg);
                 }
             });
