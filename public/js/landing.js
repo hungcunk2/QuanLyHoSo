@@ -181,12 +181,107 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form validation (if forms are added later)
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            if (!form.checkValidity()) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        }, false);
+        if (form.id !== 'loginForm') {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        }
     });
+
+    // Login form handling
+    const loginForm = document.getElementById('loginForm');
+    const loginModal = document.getElementById('loginModal');
+    const loginError = document.getElementById('loginError');
+    const loginErrorText = document.getElementById('loginErrorText');
+    const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Reset error display
+            loginError.classList.add('d-none');
+            loginErrorText.textContent = '';
+            
+            // Validate form
+            if (!loginForm.checkValidity()) {
+                loginForm.classList.add('was-validated');
+                return;
+            }
+
+            // Disable submit button
+            loginSubmitBtn.disabled = true;
+            loginSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang đăng nhập...';
+
+            try {
+                const formData = new FormData(loginForm);
+                const loginUrl = loginForm.getAttribute('data-login-url');
+                const response = await fetch(loginUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Login successful
+                    const dashboardUrl = loginForm.getAttribute('data-dashboard-url');
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        window.location.href = dashboardUrl;
+                    }
+                } else {
+                    // Login failed
+                    let errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
+                    
+                    if (data.errors) {
+                        if (data.errors.email) {
+                            errorMessage = data.errors.email[0];
+                        } else if (data.message) {
+                            errorMessage = data.message;
+                        }
+                    } else if (data.message) {
+                        errorMessage = data.message;
+                    }
+                    
+                    loginErrorText.textContent = errorMessage;
+                    loginError.classList.remove('d-none');
+                    
+                    // Re-enable submit button
+                    loginSubmitBtn.disabled = false;
+                    loginSubmitBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Đăng nhập';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                loginErrorText.textContent = 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+                loginError.classList.remove('d-none');
+                
+                // Re-enable submit button
+                loginSubmitBtn.disabled = false;
+                loginSubmitBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Đăng nhập';
+            }
+        });
+
+        // Reset form when modal is closed
+        if (loginModal) {
+            loginModal.addEventListener('hidden.bs.modal', function() {
+                loginForm.reset();
+                loginForm.classList.remove('was-validated');
+                loginError.classList.add('d-none');
+                loginErrorText.textContent = '';
+                loginSubmitBtn.disabled = false;
+                loginSubmitBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Đăng nhập';
+            });
+        }
+    }
 });

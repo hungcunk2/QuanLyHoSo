@@ -50,15 +50,9 @@
                         </li>
                     </ul>
                     <div class="header-actions ms-3">
-                        <a href="#" class="btn btn-outline-primary btn-sm me-2">
-                            <i class="fas fa-user"></i> Giảng viên
-                        </a>
-                        <a href="#" class="btn btn-outline-primary btn-sm me-2">
-                            <i class="fas fa-envelope"></i> Email
-                        </a>
-                        <a href="#" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-user-graduate"></i> Sinh viên
-                        </a>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                        </button>
                     </div>
                 </div>
             </div>
@@ -279,6 +273,63 @@
             </div>
         </div>
     </section>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">
+                        <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="loginForm" data-login-url="{{ route('login') }}" data-dashboard-url="{{ route('admin.dashboard') }}">
+                        @csrf
+                        <div id="loginError" class="alert alert-danger d-none" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span id="loginErrorText"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">
+                                <i class="fas fa-envelope me-2"></i>Tài khoản (Email)
+                            </label>
+                            <input type="email" class="form-control" id="loginEmail" name="email" required autocomplete="email" autofocus>
+                            <div class="invalid-feedback">
+                                Vui lòng nhập email hợp lệ.
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">
+                                <i class="fas fa-lock me-2"></i>Mật khẩu
+                            </label>
+                            <input type="password" class="form-control" id="loginPassword" name="password" required autocomplete="current-password">
+                            <div class="invalid-feedback">
+                                Vui lòng nhập mật khẩu.
+                            </div>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                            <label class="form-check-label" for="remember">
+                                Ghi nhớ đăng nhập
+                            </label>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="loginSubmitBtn">
+                                <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ route('password.request') }}" class="text-decoration-none">
+                        <i class="fas fa-key me-1"></i>Quên mật khẩu?
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer id="contact" class="main-footer py-5 bg-dark text-white">

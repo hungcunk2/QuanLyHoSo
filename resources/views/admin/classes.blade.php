@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Quản lý lớp học')
-@section('page-title', 'Quản lý lớp học')
+@section('page-title', '')
 
 @section('content')
 <div class="container-fluid">

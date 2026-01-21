@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin Panel') - HDU</title>
+    <title>@yield('title', 'Giáo Viên') - HDU</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -23,8 +23,8 @@
         <aside class="admin-sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <i class="fas fa-gem text-warning"></i>
-                    <span class="logo-text">HDU</span>
+                    <i class="fas fa-chalkboard-teacher text-success"></i>
+                    <span class="logo-text">Giáo Viên</span>
                 </div>
             </div>
             
@@ -33,7 +33,7 @@
                     <div class="nav-section-title">MAIN</div>
                     <ul class="nav-menu">
                         <li class="nav-item">
-                            <a href="{{ route('admin.dashboard') }}" class="nav-link">
+                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
                                 <i class="fas fa-home"></i>
                                 <span>Bảng Điều Khiển</span>
                             </a>
@@ -45,27 +45,33 @@
                     <div class="nav-section-title">QUẢN LÝ</div>
                     <ul class="nav-menu">
                         <li class="nav-item">
-                            <a href="{{ route('admin.students') }}" class="nav-link">
-                                <i class="fas fa-user-graduate"></i>
-                                <span>Quản Lý Học Sinh</span>
+                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
+                                <i class="fas fa-user"></i>
+                                <span>Thông Tin Cá Nhân</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.teachers') }}" class="nav-link">
-                                <i class="fas fa-chalkboard-teacher"></i>
-                                <span>Quản Lý Giáo Viên</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.classes') }}" class="nav-link">
+                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
                                 <i class="fas fa-school"></i>
-                                <span>Quản Lý Lớp Học</span>
+                                <span>Lớp Học Của Tôi</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.subjects') }}" class="nav-link">
-                                <i class="fas fa-book"></i>
-                                <span>Quản Lý Môn Học</span>
+                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
+                                <i class="fas fa-user-graduate"></i>
+                                <span>Học Sinh</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Chấm Điểm</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>Lịch Dạy</span>
                             </a>
                         </li>
                     </ul>
@@ -74,12 +80,6 @@
                 <div class="nav-section">
                     <div class="nav-section-title">SYSTEM</div>
                     <ul class="nav-menu">
-                        <li class="nav-item">
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-cog"></i>
-                                <span>Settings</span>
-                            </a>
-                        </li>
                         <li class="nav-item">
                             <form method="POST" action="{{ route('logout') }}" class="d-inline">
                                 @csrf
@@ -115,9 +115,9 @@
                     </button>
                     <div class="user-profile dropdown">
                         <div class="user-avatar dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
-                            <i class="fas fa-user"></i>
+                            <i class="fas fa-chalkboard-teacher"></i>
                         </div>
-                        <span class="user-name">{{ Auth::user()->email ?? 'SUPER ADMIN' }}</span>
+                        <span class="user-name">{{ Auth::user()->email ?? 'GIÁO VIÊN' }}</span>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Thông tin cá nhân</a></li>
                             <li><hr class="dropdown-divider"></li>

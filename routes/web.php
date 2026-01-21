@@ -1,10 +1,12 @@
-﻿<?php
+<?php
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TeacherController;
 use App\Http\Controllers\Admin\ClassRoomController;
 use App\Http\Controllers\Admin\SubjectController;
+use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
+use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 
 require __DIR__ . '/auth.php';
 
@@ -12,7 +14,7 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('dashboard');
@@ -46,4 +48,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/subjects/{id}', [SubjectController::class, 'show'])->name('subjects.show');
     Route::put('/subjects/{id}', [SubjectController::class, 'update'])->name('subjects.update');
     Route::delete('/subjects/{id}', [SubjectController::class, 'destroy'])->name('subjects.destroy');
+});
+
+Route::prefix('student')->name('student.')->middleware('auth')->group(function () {
+    Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+});
+
+Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function () {
+    Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
 });
