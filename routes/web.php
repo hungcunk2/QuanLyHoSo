@@ -52,6 +52,12 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
 Route::prefix('student')->name('student.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile/edit', [StudentDashboardController::class, 'editProfile'])->name('profile.edit');
+    Route::put('/profile', [StudentDashboardController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/schedule', [StudentDashboardController::class, 'schedule'])->name('schedule');
+    Route::get('/results', [StudentDashboardController::class, 'results'])->name('results');
+    Route::get('/registration', [StudentDashboardController::class, 'registration'])->name('registration');
+    Route::get('/notifications', [StudentDashboardController::class, 'notifications'])->name('notifications');
 });
 
 Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function () {

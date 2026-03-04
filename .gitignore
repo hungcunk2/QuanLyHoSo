@@ -16,6 +16,9 @@ yarn-error.log
 /.idea
 /.vscode
 
+# User uploads (không đẩy lên Git)
+/storage/app/public/avatars
+
 # Laravel specific
 /storage/framework/cache/*
 /storage/framework/sessions/*

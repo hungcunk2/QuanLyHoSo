@@ -34,38 +34,38 @@
                     <ul class="nav-menu">
                         <li class="nav-item">
                             <a href="{{ route('student.dashboard') }}" class="nav-link">
-                                <i class="fas fa-home"></i>
-                                <span>Bảng Điều Khiển</span>
+                                <i class="fas fa-user"></i>
+                                <span>Thông tin cá nhân</span>
                             </a>
                         </li>
                     </ul>
                 </div>
                 
                 <div class="nav-section">
-                    <div class="nav-section-title">THÔNG TIN</div>
+                    <div class="nav-section-title">CHỨC NĂNG</div>
                     <ul class="nav-menu">
                         <li class="nav-item">
-                            <a href="{{ route('student.dashboard') }}" class="nav-link">
-                                <i class="fas fa-user"></i>
-                                <span>Thông Tin Cá Nhân</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('student.dashboard') }}" class="nav-link">
+                            <a href="{{ route('student.schedule') }}" class="nav-link">
                                 <i class="fas fa-book"></i>
                                 <span>Lịch Học</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('student.dashboard') }}" class="nav-link">
-                                <i class="fas fa-clipboard-list"></i>
-                                <span>Điểm Số</span>
+                            <a href="{{ route('student.results') }}" class="nav-link">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Kết Quả Học Tập</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('student.dashboard') }}" class="nav-link">
-                                <i class="fas fa-calendar-alt"></i>
-                                <span>Lịch Thi</span>
+                            <a href="{{ route('student.registration') }}" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Đăng Ký Học Phần</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('student.notifications') }}" class="nav-link">
+                                <i class="fas fa-bell"></i>
+                                <span>Thông Báo</span>
                             </a>
                         </li>
                     </ul>
@@ -113,8 +113,6 @@
                         </div>
                         <span class="user-name">{{ Auth::user()->email ?? 'HỌC SINH' }}</span>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Thông tin cá nhân</a></li>
-                            <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}" class="d-inline">
                                     @csrf
