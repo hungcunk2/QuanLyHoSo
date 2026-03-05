@@ -82,28 +82,121 @@
             </div>
             <form id="createStudentForm">
                 <div class="modal-body">
+                    <h6 class="text-muted border-bottom pb-1 mb-2">Thông tin học vấn</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="create_mssv" class="form-label">Mã số học sinh <span class="text-danger">*</span></label>
+                            <label for="create_mssv" class="form-label">MSSV <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="create_mssv" name="mssv" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="create_email" class="form-label">Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="create_email" name="email" required>
-                        </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="create_ho_ten" class="form-label">Họ và tên <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="create_ho_ten" name="ho_ten" required>
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="create_lop" class="form-label">Lớp <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="create_lop" name="lop" required>
+                            <label for="create_gioi_tinh" class="form-label">Giới tính</label>
+                            <select class="form-select" id="create_gioi_tinh" name="gioi_tinh">
+                                <option value="">-- Chọn --</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_trang_thai" class="form-label">Trạng thái</label>
+                            <select class="form-select" id="create_trang_thai" name="trang_thai">
+                                <option value="Đang học" selected>Đang học</option>
+                                <option value="Bảo lưu">Bảo lưu</option>
+                                <option value="Cảnh báo học vụ">Cảnh báo học vụ</option>
+                                <option value="Buộc thôi học">Buộc thôi học</option>
+                                <option value="Đã tốt nghiệp">Đã tốt nghiệp</option>
+                            </select>
                         </div>
                     </div>
-                    <div class="alert alert-info">
-                        <small><i class="fas fa-info-circle"></i> Các thông tin khác (số điện thoại, ngày sinh, địa chỉ, thông tin phụ huynh...) học sinh có thể tự cập nhật sau.</small>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_ma_ho_so" class="form-label">Mã hồ sơ</label>
+                            <input type="text" class="form-control" id="create_ma_ho_so" name="ma_ho_so">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_ngay_vao_truong" class="form-label">Ngày vào trường</label>
+                            <input type="date" class="form-control" id="create_ngay_vao_truong" name="ngay_vao_truong">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_lop" class="form-label">Lớp <span class="text-danger">*</span></label>
+                            <select class="form-select" id="create_lop" name="lop" required>
+                                <option value="">-- Chọn lớp --</option>
+                                @foreach($classes ?? [] as $c)
+                                    <option value="{{ $c->ma_lop }}">{{ $c->ma_lop }} - {{ $c->ten_lop }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_co_so" class="form-label">Cơ sở</label>
+                            <input type="text" class="form-control" id="create_co_so" name="co_so">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_bac_dao_tao" class="form-label">Bậc đào tạo</label>
+                            <select class="form-select" id="create_bac_dao_tao" name="bac_dao_tao">
+                                <option value="">-- Chọn --</option>
+                                <option value="Đại học">Đại học</option>
+                                <option value="Thạc sĩ">Thạc sĩ</option>
+                                <option value="Tiến sĩ">Tiến sĩ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_loai_hinh_dao_tao" class="form-label">Loại hình đào tạo</label>
+                            <select class="form-select" id="create_loai_hinh_dao_tao" name="loai_hinh_dao_tao">
+                                <option value="">-- Chọn --</option>
+                                <option value="Hệ đại trà">Hệ đại trà</option>
+                                <option value="Hệ tăng cường tiếng Anh">Hệ tăng cường tiếng Anh</option>
+                                <option value="Hệ vừa học vừa làm">Hệ vừa học vừa làm</option>
+                                <option value="Hệ văn bằng 2">Hệ văn bằng 2</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_khoa" class="form-label">Khoa</label>
+                            <select class="form-select" id="create_khoa" name="khoa">
+                                <option value="">-- Chọn --</option>
+                                <option value="Khoa Công nghệ Thông tin">Khoa Công nghệ Thông tin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_nganh" class="form-label">Ngành</label>
+                            <select class="form-select" id="create_nganh" name="nganh">
+                                <option value="">-- Chọn --</option>
+                                <option value="Công nghệ thông tin" selected>Công nghệ thông tin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_chuyen_nganh" class="form-label">Chuyên ngành</label>
+                            <select class="form-select" id="create_chuyen_nganh" name="chuyen_nganh">
+                                <option value="">-- Chọn --</option>
+                                <option value="Công nghệ thông tin">Công nghệ thông tin</option>
+                                <option value="Kỹ thuật phần mềm">Kỹ thuật phần mềm</option>
+                                <option value="Khoa học máy tính">Khoa học máy tính</option>
+                                <option value="Hệ thống thông tin">Hệ thống thông tin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="create_khoa_hoc" class="form-label">Khóa học</label>
+                            <input type="text" class="form-control" id="create_khoa_hoc" name="khoa_hoc" placeholder="VD: 2020 - 2021">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="create_email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="create_email" name="email" required>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -126,9 +219,10 @@
             <form id="editStudentForm">
                 <div class="modal-body">
                     <input type="hidden" id="edit_student_id" name="id">
+                    <h6 class="text-muted border-bottom pb-1 mb-2">Thông tin học vấn</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="edit_mssv" class="form-label">Mã số học sinh <span class="text-danger">*</span></label>
+                            <label for="edit_mssv" class="form-label">MSSV <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="edit_mssv" name="mssv" required>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -138,8 +232,107 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
+                            <label for="edit_gioi_tinh" class="form-label">Giới tính</label>
+                            <select class="form-select" id="edit_gioi_tinh" name="gioi_tinh">
+                                <option value="">-- Chọn --</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_trang_thai" class="form-label">Trạng thái</label>
+                            <select class="form-select" id="edit_trang_thai" name="trang_thai">
+                                <option value="Đang học">Đang học</option>
+                                <option value="Bảo lưu">Bảo lưu</option>
+                                <option value="Cảnh báo học vụ">Cảnh báo học vụ</option>
+                                <option value="Buộc thôi học">Buộc thôi học</option>
+                                <option value="Đã tốt nghiệp">Đã tốt nghiệp</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_ma_ho_so" class="form-label">Mã hồ sơ</label>
+                            <input type="text" class="form-control" id="edit_ma_ho_so" name="ma_ho_so">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_ngay_vao_truong" class="form-label">Ngày vào trường</label>
+                            <input type="date" class="form-control" id="edit_ngay_vao_truong" name="ngay_vao_truong">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
                             <label for="edit_lop" class="form-label">Lớp</label>
-                            <input type="text" class="form-control" id="edit_lop" name="lop">
+                            <select class="form-select" id="edit_lop" name="lop">
+                                <option value="">-- Chọn lớp --</option>
+                                @foreach($classes ?? [] as $c)
+                                    <option value="{{ $c->ma_lop }}">{{ $c->ma_lop }} - {{ $c->ten_lop }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_co_so" class="form-label">Cơ sở</label>
+                            <input type="text" class="form-control" id="edit_co_so" name="co_so">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_bac_dao_tao" class="form-label">Bậc đào tạo</label>
+                            <select class="form-select" id="edit_bac_dao_tao" name="bac_dao_tao">
+                                <option value="">-- Chọn --</option>
+                                <option value="Đại học">Đại học</option>
+                                <option value="Thạc sĩ">Thạc sĩ</option>
+                                <option value="Tiến sĩ">Tiến sĩ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_loai_hinh_dao_tao" class="form-label">Loại hình đào tạo</label>
+                            <select class="form-select" id="edit_loai_hinh_dao_tao" name="loai_hinh_dao_tao">
+                                <option value="">-- Chọn --</option>
+                                <option value="Hệ đại trà">Hệ đại trà</option>
+                                <option value="Hệ tăng cường tiếng Anh">Hệ tăng cường tiếng Anh</option>
+                                <option value="Hệ vừa học vừa làm">Hệ vừa học vừa làm</option>
+                                <option value="Hệ văn bằng 2">Hệ văn bằng 2</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_khoa" class="form-label">Khoa</label>
+                            <select class="form-select" id="edit_khoa" name="khoa">
+                                <option value="">-- Chọn --</option>
+                                <option value="Khoa Công nghệ Thông tin">Khoa Công nghệ Thông tin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_nganh" class="form-label">Ngành</label>
+                            <select class="form-select" id="edit_nganh" name="nganh">
+                                <option value="">-- Chọn --</option>
+                                <option value="Công nghệ thông tin">Công nghệ thông tin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_chuyen_nganh" class="form-label">Chuyên ngành</label>
+                            <select class="form-select" id="edit_chuyen_nganh" name="chuyen_nganh">
+                                <option value="">-- Chọn --</option>
+                                <option value="Công nghệ thông tin">Công nghệ thông tin</option>
+                                <option value="Kỹ thuật phần mềm">Kỹ thuật phần mềm</option>
+                                <option value="Khoa học máy tính">Khoa học máy tính</option>
+                                <option value="Hệ thống thông tin">Hệ thống thông tin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_khoa_hoc" class="form-label">Khóa học</label>
+                            <input type="text" class="form-control" id="edit_khoa_hoc" name="khoa_hoc">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="edit_email" name="email">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="edit_so_dien_thoai" class="form-label">Số điện thoại</label>
@@ -151,15 +344,12 @@
                             <label for="edit_ngay_sinh" class="form-label">Ngày sinh</label>
                             <input type="date" class="form-control" id="edit_ngay_sinh" name="ngay_sinh">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="edit_email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="edit_email" name="email">
-                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="edit_dia_chi" class="form-label">Địa chỉ</label>
                         <textarea class="form-control" id="edit_dia_chi" name="dia_chi" rows="2"></textarea>
                     </div>
+                    <h6 class="text-muted border-bottom pb-1 mb-2 mt-2">Quan hệ gia đình</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_ho_ten_cha" class="form-label">Họ tên cha</label>
@@ -332,34 +522,48 @@
             });
         });
 
-        // Edit button click
+        // Khi bấm Sửa: điền form từ data-edit (đã nhúng trong nút khi tải bảng)
         $(document).on('click', '.edit-btn', function() {
-            var studentId = $(this).data('id');
-            
-            $.ajax({
-                url: '{{ url("admin/students") }}/' + studentId,
-                type: 'GET',
-                success: function(response) {
-                    $('#edit_student_id').val(response.id);
-                    $('#edit_mssv').val(response.mssv);
-                    $('#edit_ho_ten').val(response.ho_ten);
-                    $('#edit_lop').val(response.lop);
-                    $('#edit_so_dien_thoai').val(response.so_dien_thoai);
-                    $('#edit_ngay_sinh').val(response.ngay_sinh ? response.ngay_sinh.split('T')[0] : '');
-                    $('#edit_email').val(response.email);
-                    $('#edit_dia_chi').val(response.dia_chi);
-                    $('#edit_ho_ten_cha').val(response.ho_ten_cha);
-                    $('#edit_sdt_cha').val(response.sdt_cha);
-                    $('#edit_ho_ten_me').val(response.ho_ten_me);
-                    $('#edit_sdt_me').val(response.sdt_me);
-                    
-                    var editModal = new bootstrap.Modal(document.getElementById('editStudentModal'));
-                    editModal.show();
-                },
-                error: function() {
-                    alert('Không thể tải thông tin học sinh!');
-                }
-            });
+            var dataEdit = $(this).attr('data-edit');
+            if (!dataEdit) {
+                alert('Không có dữ liệu. Vui lòng tải lại trang.');
+                return;
+            }
+            var r;
+            try {
+                r = JSON.parse(atob(dataEdit));
+            } catch (e) {
+                alert('Dữ liệu không hợp lệ. Vui lòng tải lại trang.');
+                return;
+            }
+            if (!r || r.id == null) {
+                alert('Dữ liệu học sinh không hợp lệ.');
+                return;
+            }
+            $('#edit_student_id').val(r.id);
+            $('#edit_mssv').val(r.mssv || '');
+            $('#edit_ho_ten').val(r.ho_ten || '');
+            $('#edit_gioi_tinh').val(r.gioi_tinh || '');
+            $('#edit_trang_thai').val(r.trang_thai || '');
+            $('#edit_ma_ho_so').val(r.ma_ho_so || '');
+            $('#edit_ngay_vao_truong').val(r.ngay_vao_truong || '');
+            $('#edit_lop').val(r.lop || '');
+            $('#edit_co_so').val(r.co_so || '');
+            $('#edit_bac_dao_tao').val(r.bac_dao_tao || '');
+            $('#edit_loai_hinh_dao_tao').val(r.loai_hinh_dao_tao || '');
+            $('#edit_khoa').val(r.khoa || '');
+            $('#edit_nganh').val(r.nganh || '');
+            $('#edit_chuyen_nganh').val(r.chuyen_nganh || '');
+            $('#edit_khoa_hoc').val(r.khoa_hoc || '');
+            $('#edit_email').val(r.email || '');
+            $('#edit_so_dien_thoai').val(r.so_dien_thoai || '');
+            $('#edit_ngay_sinh').val(r.ngay_sinh || '');
+            $('#edit_dia_chi').val(r.dia_chi || '');
+            $('#edit_ho_ten_cha').val(r.ho_ten_cha || '');
+            $('#edit_sdt_cha').val(r.sdt_cha || '');
+            $('#edit_ho_ten_me').val(r.ho_ten_me || '');
+            $('#edit_sdt_me').val(r.sdt_me || '');
+            new bootstrap.Modal(document.getElementById('editStudentModal')).show();
         });
 
         // Update form submit

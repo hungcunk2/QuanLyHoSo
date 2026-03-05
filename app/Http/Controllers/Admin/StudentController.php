@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\StudentWelcomeMail;
+use App\Models\ClassRoom;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -14,26 +15,53 @@ class StudentController extends Controller
 {
     public function index()
     {
-        return view('admin.students');
+        $classes = ClassRoom::orderBy('ma_lop')->get(['id', 'ma_lop', 'ten_lop']);
+        return view('admin.students', compact('classes'));
     }
 
     public function getData(Request $request)
     {
-        $query = Student::select('id', 'mssv', 'ho_ten', 'email', 'lop', 'so_dien_thoai', 'ngay_sinh', 'created_at', 'updated_at');
+        $query = Student::query();
 
         return DataTables::of($query)
             ->addColumn('check', function ($student) {
                 return '<input type="checkbox" class="form-check-input row-checkbox" name="selected_ids[]" value="' . $student->id . '">';
             })
             ->addColumn('action', function ($student) {
+                $editData = [
+                    'id' => $student->id,
+                    'mssv' => $student->mssv ?? '',
+                    'ho_ten' => $student->ho_ten ?? '',
+                    'gioi_tinh' => $student->gioi_tinh ?? '',
+                    'trang_thai' => $student->trang_thai ?? '',
+                    'ma_ho_so' => $student->ma_ho_so ?? '',
+                    'ngay_vao_truong' => $student->ngay_vao_truong ? $student->ngay_vao_truong->format('Y-m-d') : '',
+                    'lop' => $student->lop ?? '',
+                    'co_so' => $student->co_so ?? '',
+                    'bac_dao_tao' => $student->bac_dao_tao ?? '',
+                    'loai_hinh_dao_tao' => $student->loai_hinh_dao_tao ?? '',
+                    'khoa' => $student->khoa ?? '',
+                    'nganh' => $student->nganh ?? '',
+                    'chuyen_nganh' => $student->chuyen_nganh ?? '',
+                    'khoa_hoc' => $student->khoa_hoc ?? '',
+                    'email' => $student->email ?? '',
+                    'so_dien_thoai' => $student->so_dien_thoai ?? '',
+                    'ngay_sinh' => $student->ngay_sinh ? $student->ngay_sinh->format('Y-m-d') : '',
+                    'dia_chi' => $student->dia_chi ?? '',
+                    'ho_ten_cha' => $student->ho_ten_cha ?? '',
+                    'sdt_cha' => $student->sdt_cha ?? '',
+                    'ho_ten_me' => $student->ho_ten_me ?? '',
+                    'sdt_me' => $student->sdt_me ?? '',
+                ];
+                $editJson = base64_encode(json_encode($editData));
                 return '
-                    <button class="btn btn-sm btn-primary me-1 edit-btn" data-id="' . $student->id . '" title="Sửa">
+                    <button type="button" class="btn btn-sm btn-primary me-1 edit-btn" data-id="' . (int) $student->id . '" data-edit="' . e($editJson) . '" title="Sửa">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-info me-1 send-email-btn" data-id="' . $student->id . '" data-email="' . ($student->email ?? '') . '" title="Gửi email">
+                    <button type="button" class="btn btn-sm btn-info me-1 send-email-btn" data-id="' . $student->id . '" data-email="' . e($student->email ?? '') . '" title="Gửi email">
                         <i class="fas fa-envelope"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger delete-btn" data-id="' . $student->id . '" title="Xóa">
+                    <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="' . $student->id . '" title="Xóa">
                         <i class="fas fa-trash"></i>
                     </button>
                 ';
@@ -80,6 +108,17 @@ class StudentController extends Controller
             'email' => $request->email,
             'ho_ten' => $request->ho_ten,
             'lop' => $request->lop,
+            'gioi_tinh' => $request->gioi_tinh,
+            'trang_thai' => $request->trang_thai,
+            'ma_ho_so' => $request->ma_ho_so,
+            'ngay_vao_truong' => $request->ngay_vao_truong,
+            'co_so' => $request->co_so,
+            'bac_dao_tao' => $request->bac_dao_tao,
+            'loai_hinh_dao_tao' => $request->loai_hinh_dao_tao,
+            'khoa' => $request->khoa,
+            'nganh' => $request->nganh,
+            'chuyen_nganh' => $request->chuyen_nganh,
+            'khoa_hoc' => $request->khoa_hoc,
         ]);
 
         // Gửi email chào mừng với thông tin đăng nhập
@@ -112,6 +151,17 @@ class StudentController extends Controller
             'email' => 'nullable|email|max:255|unique:students,email,' . $id,
             'ho_ten' => 'required|string|max:255',
             'lop' => 'nullable|string|max:50',
+            'gioi_tinh' => 'nullable|string|max:20',
+            'trang_thai' => 'nullable|string|max:50',
+            'ma_ho_so' => 'nullable|string|max:100',
+            'ngay_vao_truong' => 'nullable|date',
+            'co_so' => 'nullable|string|max:255',
+            'bac_dao_tao' => 'nullable|string|max:100',
+            'loai_hinh_dao_tao' => 'nullable|string|max:100',
+            'khoa' => 'nullable|string|max:255',
+            'nganh' => 'nullable|string|max:255',
+            'chuyen_nganh' => 'nullable|string|max:255',
+            'khoa_hoc' => 'nullable|string|max:50',
             'so_dien_thoai' => 'nullable|string|max:20',
             'ngay_sinh' => 'nullable|date',
             'dia_chi' => 'nullable|string',
@@ -122,7 +172,7 @@ class StudentController extends Controller
         ]);
 
         $student = Student::findOrFail($id);
-        $student->update($request->all());
+        $student->update($request->only($student->getFillable()));
 
         return response()->json([
             'success' => true,
