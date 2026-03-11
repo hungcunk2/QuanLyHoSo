@@ -68,6 +68,12 @@
                                 <span>Quản Lý Môn Học</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.subject-registrations') }}" class="nav-link">
+                                <i class="fas fa-clipboard-list"></i>
+                                <span>Quản Lý Đăng Ký Học Phần</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 
