@@ -36,6 +36,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('/teachers/{id}/send-email', [TeacherController::class, 'sendEmail'])->name('teachers.send-email');
     Route::put('/teachers/{id}', [TeacherController::class, 'update'])->name('teachers.update');
     Route::delete('/teachers/{id}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
+    Route::post('/teachers/bulk-delete', [TeacherController::class, 'bulkDelete'])->name('teachers.bulk-delete');
     
     Route::get('/classes', [ClassRoomController::class, 'index'])->name('classes');
     Route::get('/classes/data', [ClassRoomController::class, 'getData'])->name('classes.data');
@@ -65,6 +66,8 @@ Route::prefix('student')->name('student.')->middleware('auth')->group(function (
     Route::get('/schedule', [StudentDashboardController::class, 'schedule'])->name('schedule');
     Route::get('/results', [StudentDashboardController::class, 'results'])->name('results');
     Route::get('/registration', [StudentDashboardController::class, 'registration'])->name('registration');
+    Route::post('/registration/{courseOfferingId}/register', [StudentDashboardController::class, 'registerOffering'])->name('registration.register');
+    Route::post('/registration/{courseOfferingId}/cancel', [StudentDashboardController::class, 'cancelOffering'])->name('registration.cancel');
     Route::get('/notifications', [StudentDashboardController::class, 'notifications'])->name('notifications');
 });
 

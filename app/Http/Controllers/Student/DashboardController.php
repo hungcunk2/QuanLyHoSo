@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClassRoom;
+use App\Models\CourseOffering;
+use App\Models\SubjectRegistration;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -122,7 +125,114 @@ class DashboardController extends Controller
     public function registration()
     {
         $user = Auth::user();
-        return view('student.registration', compact('user'));
+        $student = Student::where('email', $user->email)->first();
+        $classRoom = null;
+        if ($student && $student->lop) {
+            $classRoom = ClassRoom::where('ma_lop', $student->lop)->first();
+        }
+
+        $today = Carbon::today();
+
+        $baseOfferingsQuery = CourseOffering::with(['subject', 'classRoom', 'teacher', 'schedules'])
+            ->withCount([
+                'subjectRegistrations as registrations_count' => function ($q) {
+                    $q->where('status', '!=', 'cancelled');
+                }
+            ])
+            ->whereDate('ngay_mo_dang_ky', '<=', $today)
+            ->whereDate('ngay_ket_thuc_hoc', '>=', $today)
+            ->orderByDesc('created_at');
+
+        // Nếu xác định được lớp của sinh viên, ưu tiên hiển thị học phần của lớp đó.
+        // Nếu lớp đó chưa có học phần phù hợp, fallback hiển thị tất cả.
+        if ($classRoom) {
+            $offerings = (clone $baseOfferingsQuery)->where('class_room_id', $classRoom->id)->get();
+            if ($offerings->isEmpty()) {
+                $offerings = (clone $baseOfferingsQuery)->get();
+            }
+        } else {
+            $offerings = (clone $baseOfferingsQuery)->get();
+        }
+
+        $myRegs = collect();
+        if ($student) {
+            $myRegs = SubjectRegistration::where('student_id', $student->id)
+                ->whereNotNull('course_offering_id')
+                ->get()
+                ->keyBy('course_offering_id');
+        }
+
+        return view('student.registration', compact('user', 'student', 'classRoom', 'offerings', 'myRegs', 'today'));
+    }
+
+    public function registerOffering(Request $request, $courseOfferingId)
+    {
+        $user = Auth::user();
+        $student = Student::where('email', $user->email)->first();
+        if (!$student) {
+            return back()->with('error', 'Không tìm thấy hồ sơ học sinh.');
+        }
+
+        $offering = CourseOffering::withCount([
+            'subjectRegistrations as registrations_count' => function ($q) {
+                $q->where('status', '!=', 'cancelled');
+            }
+        ])->findOrFail($courseOfferingId);
+
+        $today = Carbon::today();
+        if ($offering->ngay_mo_dang_ky && $offering->ngay_mo_dang_ky->gt($today)) {
+            return back()->with('error', 'Chưa đến thời gian mở đăng ký.');
+        }
+        if ($offering->ngay_ket_thuc_dang_ky && $offering->ngay_ket_thuc_dang_ky->lt($today)) {
+            return back()->with('error', 'Đã hết thời gian đăng ký.');
+        }
+
+        $conLai = (int) $offering->si_so_lop - (int) $offering->registrations_count;
+        if ($conLai <= 0) {
+            return back()->with('error', 'Lớp đã đủ sĩ số.');
+        }
+
+        $reg = SubjectRegistration::where('student_id', $student->id)
+            ->where('course_offering_id', $offering->id)
+            ->first();
+
+        if ($reg && $reg->status !== 'cancelled') {
+            return back()->with('success', 'Bạn đã đăng ký học phần này rồi.');
+        }
+
+        if ($reg) {
+            $reg->update(['status' => 'approved']);
+        } else {
+            SubjectRegistration::create([
+                'course_offering_id' => $offering->id,
+                'student_id' => $student->id,
+                'subject_id' => $offering->subject_id,
+                'class_room_id' => $offering->class_room_id,
+                'status' => 'approved',
+            ]);
+        }
+
+        return back()->with('success', 'Đăng ký học phần thành công.');
+    }
+
+    public function cancelOffering(Request $request, $courseOfferingId)
+    {
+        $user = Auth::user();
+        $student = Student::where('email', $user->email)->first();
+        if (!$student) {
+            return back()->with('error', 'Không tìm thấy hồ sơ học sinh.');
+        }
+
+        $reg = SubjectRegistration::where('student_id', $student->id)
+            ->where('course_offering_id', $courseOfferingId)
+            ->first();
+
+        if (!$reg || $reg->status === 'cancelled') {
+            return back()->with('success', 'Bạn chưa đăng ký học phần này.');
+        }
+
+        $reg->update(['status' => 'cancelled']);
+        return back()->with('success', 'Đã hủy đăng ký học phần.');
     }
 
     public function notifications()

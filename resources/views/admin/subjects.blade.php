@@ -58,6 +58,7 @@
                         </th>
                         <th>Mã môn học</th>
                         <th>Tên môn học</th>
+                        <th>Số tín chỉ</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -85,6 +86,10 @@
                     <div class="mb-3">
                         <label for="create_ten_mon_hoc" class="form-label">Tên môn học <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="create_ten_mon_hoc" name="ten_mon_hoc" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create_so_tin_chi" class="form-label">Số tín chỉ <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="create_so_tin_chi" name="so_tin_chi" min="0" max="30" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -114,6 +119,10 @@
                     <div class="mb-3">
                         <label for="edit_ten_mon_hoc" class="form-label">Tên môn học <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="edit_ten_mon_hoc" name="ten_mon_hoc" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_so_tin_chi" class="form-label">Số tín chỉ <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="edit_so_tin_chi" name="so_tin_chi" min="0" max="30" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -174,6 +183,10 @@
                 {
                     data: 'ten_mon_hoc',
                     name: 'ten_mon_hoc'
+                },
+                {
+                    data: 'so_tin_chi',
+                    name: 'so_tin_chi'
                 },
                 {
                     data: 'action',
@@ -240,7 +253,8 @@
                         errorMsg = 'Vui lòng kiểm tra lại thông tin:\n\n';
                         for (var field in errors) {
                             var fieldName = field === 'ma_mon_hoc' ? 'Mã môn học' : 
-                                          field === 'ten_mon_hoc' ? 'Tên môn học' : field;
+                                          field === 'ten_mon_hoc' ? 'Tên môn học' :
+                                          field === 'so_tin_chi' ? 'Số tín chỉ' : field;
                             errorMsg += '• ' + fieldName + ': ' + errors[field][0] + '\n';
                         }
                     }
@@ -260,6 +274,7 @@
                     $('#edit_subject_id').val(response.id);
                     $('#edit_ma_mon_hoc').val(response.ma_mon_hoc);
                     $('#edit_ten_mon_hoc').val(response.ten_mon_hoc);
+                    $('#edit_so_tin_chi').val(response.so_tin_chi ?? 0);
                     
                     var editModal = new bootstrap.Modal(document.getElementById('editSubjectModal'));
                     editModal.show();

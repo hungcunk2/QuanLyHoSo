@@ -293,11 +293,11 @@
                         </div>
                         <div class="mb-3">
                             <label for="loginEmail" class="form-label">
-                                <i class="fas fa-envelope me-2"></i>Tài khoản (Email)
+                                <i class="fas fa-user me-2"></i>Tài khoản (MSSV / MSGV / Email)
                             </label>
-                            <input type="email" class="form-control" id="loginEmail" name="email" required autocomplete="email" autofocus>
+                            <input type="text" class="form-control" id="loginEmail" name="email" required autocomplete="username" autofocus placeholder="Nhập MSSV, MSGV hoặc Email">
                             <div class="invalid-feedback">
-                                Vui lòng nhập email hợp lệ.
+                                Vui lòng nhập tài khoản.
                             </div>
                         </div>
                         <div class="mb-3">

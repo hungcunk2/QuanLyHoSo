@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -25,11 +26,28 @@ class AuthenticatedSessionController extends Controller
     public function store(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
-            'email' => ['required', 'string', 'email'],
+            // Accept email OR username (MSSV/MSGV)
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+        $login = trim((string) $request->input('email'));
+        $remember = $request->boolean('remember');
+        $common = [
+            'password' => (string) $request->input('password'),
+            'status' => 1,
+        ];
+
+        $ok = false;
+        if (Str::contains($login, '@')) {
+            $ok = Auth::attempt(['email' => $login] + $common, $remember)
+                || Auth::attempt(['username' => $login] + $common, $remember);
+        } else {
+            $ok = Auth::attempt(['username' => $login] + $common, $remember)
+                || Auth::attempt(['email' => $login] + $common, $remember);
+        }
+
+        if (!$ok) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => __('auth.failed'),
@@ -46,8 +64,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        // Redirect based on user role
+        // Update last login time
         $user = Auth::user();
+        if ($user) {
+            $user->forceFill(['last_login_at' => now()])->save();
+        }
+
+        // Redirect based on user role
         $redirectRoute = 'admin.dashboard'; // default
         
         if ($user && $user->role) {

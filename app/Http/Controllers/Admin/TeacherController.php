@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\QueryException;
 
 class TeacherController extends Controller
 {
@@ -47,9 +49,16 @@ class TeacherController extends Controller
 
     public function store(Request $request)
     {
+        // Normalize input to avoid " MSGV " / "email " bypasses
+        $request->merge([
+            'msgv' => is_string($request->msgv) ? trim($request->msgv) : $request->msgv,
+            'email' => is_string($request->email) ? trim(mb_strtolower($request->email)) : $request->email,
+        ]);
+
         $request->validate([
-            'msgv' => 'required|string|max:50|unique:teachers,msgv|unique:users,username',
-            'email' => 'required|email|max:255|unique:teachers,email|unique:users,email',
+            // Ignore soft-deleted rows when checking duplicates
+            'msgv' => 'required|string|max:50|unique:teachers,msgv,NULL,id,deleted_at,NULL|unique:users,username,NULL,id,deleted_at,NULL',
+            'email' => 'required|email|max:255|unique:teachers,email,NULL,id,deleted_at,NULL|unique:users,email,NULL,id,deleted_at,NULL',
             'ho_ten' => 'required|string|max:255',
             'chuyen_mon' => 'required|string|max:255',
         ], [
@@ -65,22 +74,33 @@ class TeacherController extends Controller
         // Tạo mật khẩu 6 số ngẫu nhiên
         $password = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // Tạo user trước
-        $user = User::create([
-            'username' => $request->msgv,
-            'email' => $request->email,
-            'password' => $password, // Sẽ được hash tự động bởi cast 'hashed'
-            'role' => 'teacher',
-            'status' => true,
-        ]);
+        try {
+            [$user, $teacher] = DB::transaction(function () use ($request, $password) {
+                // Create teacher + user atomically (no half-created accounts)
+                $user = User::create([
+                    'username' => $request->msgv,
+                    'email' => $request->email,
+                    'password' => $password, // hash via cast 'hashed'
+                    'role' => 'teacher',
+                    'status' => true,
+                ]);
 
-        // Tạo teacher sau khi user đã được tạo thành công
-        $teacher = Teacher::create([
-            'msgv' => $request->msgv,
-            'email' => $request->email,
-            'ho_ten' => $request->ho_ten,
-            'chuyen_mon' => $request->chuyen_mon,
-        ]);
+                $teacher = Teacher::create([
+                    'msgv' => $request->msgv,
+                    'email' => $request->email,
+                    'ho_ten' => $request->ho_ten,
+                    'chuyen_mon' => $request->chuyen_mon,
+                ]);
+
+                return [$user, $teacher];
+            });
+        } catch (QueryException $e) {
+            // In case DB unique constraints trigger, return a clear message
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã số giáo viên hoặc email đã tồn tại trong hệ thống.',
+            ], 422);
+        }
 
         // Gửi email chào mừng với thông tin đăng nhập
         try {
@@ -155,11 +175,41 @@ class TeacherController extends Controller
     public function destroy($id)
     {
         $teacher = Teacher::findOrFail($id);
-        $teacher->delete();
+        // Also delete linked user (username = msgv)
+        DB::transaction(function () use ($teacher) {
+            User::where('username', $teacher->msgv)->delete();
+            $teacher->delete();
+        });
 
         return response()->json([
             'success' => true,
             'message' => 'Xóa giáo viên thành công!'
+        ]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('selected_ids', []);
+        if (!is_array($ids) || count($ids) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng chọn ít nhất một giáo viên để xóa.'
+            ], 422);
+        }
+
+        $teachers = Teacher::whereIn('id', $ids)->get(['id', 'msgv']);
+
+        DB::transaction(function () use ($teachers) {
+            $usernames = $teachers->pluck('msgv')->filter()->values()->all();
+            if (count($usernames)) {
+                User::whereIn('username', $usernames)->delete();
+            }
+            Teacher::whereIn('id', $teachers->pluck('id')->all())->delete();
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa ' . $teachers->count() . ' giáo viên.'
         ]);
     }
 }

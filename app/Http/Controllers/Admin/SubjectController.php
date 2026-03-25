@@ -16,7 +16,7 @@ class SubjectController extends Controller
 
     public function getData(Request $request)
     {
-        $query = Subject::select('id', 'ma_mon_hoc', 'ten_mon_hoc', 'created_at', 'updated_at');
+        $query = Subject::select('id', 'ma_mon_hoc', 'ten_mon_hoc', 'so_tin_chi', 'created_at', 'updated_at');
 
         return DataTables::of($query)
             ->addColumn('check', function ($subject) {
@@ -41,13 +41,15 @@ class SubjectController extends Controller
         $request->validate([
             'ma_mon_hoc' => 'required|string|max:50|unique:subjects,ma_mon_hoc',
             'ten_mon_hoc' => 'required|string|max:255',
+            'so_tin_chi' => 'required|integer|min:0|max:30',
         ], [
             'ma_mon_hoc.required' => 'Vui lòng nhập mã môn học.',
             'ma_mon_hoc.unique' => 'Mã môn học đã tồn tại trong hệ thống.',
             'ten_mon_hoc.required' => 'Vui lòng nhập tên môn học.',
+            'so_tin_chi.required' => 'Vui lòng nhập số tín chỉ.',
         ]);
 
-        $subject = Subject::create($request->all());
+        $subject = Subject::create($request->only(['ma_mon_hoc', 'ten_mon_hoc', 'so_tin_chi']));
 
         return response()->json([
             'success' => true,
@@ -67,10 +69,11 @@ class SubjectController extends Controller
         $request->validate([
             'ma_mon_hoc' => 'required|string|max:50|unique:subjects,ma_mon_hoc,' . $id,
             'ten_mon_hoc' => 'required|string|max:255',
+            'so_tin_chi' => 'required|integer|min:0|max:30',
         ]);
 
         $subject = Subject::findOrFail($id);
-        $subject->update($request->all());
+        $subject->update($request->only(['ma_mon_hoc', 'ten_mon_hoc', 'so_tin_chi']));
 
         return response()->json([
             'success' => true,

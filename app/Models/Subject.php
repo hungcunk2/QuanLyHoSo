@@ -20,5 +20,6 @@ class Subject extends Model
     protected $fillable = [
         'ma_mon_hoc',
         'ten_mon_hoc',
+        'so_tin_chi',
     ];
 }

@@ -55,8 +55,7 @@ class SubjectRegistration extends Model
     public static function statusLabels(): array
     {
         return [
-            'pending' => 'Chờ duyệt',
-            'approved' => 'Đã duyệt',
+            'approved' => 'Đã đăng ký',
             'cancelled' => 'Đã hủy',
         ];
     }

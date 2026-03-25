@@ -60,6 +60,19 @@ class SubjectRegistrationController extends Controller
                 }
                 return $parts ? implode('; ', $parts) : '—';
             })
+            ->addColumn('offering_status', function ($row) {
+                $today = Carbon::today();
+                if ($row->ngay_bat_dau_hoc && $row->ngay_bat_dau_hoc->lte($today)) {
+                    return '<span class="badge bg-success">Đang học</span>';
+                }
+                if (
+                    $row->ngay_mo_dang_ky && $row->ngay_ket_thuc_dang_ky &&
+                    $row->ngay_mo_dang_ky->lte($today) && $row->ngay_ket_thuc_dang_ky->gte($today)
+                ) {
+                    return '<span class="badge bg-warning text-dark">Đang chờ sinh viên đăng kí</span>';
+                }
+                return '<span class="badge bg-light text-dark">—</span>';
+            })
             ->addColumn('action', function ($row) {
                 $daBatDau = $row->ngay_bat_dau_hoc && $row->ngay_bat_dau_hoc->lte(Carbon::today());
                 if ($daBatDau) {
@@ -67,7 +80,7 @@ class SubjectRegistrationController extends Controller
                 }
                 return '<button type="button" class="btn btn-sm btn-primary edit-offering-btn" data-id="' . $row->id . '" title="Chỉnh sửa (chỉ khi chưa bắt đầu học)"><i class="fas fa-edit"></i></button>';
             })
-            ->rawColumns(['action'])
+            ->rawColumns(['offering_status', 'action'])
             ->make(true);
     }
 }

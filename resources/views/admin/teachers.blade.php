@@ -193,6 +193,25 @@
 
 @push('scripts')
 <script>
+    function selectAllTable(checkbox) {
+        const isChecked = checkbox.checked;
+        // Only select checkboxes on current page (DataTables redraws)
+        $('#teachersTable').find('.row-checkbox').prop('checked', isChecked);
+        updateQuickAction();
+    }
+
+    function updateQuickAction() {
+        const checkedCount = $('#teachersTable').find('.row-checkbox:checked').length;
+        if (checkedCount > 0) {
+            $('#quick-action-type').prop('disabled', false);
+            $('#quick-action-apply').prop('disabled', $('#quick-action-type').val() === '');
+        } else {
+            $('#quick-action-type').prop('disabled', true).val('');
+            $('#quick-action-apply').prop('disabled', true);
+            $('#select-all-table').prop('checked', false);
+        }
+    }
+
     $(document).ready(function() {
         var table = $('#teachersTable').DataTable({
             processing: true,
@@ -266,6 +285,55 @@
         
         $('.dt-search').on('keyup', function() {
             table.search(this.value).draw();
+        });
+
+        // Reset select-all on redraw
+        table.on('draw', function() {
+            $('#select-all-table').prop('checked', false);
+            updateQuickAction();
+        });
+
+        // Row checkbox change
+        $(document).on('change', '#teachersTable .row-checkbox', function() {
+            const total = $('#teachersTable').find('.row-checkbox').length;
+            const checked = $('#teachersTable').find('.row-checkbox:checked').length;
+            $('#select-all-table').prop('checked', total > 0 && total === checked);
+            updateQuickAction();
+        });
+
+        // Quick action type change
+        $('#quick-action-type').on('change', function() {
+            updateQuickAction();
+        });
+
+        // Apply quick action (bulk delete)
+        $('#quick-action-form').on('submit', function(e) {
+            e.preventDefault();
+        });
+        $('#quick-action-apply').on('click', function(e) {
+            e.preventDefault();
+            const action = $('#quick-action-type').val();
+            const ids = $('#teachersTable').find('.row-checkbox:checked').map(function() { return $(this).val(); }).get();
+            if (!action || ids.length === 0) return;
+            if (action === 'delete') {
+                if (!confirm('Bạn có chắc muốn xóa ' + ids.length + ' giáo viên đã chọn?')) return;
+                $.ajax({
+                    url: '{{ route("admin.teachers.bulk-delete") }}',
+                    type: 'POST',
+                    data: { selected_ids: ids },
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    success: function(res) {
+                        table.ajax.reload();
+                        $('#quick-action-type').val('');
+                        updateQuickAction();
+                        alert(res.message || 'Đã xóa thành công!');
+                    },
+                    error: function(xhr) {
+                        const msg = xhr.responseJSON?.message || 'Không thể xóa hàng loạt!';
+                        alert(msg);
+                    }
+                });
+            }
         });
 
         // Reset create form when modal is closed

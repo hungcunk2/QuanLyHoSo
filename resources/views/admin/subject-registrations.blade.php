@@ -77,6 +77,7 @@
                         <th>Môn học</th>
                         <th>Lớp</th>
                         <th>Giáo viên</th>
+                        <th>Trạng thái</th>
                         <th>Thời gian học</th>
                         <th>Lịch học</th>
                         <th>Hành động</th>
@@ -390,6 +391,12 @@
                     name: 'teacher_info',
                     orderable: false,
                     searchable: true
+                },
+                {
+                    data: 'offering_status',
+                    name: 'offering_status',
+                    orderable: false,
+                    searchable: false
                 },
                 {
                     data: 'date_range',
