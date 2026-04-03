@@ -8,6 +8,7 @@ use App\Models\Lop;
 use App\Models\SubjectRegistration;
 use App\Models\Student;
 use App\Models\User;
+use App\Support\OfferingWeekCalendar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -109,11 +110,32 @@ class DashboardController extends Controller
     public function schedule(Request $request)
     {
         $user = Auth::user();
+        $student = Student::where('email', $user->email)->first();
 
         $dateParam = $request->query('date');
         $currentDate = $dateParam ? Carbon::parse($dateParam) : Carbon::now();
 
-        return view('student.schedule', compact('user', 'currentDate'));
+        $offerings = collect();
+        if ($student) {
+            $offeringIds = SubjectRegistration::query()
+                ->where('student_id', $student->id)
+                ->where('status', '!=', 'cancelled')
+                ->whereNotNull('course_offering_id')
+                ->pluck('course_offering_id')
+                ->unique()
+                ->values();
+
+            if ($offeringIds->isNotEmpty()) {
+                $offerings = CourseOffering::query()
+                    ->whereIn('id', $offeringIds)
+                    ->with(['subject', 'classRoom', 'teacher', 'schedules'])
+                    ->get();
+            }
+        }
+
+        $scheduleGrid = OfferingWeekCalendar::buildGrid($offerings, $currentDate->copy());
+
+        return view('student.schedule', compact('user', 'currentDate', 'scheduleGrid'));
     }
 
     public function results()

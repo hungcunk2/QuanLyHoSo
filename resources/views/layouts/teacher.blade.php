@@ -51,9 +51,9 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
+                            <a href="{{ route('teacher.my-classes') }}" class="nav-link">
                                 <i class="fas fa-school"></i>
-                                <span>Lớp Học Của Tôi</span>
+                                <span>Lớp học của tôi</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -63,15 +63,15 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
+                            <a href="{{ route('teacher.grading') }}" class="nav-link">
                                 <i class="fas fa-clipboard-list"></i>
-                                <span>Chấm Điểm</span>
+                                <span>Chấm điểm</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
+                            <a href="{{ route('teacher.schedule') }}" class="nav-link">
                                 <i class="fas fa-calendar-alt"></i>
-                                <span>Lịch Dạy</span>
+                                <span>Lịch dạy</span>
                             </a>
                         </li>
                     </ul>

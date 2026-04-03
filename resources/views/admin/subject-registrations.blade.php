@@ -52,8 +52,6 @@
     </div>
 </div>
 
-@include('admin.partials.lop-panel')
-
 <div class="card">
     <div class="card-body">
         <div class="row justify-content-between gy-3">
@@ -370,8 +368,6 @@
 </div>
 
 @endsection
-
-@include('admin.partials.lop-panel-scripts')
 
 @push('scripts')
 <script>

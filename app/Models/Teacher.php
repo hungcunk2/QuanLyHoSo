@@ -47,4 +47,12 @@ class Teacher extends Model
     {
         return $this->hasMany(ClassRoom::class, 'giao_vien_chu_nhiem_id');
     }
+
+    /**
+     * Các học phần (lớp học phần) giáo viên được phân công dạy.
+     */
+    public function courseOfferings(): HasMany
+    {
+        return $this->hasMany(CourseOffering::class, 'teacher_id');
+    }
 }
