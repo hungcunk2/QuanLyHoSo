@@ -44,6 +44,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/classes/{id}', [ClassRoomController::class, 'show'])->name('classes.show');
     Route::put('/classes/{id}', [ClassRoomController::class, 'update'])->name('classes.update');
     Route::delete('/classes/{id}', [ClassRoomController::class, 'destroy'])->name('classes.destroy');
+    Route::post('/classes/bulk-delete', [ClassRoomController::class, 'bulkDelete'])->name('classes.bulk-delete');
     
     Route::get('/subjects', [SubjectController::class, 'index'])->name('subjects');
     Route::get('/subjects/data', [SubjectController::class, 'getData'])->name('subjects.data');

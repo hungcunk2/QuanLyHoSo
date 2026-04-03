@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Quản lý lớp học')
+@section('title', 'Quản lý phòng học')
 @section('page-title', '')
 
 @section('content')
@@ -10,9 +10,9 @@
             <div class="card card-block card-stretch">
                 <div class="card-body p-0">
                     <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
-                        <h5 class="fw-bold">Quản lý lớp học</h5>
+                        <h5 class="fw-bold">Quản lý phòng học</h5>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createClassModal">
-                            <i class="fas fa-plus"></i> Tạo lớp học mới
+                            <i class="fas fa-plus"></i> Tạo phòng học mới
                         </button>
                     </div>
                 </div>
@@ -56,10 +56,8 @@
                         <th width="50">
                             <input type="checkbox" id="select-all-table" class="form-check-input" onclick="selectAllTable(this)">
                         </th>
-                        <th>Mã lớp</th>
-                        <th>Tên lớp</th>
-                        <th>Giáo viên chủ nhiệm</th>
-                        <th>Môn học</th>
+                        <th>Mã phòng</th>
+                        <th>Tên phòng</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -75,36 +73,18 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createClassModalLabel">Tạo lớp học mới</h5>
+                <h5 class="modal-title" id="createClassModalLabel">Tạo phòng học mới</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="createClassForm">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="create_ma_lop" class="form-label">Mã lớp <span class="text-danger">*</span></label>
+                        <label for="create_ma_lop" class="form-label">Mã phòng <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="create_ma_lop" name="ma_lop" required>
                     </div>
                     <div class="mb-3">
-                        <label for="create_ten_lop" class="form-label">Tên lớp <span class="text-danger">*</span></label>
+                        <label for="create_ten_lop" class="form-label">Tên phòng <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="create_ten_lop" name="ten_lop" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="create_giao_vien_chu_nhiem_id" class="form-label">Giáo viên chủ nhiệm</label>
-                        <select class="form-select" id="create_giao_vien_chu_nhiem_id" name="giao_vien_chu_nhiem_id">
-                            <option value="">-- Chọn giáo viên --</option>
-                            @foreach(\App\Models\Teacher::all() as $teacher)
-                                <option value="{{ $teacher->id }}">{{ $teacher->ho_ten }} ({{ $teacher->msgv }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="create_subject_id" class="form-label">Môn học</label>
-                        <select class="form-select" id="create_subject_id" name="subject_id">
-                            <option value="">-- Chọn môn học --</option>
-                            @foreach(\App\Models\Subject::all() as $subject)
-                                <option value="{{ $subject->id }}">{{ $subject->ten_mon_hoc }} ({{ $subject->ma_mon_hoc }})</option>
-                            @endforeach
-                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -121,37 +101,19 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="editClassModalLabel">Sửa thông tin lớp học</h5>
+                <h5 class="modal-title" id="editClassModalLabel">Sửa thông tin phòng học</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editClassForm">
                 <div class="modal-body">
                     <input type="hidden" id="edit_class_id" name="id">
                     <div class="mb-3">
-                        <label for="edit_ma_lop" class="form-label">Mã lớp <span class="text-danger">*</span></label>
+                        <label for="edit_ma_lop" class="form-label">Mã phòng <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="edit_ma_lop" name="ma_lop" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit_ten_lop" class="form-label">Tên lớp <span class="text-danger">*</span></label>
+                        <label for="edit_ten_lop" class="form-label">Tên phòng <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="edit_ten_lop" name="ten_lop" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_giao_vien_chu_nhiem_id" class="form-label">Giáo viên chủ nhiệm</label>
-                        <select class="form-select" id="edit_giao_vien_chu_nhiem_id" name="giao_vien_chu_nhiem_id">
-                            <option value="">-- Chọn giáo viên --</option>
-                            @foreach(\App\Models\Teacher::all() as $teacher)
-                                <option value="{{ $teacher->id }}">{{ $teacher->ho_ten }} ({{ $teacher->msgv }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="edit_subject_id" class="form-label">Môn học</label>
-                        <select class="form-select" id="edit_subject_id" name="subject_id">
-                            <option value="">-- Chọn môn học --</option>
-                            @foreach(\App\Models\Subject::all() as $subject)
-                                <option value="{{ $subject->id }}">{{ $subject->ten_mon_hoc }} ({{ $subject->ma_mon_hoc }})</option>
-                            @endforeach
-                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -172,7 +134,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Bạn có chắc chắn muốn xóa lớp học này không?</p>
+                <p>Bạn có chắc chắn muốn xóa phòng học này không?</p>
                 <p class="text-danger"><strong>Hành động này không thể hoàn tác!</strong></p>
             </div>
             <div class="modal-footer">
@@ -186,6 +148,24 @@
 
 @push('scripts')
 <script>
+    function selectAllTable(checkbox) {
+        const isChecked = checkbox.checked;
+        $('#classesTable').find('.row-checkbox').prop('checked', isChecked);
+        updateQuickAction();
+    }
+
+    function updateQuickAction() {
+        const checkedCount = $('#classesTable').find('.row-checkbox:checked').length;
+        if (checkedCount > 0) {
+            $('#quick-action-type').prop('disabled', false);
+            $('#quick-action-apply').prop('disabled', $('#quick-action-type').val() === '');
+        } else {
+            $('#quick-action-type').prop('disabled', true).val('');
+            $('#quick-action-apply').prop('disabled', true);
+            $('#select-all-table').prop('checked', false);
+        }
+    }
+
     $(document).ready(function() {
         var table = $('#classesTable').DataTable({
             processing: true,
@@ -212,16 +192,6 @@
                 {
                     data: 'ten_lop',
                     name: 'ten_lop'
-                },
-                {
-                    data: 'giao_vien_chu_nhiem',
-                    name: 'giao_vien_chu_nhiem',
-                    orderable: false
-                },
-                {
-                    data: 'mon_hoc',
-                    name: 'mon_hoc',
-                    orderable: false
                 },
                 {
                     data: 'action',
@@ -255,6 +225,51 @@
             table.search(this.value).draw();
         });
 
+        table.on('draw', function() {
+            $('#select-all-table').prop('checked', false);
+            updateQuickAction();
+        });
+
+        $(document).on('change', '#classesTable .row-checkbox', function() {
+            const total = $('#classesTable').find('.row-checkbox').length;
+            const checked = $('#classesTable').find('.row-checkbox:checked').length;
+            $('#select-all-table').prop('checked', total > 0 && total === checked);
+            updateQuickAction();
+        });
+
+        $('#quick-action-type').on('change', function() {
+            updateQuickAction();
+        });
+
+        $('#quick-action-form').on('submit', function(e) {
+            e.preventDefault();
+        });
+        $('#quick-action-apply').on('click', function(e) {
+            e.preventDefault();
+            const action = $('#quick-action-type').val();
+            const ids = $('#classesTable').find('.row-checkbox:checked').map(function() { return $(this).val(); }).get();
+            if (!action || ids.length === 0) return;
+            if (action === 'delete') {
+                if (!confirm('Bạn có chắc muốn xóa ' + ids.length + ' phòng học đã chọn?')) return;
+                $.ajax({
+                    url: '{{ route("admin.classes.bulk-delete") }}',
+                    type: 'POST',
+                    data: { selected_ids: ids },
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    success: function(res) {
+                        table.ajax.reload();
+                        $('#quick-action-type').val('');
+                        updateQuickAction();
+                        alert(res.message || 'Đã xóa thành công!');
+                    },
+                    error: function(xhr) {
+                        const msg = xhr.responseJSON?.message || 'Không thể xóa hàng loạt!';
+                        alert(msg);
+                    }
+                });
+            }
+        });
+
         // Reset create form when modal is closed
         $('#createClassModal').on('hidden.bs.modal', function() {
             $('#createClassForm')[0].reset();
@@ -276,21 +291,19 @@
                     var createModal = bootstrap.Modal.getInstance(document.getElementById('createClassModal'));
                     createModal.hide();
                     table.ajax.reload();
-                    alert('Tạo lớp học mới thành công!');
+                    alert('Tạo phòng học mới thành công!');
                 },
                 error: function(xhr) {
                     var errors = xhr.responseJSON?.errors || {};
                     var errorMsg = '';
                     
                     if (Object.keys(errors).length === 0) {
-                        errorMsg = xhr.responseJSON?.message || 'Có lỗi xảy ra khi tạo lớp học mới!';
+                        errorMsg = xhr.responseJSON?.message || 'Có lỗi xảy ra khi tạo phòng học mới!';
                     } else {
                         errorMsg = 'Vui lòng kiểm tra lại thông tin:\n\n';
                         for (var field in errors) {
-                            var fieldName = field === 'ma_lop' ? 'Mã lớp' : 
-                                          field === 'ten_lop' ? 'Tên lớp' : 
-                                          field === 'giao_vien_chu_nhiem_id' ? 'Giáo viên chủ nhiệm' : 
-                                          field === 'subject_id' ? 'Môn học' : field;
+                            var fieldName = field === 'ma_lop' ? 'Mã phòng' :
+                                          field === 'ten_lop' ? 'Tên phòng' : field;
                             errorMsg += '• ' + fieldName + ': ' + errors[field][0] + '\n';
                         }
                     }
@@ -310,14 +323,12 @@
                     $('#edit_class_id').val(response.id);
                     $('#edit_ma_lop').val(response.ma_lop);
                     $('#edit_ten_lop').val(response.ten_lop);
-                    $('#edit_giao_vien_chu_nhiem_id').val(response.giao_vien_chu_nhiem_id);
-                    $('#edit_subject_id').val(response.subject_id);
                     
                     var editModal = new bootstrap.Modal(document.getElementById('editClassModal'));
                     editModal.show();
                 },
                 error: function() {
-                    alert('Không thể tải thông tin lớp học!');
+                    alert('Không thể tải thông tin phòng học!');
                 }
             });
         });
@@ -377,7 +388,7 @@
                         deleteClassId = null;
                     },
                     error: function() {
-                        alert('Không thể xóa lớp học!');
+                        alert('Không thể xóa phòng học!');
                     }
                 });
             }

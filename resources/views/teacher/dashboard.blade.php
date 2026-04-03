@@ -29,7 +29,7 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="mb-0">Lớp Học</h6>
-                            <p class="text-muted mb-0">Quản lý lớp học</p>
+                            <p class="text-muted mb-0">Quản lý phòng học</p>
                         </div>
                     </div>
                 </div>

@@ -80,7 +80,7 @@ class CourseOfferingController extends Controller
             'ngay_thi_thuc_hanh_buoi_thu.*' => 'nullable|integer|min:1',
         ], [
             'ten_hoc_phan.required' => 'Vui lòng nhập tên học phần.',
-            'class_room_id.required' => 'Vui lòng chọn lớp học.',
+            'class_room_id.required' => 'Vui lòng chọn phòng học.',
             'subject_id.required' => 'Vui lòng chọn môn học.',
             'teacher_id.required' => 'Vui lòng chọn giáo viên phụ trách.',
             'si_so_lop.required' => 'Vui lòng nhập sĩ số lớp.',
@@ -171,7 +171,7 @@ class CourseOfferingController extends Controller
             'ngay_thi_thuc_hanh_buoi_thu.*' => 'nullable|integer|min:1',
         ], [
             'ten_hoc_phan.required' => 'Vui lòng nhập tên học phần.',
-            'class_room_id.required' => 'Vui lòng chọn lớp học.',
+            'class_room_id.required' => 'Vui lòng chọn phòng học.',
             'subject_id.required' => 'Vui lòng chọn môn học.',
             'teacher_id.required' => 'Vui lòng chọn giáo viên phụ trách.',
             'si_so_lop.required' => 'Vui lòng nhập sĩ số lớp.',

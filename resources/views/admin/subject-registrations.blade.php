@@ -108,7 +108,7 @@
                             <input type="text" class="form-control" id="ten_hoc_phan" name="ten_hoc_phan" required placeholder="VD: Toán cao cấp 1 - HK1 2024">
                         </div>
                         <div class="col-md-6">
-                            <label for="class_room_id" class="form-label">Lớp học <span class="text-danger">*</span></label>
+                            <label for="class_room_id" class="form-label">Phòng học <span class="text-danger">*</span></label>
                             <select class="form-select" id="class_room_id" name="class_room_id" required>
                                 <option value="">-- Chọn lớp --</option>
                                 @foreach($classes ?? [] as $c)

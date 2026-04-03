@@ -59,7 +59,7 @@
                         <th>Mã học sinh</th>
                         <th>Họ và tên</th>
                         <th>Email</th>
-                        <th>Lớp</th>
+                        <th>Phòng học</th>
                         <th>Số điện thoại</th>
                         <th>Ngày sinh</th>
                         <th>Hành động</th>
@@ -126,9 +126,9 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="create_lop" class="form-label">Lớp <span class="text-danger">*</span></label>
+                            <label for="create_lop" class="form-label">Phòng học <span class="text-danger">*</span></label>
                             <select class="form-select" id="create_lop" name="lop" required>
-                                <option value="">-- Chọn lớp --</option>
+                                <option value="">-- Chọn phòng học --</option>
                                 @foreach($classes ?? [] as $c)
                                     <option value="{{ $c->ma_lop }}">{{ $c->ma_lop }} - {{ $c->ten_lop }}</option>
                                 @endforeach
@@ -263,9 +263,9 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="edit_lop" class="form-label">Lớp</label>
+                            <label for="edit_lop" class="form-label">Phòng học</label>
                             <select class="form-select" id="edit_lop" name="lop">
-                                <option value="">-- Chọn lớp --</option>
+                                <option value="">-- Chọn phòng học --</option>
                                 @foreach($classes ?? [] as $c)
                                     <option value="{{ $c->ma_lop }}">{{ $c->ma_lop }} - {{ $c->ten_lop }}</option>
                                 @endforeach

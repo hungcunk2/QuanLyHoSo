@@ -103,7 +103,7 @@
                             <div class="col-md-6 col-lg-4"><strong>Trạng thái:</strong> {{ $v('trang_thai') }}</div>
                             <div class="col-md-6 col-lg-4"><strong>Mã hồ sơ:</strong> {{ $v('ma_ho_so') }}</div>
                             <div class="col-md-6 col-lg-4"><strong>Ngày vào trường:</strong> {{ $v('ngay_vao_truong') }}</div>
-                            <div class="col-md-6 col-lg-4"><strong>Lớp học:</strong> {{ $v('lop') }}</div>
+                            <div class="col-md-6 col-lg-4"><strong>Phòng học:</strong> {{ $v('lop') }}</div>
                             <div class="col-md-6 col-lg-4"><strong>Cơ sở:</strong> {{ $v('co_so') }}</div>
                             <div class="col-md-6 col-lg-4"><strong>Bậc đào tạo:</strong> {{ $v('bac_dao_tao') }}</div>
                             <div class="col-md-6 col-lg-4"><strong>Loại hình đào tạo:</strong> {{ $v('loai_hinh_dao_tao') }}</div>
