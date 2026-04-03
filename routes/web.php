@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ClassRoomController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\SubjectRegistrationController;
 use App\Http\Controllers\Admin\CourseOfferingController;
+use App\Http\Controllers\Admin\LopController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 
@@ -56,6 +57,11 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     Route::get('/subject-registrations', [SubjectRegistrationController::class, 'index'])->name('subject-registrations');
     Route::get('/subject-registrations/data', [SubjectRegistrationController::class, 'getData'])->name('subject-registrations.data');
+    Route::get('/lops/data', [LopController::class, 'getData'])->name('lops.data');
+    Route::post('/lops', [LopController::class, 'store'])->name('lops.store');
+    Route::get('/lops/{id}', [LopController::class, 'show'])->name('lops.show');
+    Route::put('/lops/{id}', [LopController::class, 'update'])->name('lops.update');
+    Route::delete('/lops/{id}', [LopController::class, 'destroy'])->name('lops.destroy');
     Route::get('/course-offerings/{id}', [CourseOfferingController::class, 'show'])->name('course-offerings.show');
     Route::post('/course-offerings', [CourseOfferingController::class, 'store'])->name('course-offerings.store');
     Route::put('/course-offerings/{id}', [CourseOfferingController::class, 'update'])->name('course-offerings.update');

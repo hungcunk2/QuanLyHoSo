@@ -133,25 +133,20 @@ class DashboardController extends Controller
 
         $today = Carbon::today();
 
-        $baseOfferingsQuery = CourseOffering::with(['subject', 'classRoom', 'teacher', 'schedules'])
+        $offerings = CourseOffering::with(['subject', 'classRoom', 'teacher', 'schedules'])
             ->withCount([
                 'subjectRegistrations as registrations_count' => function ($q) {
                     $q->where('status', '!=', 'cancelled');
                 }
             ])
-            ->whereDate('ngay_mo_dang_ky', '<=', $today)
-            ->whereDate('ngay_ket_thuc_hoc', '>=', $today)
-            ->orderByDesc('created_at');
+            ->orderByDesc('created_at')
+            ->get();
 
-        // Nếu xác định được lớp của sinh viên, ưu tiên hiển thị học phần của lớp đó.
-        // Nếu lớp đó chưa có học phần phù hợp, fallback hiển thị tất cả.
-        if ($classRoom) {
-            $offerings = (clone $baseOfferingsQuery)->where('class_room_id', $classRoom->id)->get();
-            if ($offerings->isEmpty()) {
-                $offerings = (clone $baseOfferingsQuery)->get();
-            }
-        } else {
-            $offerings = (clone $baseOfferingsQuery)->get();
+        // Ưu tiên học phần của phòng trùng hồ sơ sinh viên (nếu có).
+        if ($classRoom && $offerings->isNotEmpty()) {
+            $offerings = $offerings
+                ->sortByDesc(fn (CourseOffering $o) => (int) ((int) $o->class_room_id === (int) $classRoom->id))
+                ->values();
         }
 
         $myRegs = collect();

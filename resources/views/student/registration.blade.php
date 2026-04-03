@@ -24,7 +24,8 @@
         </div>
         <div class="card-body">
             <p class="text-muted mb-0">
-                Danh sách dưới đây là các học phần có lớp đang trong giai đoạn <strong>từ khi mở đăng ký đến trước khi kết thúc học</strong>.
+                Danh sách hiển thị <strong>tất cả học phần</strong> trong hệ thống. Việc <strong>đăng ký</strong> vẫn chỉ được khi trong khoảng thời gian mở đăng ký và lớp còn chỗ (theo quy định từng học phần).
+                Học phần trùng phòng/lớp trên hồ sơ được xếp trước trong từng môn.
             </p>
         </div>
     </div>
@@ -159,7 +160,24 @@
                                                                     <button type="submit" class="btn btn-outline-danger btn-sm w-100">Hủy đăng ký</button>
                                                                 </form>
                                                             @else
-                                                               
+                                                                @if($student)
+                                                                    @php
+                                                                        $coTheDangKy = $dangMoDangKy && $conLai > 0;
+                                                                    @endphp
+                                                                    <form method="POST" action="{{ route('student.registration.register', $o->id) }}" class="mb-0">
+                                                                        @csrf
+                                                                        <button type="submit" class="btn btn-primary btn-sm w-100" @if(!$coTheDangKy) disabled @endif>
+                                                                            Đăng ký
+                                                                        </button>
+                                                                    </form>
+                                                                    @if(!$dangMoDangKy)
+                                                                        <div class="small text-muted mt-1">Chưa mở / đã hết thời hạn đăng ký theo lịch học phần.</div>
+                                                                    @elseif($conLai <= 0)
+                                                                        <div class="small text-danger mt-1">Lớp đã đủ sĩ số.</div>
+                                                                    @endif
+                                                                @else
+                                                                    <span class="small text-muted">Cần hồ sơ học sinh trùng tài khoản.</span>
+                                                                @endif
                                                             @endif
                                                         </td>
                                                     </tr>
