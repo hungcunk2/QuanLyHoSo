@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CourseOffering;
 use App\Models\CourseOfferingSchedule;
-use App\Models\ClassRoom;
-use App\Models\Subject;
-use App\Models\Teacher;
+use App\Services\CourseOfferingScheduleConflictService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class CourseOfferingController extends Controller
 {
@@ -63,8 +63,8 @@ class CourseOfferingController extends Controller
             'teacher_id' => 'required|exists:teachers,id',
             'si_so_lop' => 'required|integer|min:1',
             'ngay_mo_dang_ky' => 'required|date',
-            'ngay_ket_thuc_dang_ky' => 'required|date|after_or_equal:ngay_mo_dang_ky',
-            'ngay_bat_dau_hoc' => 'required|date',
+            'ngay_ket_thuc_dang_ky' => 'required|date|after_or_equal:ngay_mo_dang_ky|before:ngay_bat_dau_hoc',
+            'ngay_bat_dau_hoc' => 'required|date|after:ngay_ket_thuc_dang_ky',
             'ngay_ket_thuc_hoc' => 'required|date|after_or_equal:ngay_bat_dau_hoc',
             'thu_ly_thuyet' => 'required|array|min:1',
             'thu_ly_thuyet.*' => 'required|integer|in:2,3,4,5,6,7,8',
@@ -87,8 +87,12 @@ class CourseOfferingController extends Controller
             'si_so_lop.min' => 'Sĩ số lớp phải lớn hơn 0.',
             'ngay_mo_dang_ky.required' => 'Vui lòng chọn ngày mở đăng ký.',
             'ngay_ket_thuc_dang_ky.required' => 'Vui lòng chọn ngày kết thúc đăng ký.',
+            'ngay_ket_thuc_dang_ky.after_or_equal' => 'Ngày kết thúc đăng ký phải bằng hoặc sau ngày mở đăng ký.',
+            'ngay_ket_thuc_dang_ky.before' => 'Ngày kết thúc đăng ký phải trước ngày bắt đầu học.',
             'ngay_bat_dau_hoc.required' => 'Vui lòng chọn ngày bắt đầu học.',
+            'ngay_bat_dau_hoc.after' => 'Ngày bắt đầu học phải sau ngày kết thúc đăng ký.',
             'ngay_ket_thuc_hoc.required' => 'Vui lòng chọn ngày kết thúc học.',
+            'ngay_ket_thuc_hoc.after_or_equal' => 'Ngày kết thúc học phải bằng hoặc sau ngày bắt đầu học.',
             'thu_ly_thuyet.required' => 'Vui lòng chọn ít nhất một buổi lý thuyết.',
             'tiet_ly_thuyet.required' => 'Vui lòng chọn tiết cho mỗi buổi lý thuyết.',
         ]);
@@ -99,6 +103,19 @@ class CourseOfferingController extends Controller
         $thuTh = $request->input('thu_thuc_hanh', []);
         $tietTh = $request->input('tiet_thuc_hanh', []);
         $thiTh = $request->input('ngay_thi_thuc_hanh_buoi_thu', []);
+
+        $slots = CourseOfferingScheduleConflictService::slotsFromRequestArrays($thuLt, $tietLt, $thuTh, $tietTh);
+        $conflict = CourseOfferingScheduleConflictService::findConflict(
+            $slots,
+            (int) $request->teacher_id,
+            (int) $request->class_room_id,
+            Carbon::parse($request->ngay_bat_dau_hoc),
+            Carbon::parse($request->ngay_ket_thuc_hoc),
+            null
+        );
+        if ($conflict !== null) {
+            throw ValidationException::withMessages(['schedule' => [$conflict]]);
+        }
 
         $data = $request->only([
             'ten_hoc_phan', 'class_room_id', 'subject_id', 'teacher_id', 'si_so_lop',
@@ -154,8 +171,8 @@ class CourseOfferingController extends Controller
             'teacher_id' => 'required|exists:teachers,id',
             'si_so_lop' => 'required|integer|min:1',
             'ngay_mo_dang_ky' => 'required|date',
-            'ngay_ket_thuc_dang_ky' => 'required|date|after_or_equal:ngay_mo_dang_ky',
-            'ngay_bat_dau_hoc' => 'required|date',
+            'ngay_ket_thuc_dang_ky' => 'required|date|after_or_equal:ngay_mo_dang_ky|before:ngay_bat_dau_hoc',
+            'ngay_bat_dau_hoc' => 'required|date|after:ngay_ket_thuc_dang_ky',
             'ngay_ket_thuc_hoc' => 'required|date|after_or_equal:ngay_bat_dau_hoc',
             'thu_ly_thuyet' => 'required|array|min:1',
             'thu_ly_thuyet.*' => 'required|integer|in:2,3,4,5,6,7,8',
@@ -175,6 +192,14 @@ class CourseOfferingController extends Controller
             'subject_id.required' => 'Vui lòng chọn môn học.',
             'teacher_id.required' => 'Vui lòng chọn giáo viên phụ trách.',
             'si_so_lop.required' => 'Vui lòng nhập sĩ số lớp.',
+            'ngay_mo_dang_ky.required' => 'Vui lòng chọn ngày mở đăng ký.',
+            'ngay_ket_thuc_dang_ky.required' => 'Vui lòng chọn ngày kết thúc đăng ký.',
+            'ngay_ket_thuc_dang_ky.after_or_equal' => 'Ngày kết thúc đăng ký phải bằng hoặc sau ngày mở đăng ký.',
+            'ngay_ket_thuc_dang_ky.before' => 'Ngày kết thúc đăng ký phải trước ngày bắt đầu học.',
+            'ngay_bat_dau_hoc.required' => 'Vui lòng chọn ngày bắt đầu học.',
+            'ngay_bat_dau_hoc.after' => 'Ngày bắt đầu học phải sau ngày kết thúc đăng ký.',
+            'ngay_ket_thuc_hoc.required' => 'Vui lòng chọn ngày kết thúc học.',
+            'ngay_ket_thuc_hoc.after_or_equal' => 'Ngày kết thúc học phải bằng hoặc sau ngày bắt đầu học.',
             'thu_ly_thuyet.required' => 'Vui lòng chọn ít nhất một buổi lý thuyết.',
             'tiet_ly_thuyet.required' => 'Vui lòng chọn tiết cho mỗi buổi lý thuyết.',
         ]);
@@ -185,6 +210,19 @@ class CourseOfferingController extends Controller
         $thuTh = $request->input('thu_thuc_hanh', []);
         $tietTh = $request->input('tiet_thuc_hanh', []);
         $thiTh = $request->input('ngay_thi_thuc_hanh_buoi_thu', []);
+
+        $slots = CourseOfferingScheduleConflictService::slotsFromRequestArrays($thuLt, $tietLt, $thuTh, $tietTh);
+        $conflict = CourseOfferingScheduleConflictService::findConflict(
+            $slots,
+            (int) $request->teacher_id,
+            (int) $request->class_room_id,
+            Carbon::parse($request->ngay_bat_dau_hoc),
+            Carbon::parse($request->ngay_ket_thuc_hoc),
+            (int) $id
+        );
+        if ($conflict !== null) {
+            throw ValidationException::withMessages(['schedule' => [$conflict]]);
+        }
 
         $data = $request->only([
             'ten_hoc_phan', 'class_room_id', 'subject_id', 'teacher_id', 'si_so_lop',
