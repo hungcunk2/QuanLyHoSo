@@ -8,6 +8,7 @@ use App\Models\ClassRoom;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -214,6 +215,48 @@ class StudentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Xóa học sinh thành công!'
+        ]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('selected_ids', []);
+        if (! is_array($ids) || count($ids) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng chọn ít nhất một học sinh để xóa.',
+            ], 422);
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (count($ids) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Danh sách học sinh không hợp lệ.',
+            ], 422);
+        }
+
+        $students = Student::whereIn('id', $ids)->get(['id', 'mssv']);
+        if ($students->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy học sinh để xóa.',
+            ], 422);
+        }
+
+        DB::transaction(function () use ($students) {
+            $usernames = $students->pluck('mssv')->filter()->values()->all();
+            if (count($usernames)) {
+                User::whereIn('username', $usernames)->where('role', 'student')->delete();
+            }
+            foreach ($students as $student) {
+                $student->delete();
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa '.$students->count().' học sinh.',
         ]);
     }
 }

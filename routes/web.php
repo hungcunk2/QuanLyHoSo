@@ -28,6 +28,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('/students/{id}/send-email', [StudentController::class, 'sendEmail'])->name('students.send-email');
     Route::put('/students/{id}', [StudentController::class, 'update'])->name('students.update');
     Route::delete('/students/{id}', [StudentController::class, 'destroy'])->name('students.destroy');
+    Route::post('/students/bulk-delete', [StudentController::class, 'bulkDelete'])->name('students.bulk-delete');
     
     Route::get('/teachers', [TeacherController::class, 'index'])->name('teachers');
     Route::get('/teachers/data', [TeacherController::class, 'getData'])->name('teachers.data');
