@@ -57,8 +57,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     Route::get('/subject-registrations', [SubjectRegistrationController::class, 'index'])->name('subject-registrations');
     Route::get('/subject-registrations/data', [SubjectRegistrationController::class, 'getData'])->name('subject-registrations.data');
+    Route::get('/lops', [LopController::class, 'index'])->name('lops');
     Route::get('/lops/data', [LopController::class, 'getData'])->name('lops.data');
     Route::post('/lops', [LopController::class, 'store'])->name('lops.store');
+    Route::post('/lops/bulk-delete', [LopController::class, 'bulkDelete'])->name('lops.bulk-delete');
     Route::get('/lops/{id}', [LopController::class, 'show'])->name('lops.show');
     Route::put('/lops/{id}', [LopController::class, 'update'])->name('lops.update');
     Route::delete('/lops/{id}', [LopController::class, 'destroy'])->name('lops.destroy');

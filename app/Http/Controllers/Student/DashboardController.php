@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\ClassRoom;
 use App\Models\CourseOffering;
+use App\Models\Lop;
 use App\Models\SubjectRegistration;
 use App\Models\Student;
 use App\Models\User;
@@ -47,7 +47,7 @@ class DashboardController extends Controller
             'trang_thai' => 'nullable|string|max:50',
             'ma_ho_so' => 'nullable|string|max:100',
             'ngay_vao_truong' => 'nullable|date',
-            'lop' => 'nullable|string|max:50',
+            'lop' => 'nullable|string|max:50|exists:lops,ma_lop',
             'co_so' => 'nullable|string|max:255',
             'bac_dao_tao' => 'nullable|string|max:100',
             'loai_hinh_dao_tao' => 'nullable|string|max:100',
@@ -126,9 +126,9 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $student = Student::where('email', $user->email)->first();
-        $classRoom = null;
+        $studentLop = null;
         if ($student && $student->lop) {
-            $classRoom = ClassRoom::where('ma_lop', $student->lop)->first();
+            $studentLop = Lop::where('ma_lop', $student->lop)->first();
         }
 
         $today = Carbon::today();
@@ -142,13 +142,6 @@ class DashboardController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        // Ưu tiên học phần của phòng trùng hồ sơ sinh viên (nếu có).
-        if ($classRoom && $offerings->isNotEmpty()) {
-            $offerings = $offerings
-                ->sortByDesc(fn (CourseOffering $o) => (int) ((int) $o->class_room_id === (int) $classRoom->id))
-                ->values();
-        }
-
         $myRegs = collect();
         if ($student) {
             $myRegs = SubjectRegistration::where('student_id', $student->id)
@@ -157,7 +150,7 @@ class DashboardController extends Controller
                 ->keyBy('course_offering_id');
         }
 
-        return view('student.registration', compact('user', 'student', 'classRoom', 'offerings', 'myRegs', 'today'));
+        return view('student.registration', compact('user', 'student', 'studentLop', 'offerings', 'myRegs', 'today'));
     }
 
     public function registerOffering(Request $request, $courseOfferingId)

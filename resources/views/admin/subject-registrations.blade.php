@@ -52,34 +52,7 @@
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-            <h5 class="fw-bold mb-0">Quản lý lớp</h5>
-            <div class="d-flex gap-2 align-items-center flex-wrap">
-                <div class="input-group input-group-search" style="max-width: 260px;">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control dt-search-lop" placeholder="Tìm mã / tên lớp..." aria-controls="lopsTable">
-                </div>
-                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#lopModal" id="btnOpenCreateLop">
-                    <i class="fas fa-plus"></i> Thêm lớp
-                </button>
-            </div>
-        </div>
-        <div class="table-responsive">
-            <table id="lopsTable" class="table table-striped border mb-0">
-                <thead>
-                    <tr>
-                        <th>Mã lớp</th>
-                        <th>Tên lớp</th>
-                        <th width="130">Hành động</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </div>
-</div>
+@include('admin.partials.lop-panel')
 
 <div class="card">
     <div class="card-body">
@@ -396,167 +369,13 @@
     </div>
 </div>
 
-<!-- Modal Lớp (tạo / sửa) -->
-<div class="modal fade" id="lopModal" tabindex="-1" aria-labelledby="lopModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="lopModalLabel">Thêm lớp</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-            </div>
-            <form id="lopForm">
-                <input type="hidden" id="lop_id" name="lop_id" value="">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="lop_ma_lop" class="form-label">Mã lớp <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="lop_ma_lop" name="ma_lop" required maxlength="50" placeholder="VD: D22-TH01">
-                    </div>
-                    <div class="mb-3">
-                        <label for="lop_ten_lop" class="form-label">Tên lớp <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="lop_ten_lop" name="ten_lop" required maxlength="255" placeholder="VD: Lớp Tin học K22">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-                    <button type="submit" class="btn btn-primary" id="lopSubmitBtn">Lưu</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="deleteLopModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Xác nhận xóa lớp</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-0">Xóa lớp <strong id="deleteLopMa"></strong>?</p>
-                <p class="text-danger small mt-2 mb-0">Hành động không hoàn tác.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteLopBtn">Xóa</button>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
+
+@include('admin.partials.lop-panel-scripts')
 
 @push('scripts')
 <script>
     $(document).ready(function() {
-        var lopsTable = $('#lopsTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: '{{ route("admin.lops.data") }}',
-                type: 'GET',
-                data: function(d) {
-                    d.search = $('.dt-search-lop').val();
-                }
-            },
-            columns: [
-                { data: 'ma_lop', name: 'ma_lop' },
-                { data: 'ten_lop', name: 'ten_lop' },
-                { data: 'action', name: 'action', orderable: false, searchable: false }
-            ],
-            order: [[0, 'asc']],
-            pageLength: 10,
-            language: {
-                processing: "Đang xử lý...",
-                lengthMenu: "Hiển thị _MENU_ bản ghi",
-                info: "Hiển thị _START_ đến _END_ trong tổng số _TOTAL_ bản ghi",
-                infoEmpty: "Chưa có lớp nào.",
-                paginate: { first: "Đầu", last: "Cuối", next: "Sau", previous: "Trước" },
-                zeroRecords: "Không tìm thấy kết quả"
-            },
-            dom: '<"row align-items-center"><"table-responsive my-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" l i><"col-md-6" p>><"clear">'
-        });
-        $('.dt-search-lop').on('keyup', function() {
-            lopsTable.search(this.value).draw();
-        });
-
-        $('#btnOpenCreateLop').on('click', function() {
-            $('#lopForm')[0].reset();
-            $('#lop_id').val('');
-            $('#lopModalLabel').text('Thêm lớp');
-            $('#lopSubmitBtn').text('Thêm');
-            $('#lop_ma_lop').prop('readonly', false);
-        });
-
-        $('#lopForm').on('submit', function(e) {
-            e.preventDefault();
-            var id = $('#lop_id').val();
-            var url = id ? '{{ url("admin/lops") }}/' + id : '{{ route("admin.lops.store") }}';
-            var method = id ? 'PUT' : 'POST';
-            $.ajax({
-                url: url,
-                type: method,
-                data: $(this).serialize(),
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function(res) {
-                    bootstrap.Modal.getInstance(document.getElementById('lopModal')).hide();
-                    lopsTable.ajax.reload(null, false);
-                    alert(res.message || 'Đã lưu.');
-                },
-                error: function(xhr) {
-                    var msg = xhr.responseJSON?.message || 'Có lỗi xảy ra.';
-                    var errors = xhr.responseJSON?.errors || {};
-                    if (Object.keys(errors).length) {
-                        msg = Object.values(errors).flat().join('\n');
-                    }
-                    alert(msg);
-                }
-            });
-        });
-
-        $(document).on('click', '.edit-lop-btn', function() {
-            var id = $(this).data('id');
-            $.ajax({
-                url: '{{ url("admin/lops") }}/' + id,
-                type: 'GET',
-                success: function(res) {
-                    $('#lop_id').val(res.id);
-                    $('#lop_ma_lop').val(res.ma_lop);
-                    $('#lop_ten_lop').val(res.ten_lop);
-                    $('#lopModalLabel').text('Sửa lớp');
-                    $('#lopSubmitBtn').text('Cập nhật');
-                    $('#lop_ma_lop').prop('readonly', false);
-                    new bootstrap.Modal(document.getElementById('lopModal')).show();
-                },
-                error: function() {
-                    alert('Không tải được dữ liệu lớp.');
-                }
-            });
-        });
-
-        var deleteLopId = null;
-        $(document).on('click', '.delete-lop-btn', function() {
-            deleteLopId = $(this).data('id');
-            $('#deleteLopMa').text($(this).data('ma') || '');
-            new bootstrap.Modal(document.getElementById('deleteLopModal')).show();
-        });
-        $('#confirmDeleteLopBtn').on('click', function() {
-            if (!deleteLopId) return;
-            $.ajax({
-                url: '{{ url("admin/lops") }}/' + deleteLopId,
-                type: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-                success: function(res) {
-                    bootstrap.Modal.getInstance(document.getElementById('deleteLopModal')).hide();
-                    deleteLopId = null;
-                    lopsTable.ajax.reload(null, false);
-                    alert(res.message || 'Đã xóa.');
-                },
-                error: function() {
-                    alert('Không xóa được lớp.');
-                }
-            });
-        });
-
         var table = $('#registrationsTable').DataTable({
             processing: true,
             serverSide: true,

@@ -17,16 +17,10 @@
             <h5 class="mb-0">Đăng Ký Học Phần</h5>
             <div class="small text-muted">
                 Hôm nay: {{ ($today ?? \Carbon\Carbon::today())->format('d/m/Y') }}
-                @if(!empty($classRoom))
-                    · Lớp: <strong>{{ $classRoom->ma_lop }}</strong>
+                @if(!empty($student) && !empty($student->lop))
+                    · Lớp: <strong>{{ $studentLop ? ($studentLop->ma_lop.' — '.$studentLop->ten_lop) : $student->lop }}</strong>
                 @endif
             </div>
-        </div>
-        <div class="card-body">
-            <p class="text-muted mb-0">
-                Danh sách hiển thị <strong>tất cả học phần</strong> trong hệ thống. Việc <strong>đăng ký</strong> vẫn chỉ được khi trong khoảng thời gian mở đăng ký và lớp còn chỗ (theo quy định từng học phần).
-                Học phần trùng phòng/lớp trên hồ sơ được xếp trước trong từng môn.
-            </p>
         </div>
     </div>
 

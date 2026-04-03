@@ -9,18 +9,26 @@ use Yajra\DataTables\Facades\DataTables;
 
 class LopController extends Controller
 {
+    public function index()
+    {
+        return view('admin.lops');
+    }
+
     public function getData(Request $request)
     {
         $query = Lop::query()->select('lops.id', 'lops.ma_lop', 'lops.ten_lop', 'lops.created_at');
 
         return DataTables::of($query)
-            ->addColumn('action', function (Lop $lop) {
-                return '<div class="d-inline-flex gap-2 align-items-center">'
-                    . '<button type="button" class="btn btn-sm btn-primary edit-lop-btn" data-id="' . $lop->id . '" title="Sửa"><i class="fas fa-edit"></i></button>'
-                    . '<button type="button" class="btn btn-sm btn-danger delete-lop-btn" data-id="' . $lop->id . '" data-ma="' . e($lop->ma_lop) . '" title="Xóa"><i class="fas fa-trash"></i></button>'
-                    . '</div>';
+            ->addColumn('check', function (Lop $lop) {
+                return '<input type="checkbox" class="form-check-input lop-row-checkbox" name="selected_ids[]" value="' . $lop->id . '">';
             })
-            ->rawColumns(['action'])
+            ->addColumn('action', function (Lop $lop) {
+                return '<button type="button" class="btn btn-sm btn-primary me-1 edit-lop-btn" data-id="' . $lop->id . '" title="Sửa">'
+                    . '<i class="fas fa-edit"></i></button>'
+                    . '<button type="button" class="btn btn-sm btn-danger delete-lop-btn" data-id="' . $lop->id . '" data-ma="' . e($lop->ma_lop) . '" title="Xóa">'
+                    . '<i class="fas fa-trash"></i></button>';
+            })
+            ->rawColumns(['check', 'action'])
             ->make(true);
     }
 
@@ -80,6 +88,32 @@ class LopController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Đã xóa lớp.',
+        ]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('selected_ids', []);
+        if (! is_array($ids) || count($ids) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng chọn ít nhất một lớp để xóa.',
+            ], 422);
+        }
+
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (count($ids) === 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Danh sách lớp không hợp lệ.',
+            ], 422);
+        }
+
+        $deleted = Lop::whereIn('id', $ids)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa ' . $deleted . ' lớp.',
         ]);
     }
 }

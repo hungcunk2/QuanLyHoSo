@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\StudentWelcomeMail;
-use App\Models\ClassRoom;
+use App\Models\Lop;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -16,8 +16,9 @@ class StudentController extends Controller
 {
     public function index()
     {
-        $classes = ClassRoom::orderBy('ma_lop')->get(['id', 'ma_lop', 'ten_lop']);
-        return view('admin.students', compact('classes'));
+        $lops = Lop::orderBy('ma_lop')->get(['id', 'ma_lop', 'ten_lop']);
+
+        return view('admin.students', compact('lops'));
     }
 
     public function getData(Request $request)
@@ -80,7 +81,7 @@ class StudentController extends Controller
             'mssv' => 'required|string|max:50|unique:students,mssv|unique:users,username',
             'email' => 'required|email|max:255|unique:students,email|unique:users,email',
             'ho_ten' => 'required|string|max:255',
-            'lop' => 'required|string|max:50',
+            'lop' => 'required|string|max:50|exists:lops,ma_lop',
         ], [
             'mssv.required' => 'Vui lòng nhập mã số học sinh.',
             'mssv.unique' => 'Mã số học sinh đã tồn tại trong hệ thống.',
@@ -88,7 +89,8 @@ class StudentController extends Controller
             'email.email' => 'Email không hợp lệ.',
             'email.unique' => 'Email đã được sử dụng bởi học sinh khác.',
             'ho_ten.required' => 'Vui lòng nhập họ và tên.',
-            'lop.required' => 'Vui lòng nhập lớp.',
+            'lop.required' => 'Vui lòng chọn lớp.',
+            'lop.exists' => 'Lớp không tồn tại. Vui lòng chọn lớp trong Quản lý lớp.',
         ]);
 
         // Tạo mật khẩu 6 số ngẫu nhiên
@@ -151,7 +153,7 @@ class StudentController extends Controller
             'mssv' => 'required|string|max:50|unique:students,mssv,' . $id,
             'email' => 'nullable|email|max:255|unique:students,email,' . $id,
             'ho_ten' => 'required|string|max:255',
-            'lop' => 'nullable|string|max:50',
+            'lop' => 'nullable|string|max:50|exists:lops,ma_lop',
             'gioi_tinh' => 'nullable|string|max:20',
             'trang_thai' => 'nullable|string|max:50',
             'ma_ho_so' => 'nullable|string|max:100',
