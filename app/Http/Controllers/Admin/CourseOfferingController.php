@@ -266,4 +266,23 @@ class CourseOfferingController extends Controller
             'message' => 'Cập nhật học phần thành công!',
         ]);
     }
+
+    public function destroy($id)
+    {
+        $offering = CourseOffering::findOrFail($id);
+        $today = Carbon::today();
+        if ($offering->ngay_bat_dau_hoc && $offering->ngay_bat_dau_hoc->lte($today)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể xóa học phần đã bắt đầu học.',
+            ], 422);
+        }
+
+        $offering->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa học phần.',
+        ]);
+    }
 }

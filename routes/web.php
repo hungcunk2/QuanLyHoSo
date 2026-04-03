@@ -58,6 +58,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/course-offerings/{id}', [CourseOfferingController::class, 'show'])->name('course-offerings.show');
     Route::post('/course-offerings', [CourseOfferingController::class, 'store'])->name('course-offerings.store');
     Route::put('/course-offerings/{id}', [CourseOfferingController::class, 'update'])->name('course-offerings.update');
+    Route::delete('/course-offerings/{id}', [CourseOfferingController::class, 'destroy'])->name('course-offerings.destroy');
 });
 
 Route::prefix('student')->name('student.')->middleware('auth')->group(function () {

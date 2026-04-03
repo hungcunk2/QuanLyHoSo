@@ -346,6 +346,26 @@
         </div>
     </div>
 </div>
+
+<!-- Xác nhận xóa học phần -->
+<div class="modal fade" id="deleteCourseOfferingModal" tabindex="-1" aria-labelledby="deleteCourseOfferingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCourseOfferingModalLabel">Xác nhận xóa học phần</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Bạn có chắc muốn xóa học phần <strong id="deleteOfferingName"></strong>?</p>
+                <p class="text-danger small mt-2 mb-0">Các đăng ký của học sinh/sinh viên liên quan sẽ bị xóa theo. Không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteOfferingBtn">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -680,6 +700,33 @@
                 },
                 error: function() {
                     alert('Không thể tải thông tin học phần.');
+                }
+            });
+        });
+
+        var deleteOfferingId = null;
+        $(document).on('click', '.delete-offering-btn', function() {
+            deleteOfferingId = $(this).data('id');
+            var name = $(this).data('name') || '';
+            $('#deleteOfferingName').text(name);
+            new bootstrap.Modal(document.getElementById('deleteCourseOfferingModal')).show();
+        });
+        $('#confirmDeleteOfferingBtn').on('click', function() {
+            if (!deleteOfferingId) return;
+            $.ajax({
+                url: '{{ url("admin/course-offerings") }}/' + deleteOfferingId,
+                type: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function(res) {
+                    var delModal = bootstrap.Modal.getInstance(document.getElementById('deleteCourseOfferingModal'));
+                    if (delModal) delModal.hide();
+                    deleteOfferingId = null;
+                    table.ajax.reload(null, false);
+                    alert(res.message || 'Đã xóa.');
+                },
+                error: function(xhr) {
+                    var msg = xhr.responseJSON?.message || 'Không thể xóa học phần.';
+                    alert(msg);
                 }
             });
         });

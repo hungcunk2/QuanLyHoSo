@@ -76,9 +76,14 @@ class SubjectRegistrationController extends Controller
             ->addColumn('action', function ($row) {
                 $daBatDau = $row->ngay_bat_dau_hoc && $row->ngay_bat_dau_hoc->lte(Carbon::today());
                 if ($daBatDau) {
-                    return '<span class="text-muted small" title="Chỉ chỉnh sửa khi chưa bắt đầu học"><i class="fas fa-lock me-1"></i>Đã bắt đầu</span>';
+                    return '<span class="text-muted small" title="Chỉ chỉnh sửa / xóa khi chưa bắt đầu học"><i class="fas fa-lock me-1"></i>Đã bắt đầu</span>';
                 }
-                return '<button type="button" class="btn btn-sm btn-primary edit-offering-btn" data-id="' . $row->id . '" title="Chỉnh sửa (chỉ khi chưa bắt đầu học)"><i class="fas fa-edit"></i></button>';
+                $nameAttr = e($row->ten_hoc_phan);
+
+                return '<div class="d-inline-flex gap-2 align-items-center flex-wrap">'
+                    . '<button type="button" class="btn btn-sm btn-primary edit-offering-btn" data-id="' . $row->id . '" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>'
+                    . '<button type="button" class="btn btn-sm btn-danger delete-offering-btn" data-id="' . $row->id . '" data-name="' . $nameAttr . '" title="Xóa học phần (trước ngày bắt đầu học)"><i class="fas fa-trash"></i></button>'
+                    . '</div>';
             })
             ->rawColumns(['offering_status', 'action'])
             ->make(true);
