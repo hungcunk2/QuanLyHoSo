@@ -94,11 +94,22 @@
                                                             if ($sc->loai === 'ly_thuyet') $ltSessions->push(['thu' => (int) $sc->thu, 'tiet' => (string) $sc->tiet]);
                                                             if ($sc->loai === 'thuc_hanh') $thSessions->push(['thu' => (int) $sc->thu, 'tiet' => (string) $sc->tiet]);
                                                         }
+                                                        $teacherLtName = $o->teacherLyThuyet?->ho_ten ?? '';
+                                                        $teacherThName = $o->teacherThucHanh?->ho_ten ?? '';
+                                                        $teacherLabel = '';
+                                                        if ($teacherLtName && $teacherThName && $teacherLtName !== $teacherThName) {
+                                                            $teacherLabel = 'LT: ' . $teacherLtName . ' / TH: ' . $teacherThName;
+                                                        } elseif ($teacherLtName) {
+                                                            $teacherLabel = $teacherLtName;
+                                                        } elseif ($teacherThName) {
+                                                            $teacherLabel = $teacherThName;
+                                                        }
+
                                                         $schedulePayload = [
                                                             'ten_hoc_phan' => $o->ten_hoc_phan,
                                                             'subject' => ($o->subject?->ma_mon_hoc ? ($o->subject?->ma_mon_hoc . ' - ' . $o->subject?->ten_mon_hoc) : ''),
                                                             'class' => ($o->classRoom?->ma_lop ? ($o->classRoom?->ma_lop . ' - ' . $o->classRoom?->ten_lop) : ''),
-                                                            'teacher' => ($o->teacher?->ho_ten ?? ''),
+                                                            'teacher' => $teacherLabel,
                                                             'date_range' => (optional($o->ngay_bat_dau_hoc)->format('d/m/Y') ?? '—') . ' → ' . (optional($o->ngay_ket_thuc_hoc)->format('d/m/Y') ?? '—'),
                                                             'lt' => $ltSessions->values(),
                                                             'th' => $thSessions->values(),
@@ -111,7 +122,14 @@
                                                                 Học: {{ optional($o->ngay_bat_dau_hoc)->format('d/m/Y') ?? '—' }} → {{ optional($o->ngay_ket_thuc_hoc)->format('d/m/Y') ?? '—' }}
                                                             </div>
                                                         </td>
-                                                        <td>{{ $o->teacher?->ho_ten ?? '—' }}</td>
+                                                        <td>
+                                                            @if($teacherLtName && $teacherThName && $teacherLtName !== $teacherThName)
+                                                                <div class="small">LT: {{ $teacherLtName }}</div>
+                                                                <div class="small">TH: {{ $teacherThName }}</div>
+                                                            @else
+                                                                {{ $teacherLtName ?: ($teacherThName ?: '—') }}
+                                                            @endif
+                                                        </td>
                                                         <td>
                                                             {{ optional($o->ngay_mo_dang_ky)->format('d/m/Y') ?? '—' }}
                                                             →
@@ -164,9 +182,7 @@
                                                                             Đăng ký
                                                                         </button>
                                                                     </form>
-                                                                    @if(!$dangMoDangKy)
-                                                                        <div class="small text-muted mt-1">Chưa mở / đã hết thời hạn đăng ký theo lịch học phần.</div>
-                                                                    @elseif($conLai <= 0)
+                                                                    @if($conLai <= 0)
                                                                         <div class="small text-danger mt-1">Lớp đã đủ sĩ số.</div>
                                                                     @endif
                                                                 @else

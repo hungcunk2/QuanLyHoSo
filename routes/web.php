@@ -86,6 +86,8 @@ Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function (
     Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
     Route::get('/schedule', [TeacherDashboardController::class, 'schedule'])->name('schedule');
     Route::get('/grading', [TeacherDashboardController::class, 'grading'])->name('grading');
+    Route::get('/grading/{courseOffering}', [TeacherDashboardController::class, 'gradingClass'])->name('grading.class');
+    Route::post('/grading/{courseOffering}', [TeacherDashboardController::class, 'saveGrades'])->name('grading.save');
     Route::get('/my-classes', [TeacherDashboardController::class, 'myClasses'])->name('my-classes');
     Route::get('/my-classes/{courseOffering}/students', [TeacherDashboardController::class, 'offeringRoster'])->name('my-classes.roster');
 });

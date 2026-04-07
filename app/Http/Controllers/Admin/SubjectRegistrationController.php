@@ -26,7 +26,7 @@ class SubjectRegistrationController extends Controller
 
     public function getData(Request $request)
     {
-        $query = CourseOffering::with(['subject', 'classRoom', 'teacher'])
+        $query = CourseOffering::with(['subject', 'classRoom', 'teacherLyThuyet', 'teacherThucHanh'])
             ->orderBy('created_at', 'desc');
 
         $weekdays = CourseOffering::weekdays();
@@ -43,7 +43,18 @@ class SubjectRegistrationController extends Controller
                 return $row->classRoom ? $row->classRoom->ma_lop . ' - ' . $row->classRoom->ten_lop : '—';
             })
             ->addColumn('teacher_info', function ($row) {
-                return $row->teacher ? $row->teacher->ho_ten : '—';
+                $lt = $row->teacherLyThuyet?->ho_ten;
+                $th = $row->teacherThucHanh?->ho_ten;
+                if ($lt && $th && $lt !== $th) {
+                    return 'LT: ' . $lt . '<br>TH: ' . $th;
+                }
+                if ($lt) {
+                    return $lt;
+                }
+                if ($th) {
+                    return $th;
+                }
+                return '—';
             })
             ->addColumn('date_range', function ($row) {
                 $start = $row->ngay_bat_dau_hoc ? $row->ngay_bat_dau_hoc->format('d/m/Y') : '—';
@@ -76,16 +87,20 @@ class SubjectRegistrationController extends Controller
             ->addColumn('action', function ($row) {
                 $daBatDau = $row->ngay_bat_dau_hoc && $row->ngay_bat_dau_hoc->lte(Carbon::today());
                 if ($daBatDau) {
-                    return '<span class="text-muted small" title="Chỉ chỉnh sửa / xóa khi chưa bắt đầu học"><i class="fas fa-lock me-1"></i>Đã bắt đầu</span>';
+                    $nameAttr = e($row->ten_hoc_phan);
+                    return '<div class="d-inline-flex gap-2 align-items-center flex-wrap">'
+                        . '<span class="text-muted small me-1" title="Không cho chỉnh sửa khi đã bắt đầu học"><i class="fas fa-lock me-1"></i>Đã bắt đầu</span>'
+                        . '<button type="button" class="btn btn-sm btn-danger delete-offering-btn" data-id="' . $row->id . '" data-name="' . $nameAttr . '" title="Xóa học phần"><i class="fas fa-trash"></i></button>'
+                        . '</div>';
                 }
                 $nameAttr = e($row->ten_hoc_phan);
 
                 return '<div class="d-inline-flex gap-2 align-items-center flex-wrap">'
                     . '<button type="button" class="btn btn-sm btn-primary edit-offering-btn" data-id="' . $row->id . '" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>'
-                    . '<button type="button" class="btn btn-sm btn-danger delete-offering-btn" data-id="' . $row->id . '" data-name="' . $nameAttr . '" title="Xóa học phần (trước ngày bắt đầu học)"><i class="fas fa-trash"></i></button>'
+                    . '<button type="button" class="btn btn-sm btn-danger delete-offering-btn" data-id="' . $row->id . '" data-name="' . $nameAttr . '" title="Xóa học phần"><i class="fas fa-trash"></i></button>'
                     . '</div>';
             })
-            ->rawColumns(['offering_status', 'action'])
+            ->rawColumns(['teacher_info', 'offering_status', 'action'])
             ->make(true);
     }
 }

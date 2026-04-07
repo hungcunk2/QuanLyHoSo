@@ -18,6 +18,8 @@ class CourseOffering extends Model
         'class_room_id',
         'subject_id',
         'teacher_id',
+        'teacher_id_ly_thuyet',
+        'teacher_id_thuc_hanh',
         'si_so_lop',
         'ngay_mo_dang_ky',
         'ngay_ket_thuc_dang_ky',
@@ -54,6 +56,16 @@ class CourseOffering extends Model
     public function teacher(): BelongsTo
     {
         return $this->belongsTo(Teacher::class);
+    }
+
+    public function teacherLyThuyet(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class, 'teacher_id_ly_thuyet');
+    }
+
+    public function teacherThucHanh(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class, 'teacher_id_thuc_hanh');
     }
 
     public function subjectRegistrations(): HasMany

@@ -126,15 +126,6 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="teacher_id" class="form-label">Giáo viên phụ trách <span class="text-danger">*</span></label>
-                            <select class="form-select" id="teacher_id" name="teacher_id" required>
-                                <option value="">-- Chọn giáo viên --</option>
-                                @foreach($teachers ?? [] as $t)
-                                    <option value="{{ $t->id }}">{{ $t->msgv }} - {{ $t->ho_ten }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
                             <label for="si_so_lop" class="form-label">Sĩ số lớp <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="si_so_lop" name="si_so_lop" min="1" required placeholder="VD: 50">
                         </div>
@@ -181,6 +172,15 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4">
+                                    <label class="form-label">Giáo viên (Lý thuyết) <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="teacher_id_ly_thuyet[]" required>
+                                        <option value="">-- Chọn giáo viên --</option>
+                                        @foreach($teachers ?? [] as $t)
+                                            <option value="{{ $t->id }}">{{ $t->msgv }} - {{ $t->ho_ten }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
                                     <label class="form-label">Tiết học (3 tiết liên tiếp) <span class="text-danger">*</span></label>
                                     <div class="mb-2">
                                         <div class="btn-group btn-group-sm flex-wrap" role="group">
@@ -201,9 +201,9 @@
                                     </div>
                                     <input type="hidden" name="tiet_ly_thuyet[]" class="tiet-lt-hidden" value="">
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Thi lý thuyết vào buổi thứ mấy</label>
-                                    <input type="number" class="form-control" name="ngay_thi_ly_thuyet_buoi_thu[]" min="1" placeholder="VD: 5">
+                                <div class="col-md-4 mt-2">
+                                    <label class="form-label">Thi lý thuyết vào buổi thứ mấy <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" name="ngay_thi_ly_thuyet_buoi_thu[]" min="1" required placeholder="VD: 5">
                                 </div>
                             </div>
                         </div>
@@ -227,6 +227,15 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4">
+                                    <label class="form-label">Giáo viên (Lý thuyết) <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="teacher_id_ly_thuyet[]" required>
+                                        <option value="">-- Chọn giáo viên --</option>
+                                        @foreach($teachers ?? [] as $t)
+                                            <option value="{{ $t->id }}">{{ $t->msgv }} - {{ $t->ho_ten }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
                                     <label class="form-label">Tiết học (3 tiết liên tiếp) <span class="text-danger">*</span></label>
                                     <div class="mb-2">
                                         <div class="btn-group btn-group-sm flex-wrap" role="group">
@@ -240,9 +249,9 @@
                                     <div class="border rounded p-2 bg-white tiet-lt-checkboxes"></div>
                                     <input type="hidden" name="tiet_ly_thuyet[]" class="tiet-lt-hidden" value="">
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Thi lý thuyết vào buổi thứ mấy</label>
-                                    <input type="number" class="form-control" name="ngay_thi_ly_thuyet_buoi_thu[]" min="1" placeholder="VD: 5">
+                                <div class="col-md-4 mt-2">
+                                    <label class="form-label">Thi lý thuyết vào buổi thứ mấy <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" name="ngay_thi_ly_thuyet_buoi_thu[]" min="1" required placeholder="VD: 5">
                                 </div>
                             </div>
                         </div>
@@ -272,6 +281,15 @@
                                         </select>
                                     </div>
                                     <div class="col-md-4">
+                                        <label class="form-label">Giáo viên (Thực hành)</label>
+                                        <select class="form-select" name="teacher_id_thuc_hanh[]">
+                                            <option value="">-- Chọn giáo viên --</option>
+                                            @foreach($teachers ?? [] as $t)
+                                                <option value="{{ $t->id }}">{{ $t->msgv }} - {{ $t->ho_ten }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
                                         <label class="form-label">Tiết (3 tiết liên tiếp)</label>
                                         <div class="mb-2">
                                             <div class="btn-group btn-group-sm flex-wrap" role="group">
@@ -292,7 +310,7 @@
                                         </div>
                                         <input type="hidden" name="tiet_thuc_hanh[]" class="tiet-th-hidden" value="">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-4 mt-2">
                                         <label class="form-label">Thi TH vào buổi thứ mấy</label>
                                         <input type="number" class="form-control" name="ngay_thi_thuc_hanh_buoi_thu[]" min="1" placeholder="VD: 3">
                                     </div>
@@ -316,6 +334,15 @@
                                         </select>
                                     </div>
                                     <div class="col-md-4">
+                                        <label class="form-label">Giáo viên (Thực hành)</label>
+                                        <select class="form-select" name="teacher_id_thuc_hanh[]">
+                                            <option value="">-- Chọn giáo viên --</option>
+                                            @foreach($teachers ?? [] as $t)
+                                                <option value="{{ $t->id }}">{{ $t->msgv }} - {{ $t->ho_ten }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
                                         <label class="form-label">Tiết (3 tiết liên tiếp)</label>
                                         <div class="mb-2">
                                             <div class="btn-group btn-group-sm flex-wrap" role="group">
@@ -329,7 +356,7 @@
                                         <div class="border rounded p-2 bg-white tiet-th-checkboxes"></div>
                                         <input type="hidden" name="tiet_thuc_hanh[]" class="tiet-th-hidden" value="">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-4 mt-2">
                                         <label class="form-label">Thi TH vào buổi thứ mấy</label>
                                         <input type="number" class="form-control" name="ngay_thi_thuc_hanh_buoi_thu[]" min="1" placeholder="VD: 3">
                                     </div>
@@ -637,7 +664,6 @@
                     $('#ten_hoc_phan').val(res.ten_hoc_phan);
                     $('#class_room_id').val(res.class_room_id);
                     $('#subject_id').val(res.subject_id);
-                    $('#teacher_id').val(res.teacher_id);
                     $('#si_so_lop').val(res.si_so_lop);
                     $('#ngay_mo_dang_ky').val(res.ngay_mo_dang_ky);
                     $('#ngay_ket_thuc_dang_ky').val(res.ngay_ket_thuc_dang_ky);
@@ -646,6 +672,7 @@
 
                     var thuLt = res.thu_ly_thuyet || [];
                     var tietLt = res.tiet_ly_thuyet || [];
+                    var gvLt = res.teacher_id_ly_thuyet || [];
                     var thiLt = res.ngay_thi_ly_thuyet_buoi_thu || [];
                     while ($('#buoi-ly-thuyet-list .buoi-ly-thuyet-row').length > 1) {
                         $('#buoi-ly-thuyet-list .buoi-ly-thuyet-row').last().find('.remove-buoi-lt').click();
@@ -657,6 +684,7 @@
                         if (idx >= thuLt.length) return;
                         var row = $(this);
                         row.find('select[name="thu_ly_thuyet[]"]').val(thuLt[idx]);
+                        row.find('select[name="teacher_id_ly_thuyet[]"]').val(gvLt[idx] || '');
                         row.find('input[name="ngay_thi_ly_thuyet_buoi_thu[]"]').val(thiLt[idx] || '');
                         var tietStr = (tietLt[idx] || '').toString();
                         row.find('.tiet-ly-thuyet').prop('checked', false);
@@ -671,6 +699,7 @@
 
                     var thuTh = res.thu_thuc_hanh || [];
                     var tietTh = res.tiet_thuc_hanh || [];
+                    var gvTh = res.teacher_id_thuc_hanh || [];
                     var thiTh = res.ngay_thi_thuc_hanh_buoi_thu || [];
                     while ($('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').length > 1) {
                         $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').last().find('.remove-buoi-th').click();
@@ -682,6 +711,7 @@
                         if (idx >= thuTh.length) return;
                         var rowTh = $(this);
                         rowTh.find('select[name="thu_thuc_hanh[]"]').val(thuTh[idx] || '');
+                        rowTh.find('select[name="teacher_id_thuc_hanh[]"]').val(gvTh[idx] || '');
                         rowTh.find('input[name="ngay_thi_thuc_hanh_buoi_thu[]"]').val(thiTh[idx] || '');
                         var tietStrTh = (tietTh[idx] || '').toString();
                         rowTh.find('.tiet-thuc-hanh').prop('checked', false);
@@ -745,6 +775,16 @@
             });
             if (invalidLt) {
                 alert('Vui lòng chọn 3 tiết liên tiếp cho từng buổi lý thuyết (dùng nút 1-3, 4-6, 7-9, 10-12 hoặc 13-15).');
+                return;
+            }
+            var invalidLtTeacher = false;
+            $('#buoi-ly-thuyet-list .buoi-ly-thuyet-row').each(function() {
+                if (!$(this).find('select[name="teacher_id_ly_thuyet[]"]').val()) {
+                    invalidLtTeacher = true;
+                }
+            });
+            if (invalidLtTeacher) {
+                alert('Vui lòng chọn giáo viên cho từng buổi lý thuyết.');
                 return;
             }
             var data = $(this).serializeArray();

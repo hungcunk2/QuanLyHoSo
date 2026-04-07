@@ -284,4 +284,123 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
+
+    // Forgot password modal handling
+    const forgotLink = document.getElementById('openForgotPasswordLink');
+    const forgotModalEl = document.getElementById('forgotPasswordModal');
+    const forgotForm = document.getElementById('forgotPasswordForm');
+    const forgotSubmitBtn = document.getElementById('forgotSubmitBtn');
+    const forgotSuccess = document.getElementById('forgotSuccess');
+    const forgotError = document.getElementById('forgotError');
+
+    function openForgotModal() {
+        if (!forgotModalEl) return;
+        const forgotModal = new bootstrap.Modal(forgotModalEl);
+        forgotModal.show();
+        setTimeout(() => {
+            const inp = document.getElementById('forgotEmail');
+            if (inp) inp.focus();
+        }, 200);
+    }
+
+    if (forgotLink) {
+        forgotLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Close login modal (if open) then open forgot modal
+            if (loginModal) {
+                const loginInstance = bootstrap.Modal.getInstance(loginModal);
+                if (loginInstance) loginInstance.hide();
+            }
+            openForgotModal();
+        });
+    }
+
+    if (forgotForm) {
+        forgotForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            forgotSuccess.classList.add('d-none');
+            forgotError.classList.add('d-none');
+            forgotSuccess.textContent = '';
+            forgotError.textContent = '';
+
+            if (!forgotForm.checkValidity()) {
+                forgotForm.classList.add('was-validated');
+                return;
+            }
+
+            forgotSubmitBtn.disabled = true;
+            forgotSubmitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+
+            try {
+                const formData = new FormData(forgotForm);
+                const url = forgotForm.getAttribute('data-forgot-url');
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    forgotSuccess.textContent = data.message || 'Mật khẩu mới đã được gửi về email.';
+                    forgotSuccess.classList.remove('d-none');
+                } else {
+                    let msg = data.message || 'Không thể khôi phục mật khẩu.';
+                    if (data.errors && data.errors.email && data.errors.email[0]) {
+                        msg = data.errors.email[0];
+                    }
+                    forgotError.textContent = msg;
+                    forgotError.classList.remove('d-none');
+                }
+            } catch (err) {
+                console.error('Forgot password error:', err);
+                forgotError.textContent = 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+                forgotError.classList.remove('d-none');
+            } finally {
+                forgotSubmitBtn.disabled = false;
+                forgotSubmitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Khôi phục';
+            }
+        });
+    }
+
+    if (forgotModalEl) {
+        forgotModalEl.addEventListener('hidden.bs.modal', function() {
+            if (forgotForm) {
+                forgotForm.reset();
+                forgotForm.classList.remove('was-validated');
+            }
+            if (forgotSuccess) {
+                forgotSuccess.classList.add('d-none');
+                forgotSuccess.textContent = '';
+            }
+            if (forgotError) {
+                forgotError.classList.add('d-none');
+                forgotError.textContent = '';
+            }
+            if (forgotSubmitBtn) {
+                forgotSubmitBtn.disabled = false;
+                forgotSubmitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Khôi phục';
+            }
+        });
+    }
+
+    // Direct URL: /forgot-password redirects to /?forgot=1
+    try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('forgot') === '1') {
+            // Open modal
+            openForgotModal();
+            // Clean URL
+            params.delete('forgot');
+            const newQs = params.toString();
+            const newUrl = window.location.pathname + (newQs ? '?' + newQs : '') + window.location.hash;
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    } catch (e) {}
 });

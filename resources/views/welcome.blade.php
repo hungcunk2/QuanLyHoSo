@@ -323,9 +323,46 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <a href="{{ route('password.request') }}" class="text-decoration-none">
+                    <a href="{{ route('password.request') }}" class="text-decoration-none" id="openForgotPasswordLink">
                         <i class="fas fa-key me-1"></i>Quên mật khẩu?
                     </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="forgotPasswordModalLabel">
+                        <i class="fas fa-key me-2"></i>Quên mật khẩu
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="forgotSuccess" class="alert alert-success d-none" role="alert"></div>
+                    <div id="forgotError" class="alert alert-danger d-none" role="alert"></div>
+
+                    <form id="forgotPasswordForm" data-forgot-url="{{ route('password.email') }}">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="forgotEmail" class="form-label">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </label>
+                            <input type="email" class="form-control" id="forgotEmail" name="email" required placeholder="Nhập email đã đăng ký">
+                            <div class="invalid-feedback">Vui lòng nhập email hợp lệ.</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" id="forgotSubmitBtn">
+                                <i class="fas fa-paper-plane me-2"></i>Khôi phục
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
         </div>

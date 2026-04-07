@@ -31,7 +31,7 @@
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <span class="fw-semibold">Sinh viên đã đăng ký ({{ $registrations->count() }})</span>
+            <span class="fw-semibold">Danh sách học sinh/sinh viên ({{ $registrations->count() }})</span>
             <a href="{{ $rosterListUrl ?? route('teacher.my-classes') }}" class="btn btn-outline-secondary btn-sm">Quay lại</a>
         </div>
         <div class="card-body p-0">
@@ -42,11 +42,11 @@
                     <table class="table table-striped border mb-0 align-middle">
                         <thead>
                             <tr>
-                                <th>STT</th>
-                                <th>MSSV</th>
-                                <th>Họ và tên</th>
+                                <th style="width:70px">STT</th>
+                                <th>Tên học sinh</th>
+                                <th style="width:140px">MSSV</th>
                                 <th>Email</th>
-                                <th>Lớp hành chính</th>
+                                <th style="width:140px">Lớp</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -54,8 +54,8 @@
                                 @php $s = $reg->student; @endphp
                                 <tr>
                                     <td>{{ $i + 1 }}</td>
+                                    <td class="fw-semibold">{{ $s?->ho_ten ?? '—' }}</td>
                                     <td>{{ $s?->mssv ?? '—' }}</td>
-                                    <td>{{ $s?->ho_ten ?? '—' }}</td>
                                     <td>{{ $s?->email ?? '—' }}</td>
                                     <td>{{ $s?->lop ?? '—' }}</td>
                                 </tr>

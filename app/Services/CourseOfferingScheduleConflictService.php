@@ -104,11 +104,12 @@ class CourseOfferingScheduleConflictService
 
     /**
      * @param  list<array{thu: int, periods: int[]}>  $newSlots
+     * @param  int[]  $teacherIds
      * @return string|null Thông báo lỗi tiếng Việt nếu trùng lịch
      */
     public static function findConflict(
         array $newSlots,
-        int $teacherId,
+        array $teacherIds,
         int $classRoomId,
         Carbon $ngayBatDau,
         Carbon $ngayKetThuc,
@@ -117,11 +118,20 @@ class CourseOfferingScheduleConflictService
         if ($newSlots === []) {
             return null;
         }
+        $teacherIds = array_values(array_unique(array_filter(array_map('intval', $teacherIds))));
 
         $query = CourseOffering::query()
             ->with('schedules')
-            ->where(function ($q) use ($teacherId, $classRoomId) {
-                $q->where('teacher_id', $teacherId)->orWhere('class_room_id', $classRoomId);
+            ->where(function ($q) use ($teacherIds, $classRoomId) {
+                $q->where('class_room_id', $classRoomId);
+                if ($teacherIds !== []) {
+                    $q->orWhereIn('teacher_id', $teacherIds)
+                        ->orWhereIn('teacher_id_ly_thuyet', $teacherIds)
+                        ->orWhereIn('teacher_id_thuc_hanh', $teacherIds)
+                        ->orWhereHas('schedules', function ($sq) use ($teacherIds) {
+                            $sq->whereIn('teacher_id', $teacherIds);
+                        });
+                }
             })
             ->whereDate('ngay_bat_dau_hoc', '<=', $ngayKetThuc)
             ->whereDate('ngay_ket_thuc_hoc', '>=', $ngayBatDau);
@@ -152,11 +162,19 @@ class CourseOfferingScheduleConflictService
                     $tietStr = implode(', ', $intersect);
                     $thuLabel = $weekdays[$ns['thu']] ?? ('Thứ '.$ns['thu']);
 
-                    if ($other->teacher_id !== null && (int) $other->teacher_id === $teacherId) {
+                    $teacherConflict = false;
+                    if ($teacherIds !== []) {
+                        $teacherConflict = ($other->teacher_id !== null && in_array((int) $other->teacher_id, $teacherIds, true))
+                            || ($other->teacher_id_ly_thuyet !== null && in_array((int) $other->teacher_id_ly_thuyet, $teacherIds, true))
+                            || ($other->teacher_id_thuc_hanh !== null && in_array((int) $other->teacher_id_thuc_hanh, $teacherIds, true))
+                            || $other->schedules->whereNotNull('teacher_id')->pluck('teacher_id')->map(fn ($x) => (int) $x)->intersect($teacherIds)->isNotEmpty();
+                    }
+
+                    if ($teacherConflict) {
                         return 'Giáo viên bị trùng tiết: đã có học phần "'.$other->ten_hoc_phan.'" '
                             .'('.$thuLabel.', tiết '.$tietStr.') trong khoảng thời gian học giao nhau.';
                     }
-                    if ($other->class_room_id !== null && (int) $other->class_room_id === $classRoomId) {
+                    if ($other->class_room_id !== null && (int) $other->class_room_id === (int) $classRoomId) {
                         return 'Phòng học bị trùng tiết: đã có học phần "'.$other->ten_hoc_phan.'" '
                             .'('.$thuLabel.', tiết '.$tietStr.') trong khoảng thời gian học giao nhau.';
                     }

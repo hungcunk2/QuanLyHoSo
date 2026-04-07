@@ -128,7 +128,7 @@ class DashboardController extends Controller
             if ($offeringIds->isNotEmpty()) {
                 $offerings = CourseOffering::query()
                     ->whereIn('id', $offeringIds)
-                    ->with(['subject', 'classRoom', 'teacher', 'schedules'])
+                    ->with(['subject', 'classRoom', 'teacherLyThuyet', 'teacherThucHanh', 'schedules.teacher'])
                     ->get();
             }
         }
@@ -155,7 +155,7 @@ class DashboardController extends Controller
 
         $today = Carbon::today();
 
-        $offerings = CourseOffering::with(['subject', 'classRoom', 'teacher', 'schedules'])
+        $offerings = CourseOffering::with(['subject', 'classRoom', 'teacherLyThuyet', 'teacherThucHanh', 'schedules.teacher'])
             ->withCount([
                 'subjectRegistrations as registrations_count' => function ($q) {
                     $q->where('status', '!=', 'cancelled');

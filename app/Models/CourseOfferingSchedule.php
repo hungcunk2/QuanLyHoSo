@@ -9,10 +9,15 @@ class CourseOfferingSchedule extends Model
 {
     protected $table = 'course_offering_schedules';
 
-    protected $fillable = ['course_offering_id', 'loai', 'thu', 'tiet', 'thi_buoi_thu'];
+    protected $fillable = ['course_offering_id', 'teacher_id', 'loai', 'thu', 'tiet', 'thi_buoi_thu'];
 
     public function courseOffering(): BelongsTo
     {
         return $this->belongsTo(CourseOffering::class);
+    }
+
+    public function teacher(): BelongsTo
+    {
+        return $this->belongsTo(Teacher::class);
     }
 }

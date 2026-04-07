@@ -57,7 +57,7 @@ class OfferingWeekCalendar
     }
 
     /**
-     * @return list<array{loai: string, thu: int, tiet: string}>
+     * @return list<array{loai: string, thu: int, tiet: string, thi_buoi_thu: int|null}>
      */
     public static function flattenOfferingSessions(CourseOffering $o): array
     {
@@ -65,19 +65,59 @@ class OfferingWeekCalendar
 
         $rows = [];
         if ($o->thu_ly_thuyet && $o->tiet_ly_thuyet) {
-            $rows[] = ['loai' => 'ly_thuyet', 'thu' => (int) $o->thu_ly_thuyet, 'tiet' => (string) $o->tiet_ly_thuyet];
+            $rows[] = [
+                'loai' => 'ly_thuyet',
+                'thu' => (int) $o->thu_ly_thuyet,
+                'tiet' => (string) $o->tiet_ly_thuyet,
+                'thi_buoi_thu' => $o->ngay_thi_ly_thuyet_buoi_thu ? (int) $o->ngay_thi_ly_thuyet_buoi_thu : null,
+            ];
         }
         foreach ($o->schedules->where('loai', 'ly_thuyet') as $sc) {
-            $rows[] = ['loai' => 'ly_thuyet', 'thu' => (int) $sc->thu, 'tiet' => (string) $sc->tiet];
+            $rows[] = [
+                'loai' => 'ly_thuyet',
+                'thu' => (int) $sc->thu,
+                'tiet' => (string) $sc->tiet,
+                'thi_buoi_thu' => $sc->thi_buoi_thu ? (int) $sc->thi_buoi_thu : null,
+            ];
         }
         if ($o->thu_thuc_hanh && $o->tiet_thuc_hanh) {
-            $rows[] = ['loai' => 'thuc_hanh', 'thu' => (int) $o->thu_thuc_hanh, 'tiet' => (string) $o->tiet_thuc_hanh];
+            $rows[] = [
+                'loai' => 'thuc_hanh',
+                'thu' => (int) $o->thu_thuc_hanh,
+                'tiet' => (string) $o->tiet_thuc_hanh,
+                'thi_buoi_thu' => $o->ngay_thi_thuc_hanh_buoi_thu ? (int) $o->ngay_thi_thuc_hanh_buoi_thu : null,
+            ];
         }
         foreach ($o->schedules->where('loai', 'thuc_hanh') as $sc) {
-            $rows[] = ['loai' => 'thuc_hanh', 'thu' => (int) $sc->thu, 'tiet' => (string) $sc->tiet];
+            $rows[] = [
+                'loai' => 'thuc_hanh',
+                'thu' => (int) $sc->thu,
+                'tiet' => (string) $sc->tiet,
+                'thi_buoi_thu' => $sc->thi_buoi_thu ? (int) $sc->thi_buoi_thu : null,
+            ];
         }
 
         return $rows;
+    }
+
+    public static function nthOccurrenceDate(Carbon $start, Carbon $end, int $thuVn, int $nth): ?Carbon
+    {
+        if ($nth < 1) {
+            return null;
+        }
+        $d = $start->copy()->startOfDay();
+        $count = 0;
+        while ($d->lte($end)) {
+            if (self::thuVnFromDate($d) === $thuVn) {
+                $count++;
+                if ($count === $nth) {
+                    return $d->copy();
+                }
+            }
+            $d->addDay();
+        }
+
+        return null;
     }
 
     /**
@@ -102,6 +142,20 @@ class OfferingWeekCalendar
             }
 
             $sessions = self::flattenOfferingSessions($offering);
+            $room = $offering->classRoom;
+
+            // Tính ngày thi cho từng buổi (nếu có).
+            $examDates = [];
+            foreach ($sessions as $idx => $sess) {
+                $nth = $sess['thi_buoi_thu'] ?? null;
+                if (! $nth) {
+                    continue;
+                }
+                $examDate = self::nthOccurrenceDate($start, $end, (int) $sess['thu'], (int) $nth);
+                if ($examDate) {
+                    $examDates[$idx] = $examDate;
+                }
+            }
 
             for ($d = 0; $d < 7; $d++) {
                 $date = $weekStart->copy()->addDays($d);
@@ -111,8 +165,13 @@ class OfferingWeekCalendar
 
                 $thuVn = self::thuVnFromDate($date);
 
-                foreach ($sessions as $sess) {
+                foreach ($sessions as $idx => $sess) {
                     if ((int) $sess['thu'] !== $thuVn) {
+                        continue;
+                    }
+
+                    // Nếu buổi này là ngày thi, bỏ lịch học của buổi đó (chỉ hiển thị lịch thi).
+                    if (isset($examDates[$idx]) && $examDates[$idx]->isSameDay($date)) {
                         continue;
                     }
 
@@ -120,7 +179,6 @@ class OfferingWeekCalendar
                     $bucket = self::sessionKeyFromMinPeriod($minP);
                     $isLt = $sess['loai'] === 'ly_thuyet';
                     $badge = $isLt ? '#3498db' : '#27ae60';
-                    $room = $offering->classRoom;
 
                     $grid[$bucket][$d][] = [
                         'kind' => 'study',
@@ -131,6 +189,27 @@ class OfferingWeekCalendar
                             .' · Tiết '.$sess['tiet']
                         ),
                         'badge' => $badge,
+                    ];
+                }
+
+                // Đổ lịch thi (màu vàng) nếu ngày thi rơi vào tuần này.
+                foreach ($examDates as $idx => $examDate) {
+                    if (! $examDate->isSameDay($date)) {
+                        continue;
+                    }
+                    $sess = $sessions[$idx];
+                    $minP = self::minPeriodFromTiet($sess['tiet']);
+                    $bucket = self::sessionKeyFromMinPeriod($minP);
+                    $isLt = $sess['loai'] === 'ly_thuyet';
+                    $grid[$bucket][$d][] = [
+                        'kind' => 'exam',
+                        'title' => 'Thi: ' . $offering->ten_hoc_phan,
+                        'meta' => trim(
+                            ($room ? $room->ma_lop.' · ' : '')
+                            .($isLt ? 'Lý thuyết' : 'Thực hành')
+                            .' · Tiết '.$sess['tiet']
+                        ),
+                        'badge' => '#f39c12',
                     ];
                 }
             }
