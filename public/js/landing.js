@@ -230,12 +230,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: formData
                 });
 
-                const data = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                let data = null;
+                let rawText = '';
+                try {
+                    if (contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        rawText = await response.text();
+                    }
+                } catch (e) {
+                    // ignore parse errors and fallback to generic message below
+                }
 
                 if (response.ok) {
                     // Login successful
                     const dashboardUrl = loginForm.getAttribute('data-dashboard-url');
-                    if (data.redirect) {
+                    if (data && data.redirect) {
                         window.location.href = data.redirect;
                     } else {
                         window.location.href = dashboardUrl;
@@ -243,15 +254,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     // Login failed
                     let errorMessage = 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
-                    
-                    if (data.errors) {
-                        if (data.errors.email) {
+
+                    // Common Laravel statuses
+                    if (response.status === 419) {
+                        errorMessage = 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang rồi thử lại.';
+                    } else if (response.status === 429) {
+                        errorMessage = 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.';
+                    } else if (response.status >= 500) {
+                        errorMessage = 'Máy chủ đang gặp lỗi. Vui lòng thử lại sau.';
+                    }
+
+                    if (data) {
+                        if (data.errors && data.errors.email && data.errors.email[0]) {
                             errorMessage = data.errors.email[0];
                         } else if (data.message) {
                             errorMessage = data.message;
                         }
-                    } else if (data.message) {
-                        errorMessage = data.message;
+                    } else if (rawText) {
+                        // If server returned HTML, still show status code for debugging
+                        errorMessage = `Đăng nhập thất bại (HTTP ${response.status}). Vui lòng thử lại.`;
                     }
                     
                     loginErrorText.textContent = errorMessage;
@@ -263,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                loginErrorText.textContent = 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+                loginErrorText.textContent = 'Không thể kết nối máy chủ hoặc phản hồi không hợp lệ. Vui lòng tải lại trang và thử lại.';
                 loginError.classList.remove('d-none');
                 
                 // Re-enable submit button
@@ -345,22 +366,42 @@ document.addEventListener('DOMContentLoaded', function() {
                     body: formData
                 });
 
-                const data = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                let data = null;
+                let rawText = '';
+                try {
+                    if (contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        rawText = await response.text();
+                    }
+                } catch (e) {
+                    // ignore parse errors
+                }
 
                 if (response.ok) {
                     forgotSuccess.textContent = data.message || 'Mật khẩu mới đã được gửi về email.';
                     forgotSuccess.classList.remove('d-none');
                 } else {
-                    let msg = data.message || 'Không thể khôi phục mật khẩu.';
-                    if (data.errors && data.errors.email && data.errors.email[0]) {
+                    let msg = (data && data.message) ? data.message : 'Không thể khôi phục mật khẩu.';
+                    if (response.status === 419) {
+                        msg = 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang rồi thử lại.';
+                    } else if (response.status === 429) {
+                        msg = 'Bạn thao tác quá nhanh. Vui lòng thử lại sau ít phút.';
+                    } else if (response.status >= 500) {
+                        msg = 'Máy chủ đang gặp lỗi. Vui lòng kiểm tra cấu hình mail và thử lại.';
+                    }
+                    if (data && data.errors && data.errors.email && data.errors.email[0]) {
                         msg = data.errors.email[0];
+                    } else if (!data && rawText) {
+                        msg = `Khôi phục thất bại (HTTP ${response.status}). Vui lòng thử lại.`;
                     }
                     forgotError.textContent = msg;
                     forgotError.classList.remove('d-none');
                 }
             } catch (err) {
                 console.error('Forgot password error:', err);
-                forgotError.textContent = 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+                forgotError.textContent = 'Không thể kết nối máy chủ hoặc phản hồi không hợp lệ. Vui lòng tải lại trang và thử lại.';
                 forgotError.classList.remove('d-none');
             } finally {
                 forgotSubmitBtn.disabled = false;

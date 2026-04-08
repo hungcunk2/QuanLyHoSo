@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\SubjectRegistrationController;
 use App\Http\Controllers\Admin\CourseOfferingController;
 use App\Http\Controllers\Admin\LopController;
+use App\Http\Controllers\Account\PasswordController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 
@@ -16,6 +17,25 @@ require __DIR__ . '/auth.php';
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::middleware('auth')->group(function () {
+    Route::get('/account/change-password', [PasswordController::class, 'edit'])->name('account.password.edit');
+    Route::post('/account/change-password', [PasswordController::class, 'update'])->name('account.password.update');
+});
+
+// Some templates/packages still reference route('home')
+Route::get('/home', function () {
+    $user = auth()->user();
+    if (! $user) {
+        return redirect()->to('/');
+    }
+
+    return match ($user->role) {
+        'student' => redirect()->route('student.dashboard'),
+        'teacher' => redirect()->route('teacher.dashboard'),
+        default => redirect()->route('admin.dashboard'),
+    };
+})->name('home');
 
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
@@ -88,6 +108,7 @@ Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function (
     Route::get('/grading', [TeacherDashboardController::class, 'grading'])->name('grading');
     Route::get('/grading/{courseOffering}', [TeacherDashboardController::class, 'gradingClass'])->name('grading.class');
     Route::post('/grading/{courseOffering}', [TeacherDashboardController::class, 'saveGrades'])->name('grading.save');
+    Route::get('/grading/{courseOffering}/export.xlsx', [TeacherDashboardController::class, 'exportGradesXlsx'])->name('grading.export.xlsx');
     Route::get('/my-classes', [TeacherDashboardController::class, 'myClasses'])->name('my-classes');
     Route::get('/my-classes/{courseOffering}/students', [TeacherDashboardController::class, 'offeringRoster'])->name('my-classes.roster');
 });

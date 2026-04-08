@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Học Sinh') - HDU</title>
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
+    <title>@yield('title', 'Học Sinh') - IIUH</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -23,7 +25,7 @@
         <aside class="admin-sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <i class="fas fa-user-graduate text-info"></i>
+                    <img src="{{ asset('images/logo.png') }}" alt="IIUH" style="height: 52px; width: auto;">
                     <span class="logo-text">Học Sinh</span>
                 </div>
             </div>
@@ -75,6 +77,12 @@
                     <div class="nav-section-title">SYSTEM</div>
                     <ul class="nav-menu">
                         <li class="nav-item">
+                            <a href="{{ route('account.password.edit') }}" class="nav-link">
+                                <i class="fas fa-key"></i>
+                                <span>Đổi mật khẩu</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <form method="POST" action="{{ route('logout') }}" class="d-inline">
                                 @csrf
                                 <button type="submit" class="nav-link border-0 bg-transparent w-100 text-start">
@@ -88,7 +96,7 @@
             </nav>
             
             <div class="sidebar-footer">
-                <p class="copyright">© 2025 HDU Connect – All rights reserved</p>
+                <p class="copyright">© 2025 IIUH Connect – All rights reserved</p>
             </div>
         </aside>
         
@@ -108,11 +116,12 @@
                         <span class="badge">3</span>
                     </button>
                     <div class="user-profile dropdown">
-                        <div class="user-avatar dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="cursor: pointer;">
-                            <i class="fas fa-user-graduate"></i>
-                        </div>
-                        <span class="user-name">{{ Auth::user()->email ?? 'HỌC SINH' }}</span>
+                        <button type="button" class="btn btn-link p-0 text-decoration-none user-name dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ $authDisplayName ?? (Auth::user()->email ?? 'HỌC SINH') }}
+                        </button>
                         <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{{ route('account.password.edit') }}"><i class="fas fa-key me-2"></i>Đổi mật khẩu</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}" class="d-inline">
                                     @csrf

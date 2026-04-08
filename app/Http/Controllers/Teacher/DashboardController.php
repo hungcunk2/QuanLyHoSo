@@ -11,6 +11,8 @@ use App\Support\OfferingWeekCalendar;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\CourseOfferingGradesExport;
 
 class DashboardController extends Controller
 {
@@ -208,6 +210,23 @@ class DashboardController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Đã lưu điểm.']);
+    }
+
+    public function exportGradesXlsx(CourseOffering $courseOffering)
+    {
+        $teacher = $this->currentTeacher();
+        if (! $teacher) {
+            abort(403, 'Không tìm thấy hồ sơ giáo viên.');
+        }
+        $isAssigned = ((int) $courseOffering->teacher_id_ly_thuyet === (int) $teacher->id)
+            || ((int) $courseOffering->teacher_id_thuc_hanh === (int) $teacher->id)
+            || $courseOffering->schedules()->where('teacher_id', $teacher->id)->exists();
+        if (! $isAssigned) {
+            abort(403, 'Bạn không được phân công dạy học phần này.');
+        }
+
+        $filename = 'bang-diem-'.$courseOffering->id.'-'.now()->format('Ymd-His').'.xlsx';
+        return Excel::download(new CourseOfferingGradesExport($courseOffering), $filename);
     }
 
     public function schedule(Request $request)

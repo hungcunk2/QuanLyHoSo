@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\CourseOffering;
+use App\Models\CourseOfferingGrade;
 use App\Models\Lop;
 use App\Models\SubjectRegistration;
 use App\Models\Student;
@@ -141,7 +142,37 @@ class DashboardController extends Controller
     public function results()
     {
         $user = Auth::user();
-        return view('student.results', compact('user'));
+        $student = Student::where('email', $user->email)->first();
+
+        $offerings = collect();
+        $gradesByOffering = collect();
+
+        if ($student) {
+            $offeringIds = SubjectRegistration::query()
+                ->where('student_id', $student->id)
+                ->where('status', '!=', 'cancelled')
+                ->whereNotNull('course_offering_id')
+                ->pluck('course_offering_id')
+                ->unique()
+                ->values();
+
+            if ($offeringIds->isNotEmpty()) {
+                $offerings = CourseOffering::query()
+                    ->whereIn('id', $offeringIds)
+                    ->with(['subject', 'classRoom'])
+                    ->orderByDesc('ngay_bat_dau_hoc')
+                    ->orderByDesc('created_at')
+                    ->get();
+
+                $gradesByOffering = CourseOfferingGrade::query()
+                    ->whereIn('course_offering_id', $offerings->pluck('id'))
+                    ->where('student_id', $student->id)
+                    ->get()
+                    ->keyBy('course_offering_id');
+            }
+        }
+
+        return view('student.results', compact('user', 'student', 'offerings', 'gradesByOffering'));
     }
 
     public function registration()

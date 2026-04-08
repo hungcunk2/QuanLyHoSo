@@ -1,7 +1,7 @@
 @extends('layouts.student')
 
 @section('title', 'Lịch Học')
-@section('page-title', 'Lịch Học')
+@section('page-title', '')
 
 @section('content')
 @include('partials.week-schedule-table', [

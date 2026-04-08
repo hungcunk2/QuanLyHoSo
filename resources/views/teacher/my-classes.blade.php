@@ -1,7 +1,7 @@
 @extends('layouts.teacher')
 
 @section('title', 'Lớp học của tôi')
-@section('page-title', 'Lớp học của tôi')
+@section('page-title', '')
 
 @section('content')
 <div class="container-fluid">

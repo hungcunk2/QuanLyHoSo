@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class PasswordResetLinkController extends Controller
 {
@@ -94,7 +95,16 @@ class PasswordResetLinkController extends Controller
         $newPassword = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $user->forceFill(['password' => Hash::make($newPassword)])->save();
 
-        Mail::to($email)->send(new ForgotPasswordSixDigitMail($user, $newPassword));
+        try {
+            Mail::to($email)->send(new ForgotPasswordSixDigitMail($user, $newPassword));
+        } catch (Throwable $e) {
+            report($e);
+            $msg = 'Không thể gửi email. Vui lòng kiểm tra cấu hình mail (MAIL_*) và thử lại.';
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $msg], 500);
+            }
+            return back()->withErrors(['email' => $msg])->withInput($request->only('email'));
+        }
 
         $message = 'Mật khẩu mới đã được gửi về email.';
 

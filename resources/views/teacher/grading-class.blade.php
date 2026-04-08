@@ -1,12 +1,13 @@
 @extends('layouts.teacher')
 
 @section('title', 'Nhập điểm')
-@section('page-title', 'Nhập điểm')
+@section('page-title', '')
 
 @section('content')
 @php
     $saveUrl = route('teacher.grading.save', $courseOffering);
     $backUrl = route('teacher.grading');
+    $exportXlsxUrl = route('teacher.grading.export.xlsx', $courseOffering);
     $canEdit = optional($courseOffering->ngay_bat_dau_hoc)->startOfDay()?->lte(now()->startOfDay()) ?? false;
 @endphp
 
@@ -30,6 +31,9 @@
                         <div class="d-flex gap-2">
                             <a href="{{ $backUrl }}" class="btn btn-outline-secondary btn-sm text-nowrap">
                                 <i class="fas fa-arrow-left me-1"></i> Quay lại
+                            </a>
+                            <a href="{{ $exportXlsxUrl }}" class="btn btn-outline-success btn-sm text-nowrap">
+                                <i class="fas fa-file-excel me-1"></i> Tải Excel
                             </a>
                             <button type="button" class="btn btn-primary btn-sm text-nowrap" id="btnSaveGrades" @disabled(!$canEdit) title="{{ $canEdit ? '' : 'Lớp chưa bắt đầu học nên chưa thể lưu điểm' }}">
                                 <i class="fas fa-save me-1"></i> Lưu điểm

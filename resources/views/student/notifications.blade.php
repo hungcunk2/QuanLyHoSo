@@ -1,7 +1,7 @@
 @extends('layouts.student')
 
 @section('title', 'Thông Báo')
-@section('page-title', 'Thông Báo')
+@section('page-title', '')
 
 @section('content')
 <div class="card">
