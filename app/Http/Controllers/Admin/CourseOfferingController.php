@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CourseOffering;
 use App\Models\CourseOfferingSchedule;
+use App\Models\Subject;
 use App\Models\SubjectRegistration;
 use App\Services\CourseOfferingScheduleConflictService;
 use Carbon\Carbon;
@@ -20,7 +21,9 @@ class CourseOfferingController extends Controller
         $schedulesTh = $offering->schedules->where('loai', 'thuc_hanh')->values();
 
         $data = $offering->only([
-            'id', 'ten_hoc_phan', 'class_room_id', 'subject_id', 'teacher_id', 'si_so_lop',
+            'id', 'ten_hoc_phan', 'class_room_id', 'class_room_id_thuc_hanh', 'subject_id', 'teacher_id', 'si_so_lop',
+            'si_so_thuc_hanh_nhom_1', 'si_so_thuc_hanh_nhom_2',
+            'hoc_ky', 'khoa_hoc',
             'thu_ly_thuyet', 'tiet_ly_thuyet', 'ngay_thi_ly_thuyet_buoi_thu',
             'thu_thuc_hanh', 'tiet_thuc_hanh', 'ngay_thi_thuc_hanh_buoi_thu',
         ]);
@@ -55,6 +58,9 @@ class CourseOfferingController extends Controller
         $data['teacher_id_thuc_hanh'] = $offering->teacher_id_thuc_hanh !== null
             ? array_merge([$offering->teacher_id_thuc_hanh], $schedulesTh->pluck('teacher_id')->all())
             : $schedulesTh->pluck('teacher_id')->all();
+        $data['class_room_id_thuc_hanh'] = $offering->class_room_id_thuc_hanh !== null
+            ? array_merge([$offering->class_room_id_thuc_hanh], $schedulesTh->pluck('class_room_id')->all())
+            : $schedulesTh->pluck('class_room_id')->all();
         $data['ngay_thi_thuc_hanh_buoi_thu'] = $offering->ngay_thi_thuc_hanh_buoi_thu !== null
             ? array_merge([$offering->ngay_thi_thuc_hanh_buoi_thu], $schedulesTh->pluck('thi_buoi_thu')->all())
             : $schedulesTh->pluck('thi_buoi_thu')->all();
@@ -65,10 +71,15 @@ class CourseOfferingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'ten_hoc_phan' => 'required|string|max:255',
+            'hoc_ky' => 'required|integer|in:1,2,3',
+            'khoa_hoc' => 'required|string|max:50',
             'class_room_id' => 'required|exists:classes,id',
+            'class_room_id_thuc_hanh' => 'nullable|array',
+            'class_room_id_thuc_hanh.*' => 'nullable|exists:classes,id',
             'subject_id' => 'required|exists:subjects,id',
             'si_so_lop' => 'required|integer|min:1',
+            'si_so_thuc_hanh_nhom_1' => 'nullable|integer|min:1',
+            'si_so_thuc_hanh_nhom_2' => 'nullable|integer|min:1',
             'ngay_mo_dang_ky' => 'required|date',
             'ngay_ket_thuc_dang_ky' => 'required|date|after_or_equal:ngay_mo_dang_ky|before:ngay_bat_dau_hoc',
             'ngay_bat_dau_hoc' => 'required|date|after:ngay_ket_thuc_dang_ky',
@@ -90,7 +101,6 @@ class CourseOfferingController extends Controller
             'ngay_thi_thuc_hanh_buoi_thu' => 'nullable|array',
             'ngay_thi_thuc_hanh_buoi_thu.*' => 'nullable|integer|min:1',
         ], [
-            'ten_hoc_phan.required' => 'Vui lòng nhập tên học phần.',
             'class_room_id.required' => 'Vui lòng chọn phòng học.',
             'subject_id.required' => 'Vui lòng chọn môn học.',
             'si_so_lop.required' => 'Vui lòng nhập sĩ số lớp.',
@@ -118,14 +128,33 @@ class CourseOfferingController extends Controller
         $thuTh = $request->input('thu_thuc_hanh', []);
         $tietTh = $request->input('tiet_thuc_hanh', []);
         $teacherTh = $request->input('teacher_id_thuc_hanh', []);
+        $roomTh = $request->input('class_room_id_thuc_hanh', []);
+        $sizeTh = $request->input('si_so_thuc_hanh', []);
         $thiTh = $request->input('ngay_thi_thuc_hanh_buoi_thu', []);
 
+        $hasAnyTh = false;
+        for ($i = 0; $i < count($thuTh); $i++) {
+            if (($thuTh[$i] ?? '') !== '' && ($tietTh[$i] ?? '') !== '') {
+                $hasAnyTh = true;
+                break;
+            }
+        }
         // Nếu có buổi TH (chọn thứ/tiết) thì buổi thi TH cũng bắt buộc nhập.
         for ($i = 0; $i < count($thuTh); $i++) {
             $hasTh = ($thuTh[$i] ?? '') !== '' && ($tietTh[$i] ?? '') !== '';
             if ($hasTh && (($thiTh[$i] ?? '') === '')) {
                 throw ValidationException::withMessages([
                     'ngay_thi_thuc_hanh_buoi_thu.'.$i => ['Vui lòng nhập buổi thi thực hành cho buổi TH '.($i + 1).'.'],
+                ]);
+            }
+            if ($hasTh && (int) ($roomTh[$i] ?? 0) < 1) {
+                throw ValidationException::withMessages([
+                    'class_room_id_thuc_hanh.'.$i => ['Vui lòng chọn phòng học cho nhóm thực hành '.($i + 1).'.'],
+                ]);
+            }
+            if ($hasTh && (int) ($sizeTh[$i] ?? 0) < 1) {
+                throw ValidationException::withMessages([
+                    'si_so_thuc_hanh.'.$i => ['Vui lòng nhập sĩ số cho nhóm thực hành '.($i + 1).'.'],
                 ]);
             }
         }
@@ -148,9 +177,17 @@ class CourseOfferingController extends Controller
         }
 
         $data = $request->only([
-            'ten_hoc_phan', 'class_room_id', 'subject_id', 'si_so_lop',
+            'hoc_ky', 'khoa_hoc', 'class_room_id', 'class_room_id_thuc_hanh', 'subject_id', 'si_so_lop',
+            'si_so_thuc_hanh_nhom_1', 'si_so_thuc_hanh_nhom_2',
             'ngay_mo_dang_ky', 'ngay_ket_thuc_dang_ky', 'ngay_bat_dau_hoc', 'ngay_ket_thuc_hoc',
         ]);
+        // Map first 2 group sizes to existing columns
+        $data['si_so_thuc_hanh_nhom_1'] = isset($sizeTh[0]) && $sizeTh[0] !== '' ? (int) $sizeTh[0] : null;
+        $data['si_so_thuc_hanh_nhom_2'] = isset($sizeTh[1]) && $sizeTh[1] !== '' ? (int) $sizeTh[1] : null;
+        $subject = Subject::findOrFail((int) $request->subject_id);
+        $data['ten_hoc_phan'] = (string) ($subject->ten_mon_hoc ?? '');
+        // room TH: store first group on offering, rest on schedules
+        $data['class_room_id_thuc_hanh'] = isset($roomTh[0]) && $roomTh[0] !== '' ? (int) $roomTh[0] : null;
         // teacher_id giữ để tương thích code cũ -> lấy theo giáo viên lý thuyết buổi 1 (bắt buộc).
         $data['teacher_id'] = (int) ($teacherLt[0] ?? 0);
         $data['teacher_id_ly_thuyet'] = isset($teacherLt[0]) && $teacherLt[0] !== '' ? (int) $teacherLt[0] : null;
@@ -183,6 +220,7 @@ class CourseOfferingController extends Controller
             CourseOfferingSchedule::create([
                 'course_offering_id' => $offering->id,
                 'teacher_id' => isset($teacherTh[$i]) && $teacherTh[$i] !== '' ? (int) $teacherTh[$i] : null,
+                'class_room_id' => isset($roomTh[$i]) && $roomTh[$i] !== '' ? (int) $roomTh[$i] : null,
                 'loai' => 'thuc_hanh',
                 'thu' => $thuTh[$i],
                 'tiet' => $tietTh[$i] ?? '',
@@ -201,10 +239,15 @@ class CourseOfferingController extends Controller
         $offering = CourseOffering::findOrFail($id);
 
         $request->validate([
-            'ten_hoc_phan' => 'required|string|max:255',
+            'hoc_ky' => 'required|integer|in:1,2,3',
+            'khoa_hoc' => 'required|string|max:50',
             'class_room_id' => 'required|exists:classes,id',
+            'class_room_id_thuc_hanh' => 'nullable|array',
+            'class_room_id_thuc_hanh.*' => 'nullable|exists:classes,id',
             'subject_id' => 'required|exists:subjects,id',
             'si_so_lop' => 'required|integer|min:1',
+            'si_so_thuc_hanh_nhom_1' => 'nullable|integer|min:1',
+            'si_so_thuc_hanh_nhom_2' => 'nullable|integer|min:1',
             'ngay_mo_dang_ky' => 'required|date',
             'ngay_ket_thuc_dang_ky' => 'required|date|after_or_equal:ngay_mo_dang_ky|before:ngay_bat_dau_hoc',
             'ngay_bat_dau_hoc' => 'required|date|after:ngay_ket_thuc_dang_ky',
@@ -226,7 +269,6 @@ class CourseOfferingController extends Controller
             'ngay_thi_thuc_hanh_buoi_thu' => 'nullable|array',
             'ngay_thi_thuc_hanh_buoi_thu.*' => 'nullable|integer|min:1',
         ], [
-            'ten_hoc_phan.required' => 'Vui lòng nhập tên học phần.',
             'class_room_id.required' => 'Vui lòng chọn phòng học.',
             'subject_id.required' => 'Vui lòng chọn môn học.',
             'si_so_lop.required' => 'Vui lòng nhập sĩ số lớp.',
@@ -253,14 +295,33 @@ class CourseOfferingController extends Controller
         $thuTh = $request->input('thu_thuc_hanh', []);
         $tietTh = $request->input('tiet_thuc_hanh', []);
         $teacherTh = $request->input('teacher_id_thuc_hanh', []);
+        $roomTh = $request->input('class_room_id_thuc_hanh', []);
+        $sizeTh = $request->input('si_so_thuc_hanh', []);
         $thiTh = $request->input('ngay_thi_thuc_hanh_buoi_thu', []);
 
+        $hasAnyTh = false;
+        for ($i = 0; $i < count($thuTh); $i++) {
+            if (($thuTh[$i] ?? '') !== '' && ($tietTh[$i] ?? '') !== '') {
+                $hasAnyTh = true;
+                break;
+            }
+        }
         // Nếu có buổi TH (chọn thứ/tiết) thì buổi thi TH cũng bắt buộc nhập.
         for ($i = 0; $i < count($thuTh); $i++) {
             $hasTh = ($thuTh[$i] ?? '') !== '' && ($tietTh[$i] ?? '') !== '';
             if ($hasTh && (($thiTh[$i] ?? '') === '')) {
                 throw ValidationException::withMessages([
                     'ngay_thi_thuc_hanh_buoi_thu.'.$i => ['Vui lòng nhập buổi thi thực hành cho buổi TH '.($i + 1).'.'],
+                ]);
+            }
+            if ($hasTh && (int) ($roomTh[$i] ?? 0) < 1) {
+                throw ValidationException::withMessages([
+                    'class_room_id_thuc_hanh.'.$i => ['Vui lòng chọn phòng học cho nhóm thực hành '.($i + 1).'.'],
+                ]);
+            }
+            if ($hasTh && (int) ($sizeTh[$i] ?? 0) < 1) {
+                throw ValidationException::withMessages([
+                    'si_so_thuc_hanh.'.$i => ['Vui lòng nhập sĩ số cho nhóm thực hành '.($i + 1).'.'],
                 ]);
             }
         }
@@ -283,9 +344,16 @@ class CourseOfferingController extends Controller
         }
 
         $data = $request->only([
-            'ten_hoc_phan', 'class_room_id', 'subject_id', 'si_so_lop',
+            'hoc_ky', 'khoa_hoc', 'class_room_id', 'subject_id', 'si_so_lop',
+            'si_so_thuc_hanh_nhom_1', 'si_so_thuc_hanh_nhom_2',
             'ngay_mo_dang_ky', 'ngay_ket_thuc_dang_ky', 'ngay_bat_dau_hoc', 'ngay_ket_thuc_hoc',
         ]);
+        // Map first 2 group sizes to existing columns
+        $data['si_so_thuc_hanh_nhom_1'] = isset($sizeTh[0]) && $sizeTh[0] !== '' ? (int) $sizeTh[0] : null;
+        $data['si_so_thuc_hanh_nhom_2'] = isset($sizeTh[1]) && $sizeTh[1] !== '' ? (int) $sizeTh[1] : null;
+        $subject = Subject::findOrFail((int) $request->subject_id);
+        $data['ten_hoc_phan'] = (string) ($subject->ten_mon_hoc ?? '');
+        $data['class_room_id_thuc_hanh'] = isset($roomTh[0]) && $roomTh[0] !== '' ? (int) $roomTh[0] : null;
         $data['teacher_id'] = (int) ($teacherLt[0] ?? 0);
         $data['teacher_id_ly_thuyet'] = isset($teacherLt[0]) && $teacherLt[0] !== '' ? (int) $teacherLt[0] : null;
         $data['teacher_id_thuc_hanh'] = isset($teacherTh[0]) && $teacherTh[0] !== '' ? (int) $teacherTh[0] : null;
@@ -317,6 +385,7 @@ class CourseOfferingController extends Controller
             CourseOfferingSchedule::create([
                 'course_offering_id' => $offering->id,
                 'teacher_id' => isset($teacherTh[$i]) && $teacherTh[$i] !== '' ? (int) $teacherTh[$i] : null,
+                'class_room_id' => isset($roomTh[$i]) && $roomTh[$i] !== '' ? (int) $roomTh[$i] : null,
                 'loai' => 'thuc_hanh',
                 'thu' => $thuTh[$i],
                 'tiet' => $tietTh[$i] ?? '',

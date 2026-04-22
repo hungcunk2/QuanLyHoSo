@@ -57,20 +57,36 @@ class OfferingWeekCalendar
     }
 
     /**
-     * @return list<array{loai: string, thu: int, tiet: string, thi_buoi_thu: int|null}>
+     * @return list<array{loai: string, thu: int, tiet: string, thi_buoi_thu: int|null, moved_from: string|null}>
      */
-    public static function flattenOfferingSessions(CourseOffering $o): array
+    public static function flattenOfferingSessions(CourseOffering $o, ?int $thGroupIndex = null): array
     {
         $o->loadMissing('schedules');
 
+        $pausedKeys = $o->schedules
+            ->where('loai', 'tam_ngung')
+            ->map(function ($sc) {
+                $thu = (int) ($sc->thu ?? 0);
+                $tiet = (string) ($sc->tiet ?? '');
+                return $thu > 0 && $tiet !== '' ? ($thu.'|'.$tiet) : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
+        $pausedSet = array_fill_keys($pausedKeys, true);
+
         $rows = [];
         if ($o->thu_ly_thuyet && $o->tiet_ly_thuyet) {
+            $k = ((int) $o->thu_ly_thuyet).'|'.((string) $o->tiet_ly_thuyet);
+            if (! isset($pausedSet[$k])) {
             $rows[] = [
                 'loai' => 'ly_thuyet',
                 'thu' => (int) $o->thu_ly_thuyet,
                 'tiet' => (string) $o->tiet_ly_thuyet,
                 'thi_buoi_thu' => $o->ngay_thi_ly_thuyet_buoi_thu ? (int) $o->ngay_thi_ly_thuyet_buoi_thu : null,
+                'moved_from' => $o->lt_moved_from ?: null,
             ];
+            }
         }
         foreach ($o->schedules->where('loai', 'ly_thuyet') as $sc) {
             $rows[] = [
@@ -78,23 +94,49 @@ class OfferingWeekCalendar
                 'thu' => (int) $sc->thu,
                 'tiet' => (string) $sc->tiet,
                 'thi_buoi_thu' => $sc->thi_buoi_thu ? (int) $sc->thi_buoi_thu : null,
+                'moved_from' => $sc->moved_from ?: null,
             ];
         }
-        if ($o->thu_thuc_hanh && $o->tiet_thuc_hanh) {
+
+        // Buổi tạm ngưng: luôn hiển thị (màu đỏ) để người xem biết buổi bị hủy
+        foreach ($o->schedules->where('loai', 'tam_ngung') as $sc) {
+            if (! $sc->thu || ($sc->tiet ?? '') === '') {
+                continue;
+            }
             $rows[] = [
+                'loai' => 'tam_ngung',
+                'thu' => (int) $sc->thu,
+                'tiet' => (string) $sc->tiet,
+                'thi_buoi_thu' => null,
+                'moved_from' => null,
+            ];
+        }
+        $thRows = [];
+        if ($o->thu_thuc_hanh && $o->tiet_thuc_hanh) {
+            $k = ((int) $o->thu_thuc_hanh).'|'.((string) $o->tiet_thuc_hanh);
+            if (! isset($pausedSet[$k])) {
+            $thRows[] = [
                 'loai' => 'thuc_hanh',
                 'thu' => (int) $o->thu_thuc_hanh,
                 'tiet' => (string) $o->tiet_thuc_hanh,
                 'thi_buoi_thu' => $o->ngay_thi_thuc_hanh_buoi_thu ? (int) $o->ngay_thi_thuc_hanh_buoi_thu : null,
+                'moved_from' => $o->th_moved_from ?: null,
             ];
+            }
         }
         foreach ($o->schedules->where('loai', 'thuc_hanh') as $sc) {
-            $rows[] = [
+            $thRows[] = [
                 'loai' => 'thuc_hanh',
                 'thu' => (int) $sc->thu,
                 'tiet' => (string) $sc->tiet,
                 'thi_buoi_thu' => $sc->thi_buoi_thu ? (int) $sc->thi_buoi_thu : null,
+                'moved_from' => $sc->moved_from ?: null,
             ];
+        }
+        if ($thGroupIndex !== null && $thGroupIndex >= 1 && $thGroupIndex <= count($thRows)) {
+            $rows[] = $thRows[$thGroupIndex - 1];
+        } else {
+            $rows = array_merge($rows, $thRows);
         }
 
         return $rows;
@@ -124,7 +166,7 @@ class OfferingWeekCalendar
      * @param  Collection<int, CourseOffering>  $offerings
      * @return array{morning: array<int, list<array{kind: string, title: string, meta: string, badge: string}>>, afternoon: array, evening: array}
      */
-    public static function buildGrid(Collection $offerings, Carbon $weekStart): array
+    public static function buildGrid(Collection $offerings, Carbon $weekStart, array $thGroupIndexByOfferingId = []): array
     {
         $weekStart = $weekStart->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
 
@@ -141,7 +183,9 @@ class OfferingWeekCalendar
                 continue;
             }
 
-            $sessions = self::flattenOfferingSessions($offering);
+            $thIdx = $thGroupIndexByOfferingId[(int) $offering->id] ?? null;
+            $thIdx = $thIdx === null ? null : (int) $thIdx;
+            $sessions = self::flattenOfferingSessions($offering, $thIdx);
             $room = $offering->classRoom;
 
             // Tính ngày thi cho từng buổi (nếu có).
@@ -178,15 +222,17 @@ class OfferingWeekCalendar
                     $minP = self::minPeriodFromTiet($sess['tiet']);
                     $bucket = self::sessionKeyFromMinPeriod($minP);
                     $isLt = $sess['loai'] === 'ly_thuyet';
-                    $badge = $isLt ? '#3498db' : '#27ae60';
+                    $isPause = $sess['loai'] === 'tam_ngung';
+                    $badge = $isPause ? '#e74c3c' : ($isLt ? '#3498db' : '#27ae60');
 
                     $grid[$bucket][$d][] = [
-                        'kind' => 'study',
-                        'title' => $offering->ten_hoc_phan,
+                        'kind' => $isPause ? 'pause' : 'study',
+                        'title' => $isPause ? ('Tạm ngưng: ' . $offering->ten_hoc_phan) : $offering->ten_hoc_phan,
                         'meta' => trim(
                             ($room ? $room->ma_lop.' · ' : '')
-                            .($isLt ? 'Lý thuyết' : 'Thực hành')
+                            .($isPause ? 'Tạm ngưng' : ($isLt ? 'Lý thuyết' : 'Thực hành'))
                             .' · Tiết '.$sess['tiet']
+                            .(! empty($sess['moved_from']) ? (' · dời từ '.$sess['moved_from']) : '')
                         ),
                         'badge' => $badge,
                     ];

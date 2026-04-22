@@ -44,24 +44,28 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     
     Route::get('/students', [StudentController::class, 'index'])->name('students');
     Route::get('/students/data', [StudentController::class, 'getData'])->name('students.data');
+    Route::get('/students/next-mssv', [StudentController::class, 'nextMssv'])->name('students.next-mssv');
+    Route::get('/students/next-ma-ho-so', [StudentController::class, 'nextMaHoSo'])->name('students.next-ma-ho-so');
     Route::post('/students', [StudentController::class, 'store'])->name('students.store');
     Route::get('/students/{id}', [StudentController::class, 'show'])->name('students.show');
-    Route::post('/students/{id}/send-email', [StudentController::class, 'sendEmail'])->name('students.send-email');
+    Route::post('/students/{id}/reset-password', [StudentController::class, 'resetPassword'])->name('students.reset-password');
     Route::put('/students/{id}', [StudentController::class, 'update'])->name('students.update');
     Route::delete('/students/{id}', [StudentController::class, 'destroy'])->name('students.destroy');
     Route::post('/students/bulk-delete', [StudentController::class, 'bulkDelete'])->name('students.bulk-delete');
     
     Route::get('/teachers', [TeacherController::class, 'index'])->name('teachers');
     Route::get('/teachers/data', [TeacherController::class, 'getData'])->name('teachers.data');
+    Route::get('/teachers/next-msgv', [TeacherController::class, 'nextMsgv'])->name('teachers.next-msgv');
     Route::post('/teachers', [TeacherController::class, 'store'])->name('teachers.store');
     Route::get('/teachers/{id}', [TeacherController::class, 'show'])->name('teachers.show');
-    Route::post('/teachers/{id}/send-email', [TeacherController::class, 'sendEmail'])->name('teachers.send-email');
+    Route::post('/teachers/{id}/reset-password', [TeacherController::class, 'resetPassword'])->name('teachers.reset-password');
     Route::put('/teachers/{id}', [TeacherController::class, 'update'])->name('teachers.update');
     Route::delete('/teachers/{id}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
     Route::post('/teachers/bulk-delete', [TeacherController::class, 'bulkDelete'])->name('teachers.bulk-delete');
     
     Route::get('/classes', [ClassRoomController::class, 'index'])->name('classes');
     Route::get('/classes/data', [ClassRoomController::class, 'getData'])->name('classes.data');
+    Route::get('/classes/next-ma-lop', [ClassRoomController::class, 'nextMaLop'])->name('classes.next-ma-lop');
     Route::post('/classes', [ClassRoomController::class, 'store'])->name('classes.store');
     Route::get('/classes/{id}', [ClassRoomController::class, 'show'])->name('classes.show');
     Route::put('/classes/{id}', [ClassRoomController::class, 'update'])->name('classes.update');
@@ -77,8 +81,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     Route::get('/subject-registrations', [SubjectRegistrationController::class, 'index'])->name('subject-registrations');
     Route::get('/subject-registrations/data', [SubjectRegistrationController::class, 'getData'])->name('subject-registrations.data');
+    Route::get('/subject-registrations/course-offerings/{id}/sessions', [SubjectRegistrationController::class, 'offeringSessions'])->name('subject-registrations.offering-sessions');
+    Route::post('/subject-registrations/course-offerings/{id}/reschedule-session', [SubjectRegistrationController::class, 'rescheduleSession'])->name('subject-registrations.reschedule-session');
+    Route::post('/subject-registrations/course-offerings/{id}/pause-session', [SubjectRegistrationController::class, 'pauseSession'])->name('subject-registrations.pause-session');
+    Route::post('/subject-registrations/course-offerings/{id}/unpause-session', [SubjectRegistrationController::class, 'unpauseSession'])->name('subject-registrations.unpause-session');
     Route::get('/lops', [LopController::class, 'index'])->name('lops');
     Route::get('/lops/data', [LopController::class, 'getData'])->name('lops.data');
+    Route::get('/lops/next-ma-lop', [LopController::class, 'nextMaLop'])->name('lops.next-ma-lop');
     Route::post('/lops', [LopController::class, 'store'])->name('lops.store');
     Route::post('/lops/bulk-delete', [LopController::class, 'bulkDelete'])->name('lops.bulk-delete');
     Route::get('/lops/{id}', [LopController::class, 'show'])->name('lops.show');
@@ -95,6 +104,7 @@ Route::prefix('student')->name('student.')->middleware('auth')->group(function (
     Route::get('/profile/edit', [StudentDashboardController::class, 'editProfile'])->name('profile.edit');
     Route::put('/profile', [StudentDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::get('/schedule', [StudentDashboardController::class, 'schedule'])->name('schedule');
+    Route::get('/schedule.pdf', [StudentDashboardController::class, 'schedulePdf'])->name('schedule.pdf');
     Route::get('/results', [StudentDashboardController::class, 'results'])->name('results');
     Route::get('/registration', [StudentDashboardController::class, 'registration'])->name('registration');
     Route::post('/registration/{courseOfferingId}/register', [StudentDashboardController::class, 'registerOffering'])->name('registration.register');

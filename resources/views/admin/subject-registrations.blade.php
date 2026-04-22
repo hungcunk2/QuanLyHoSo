@@ -31,6 +31,48 @@
     #createCourseOfferingModal.modal-edit .modal-body {
         max-height: 80vh;
     }
+
+    /* Reschedule modal: make schedule grid bigger/easier to click */
+    #rescheduleModal .modal-dialog {
+        max-width: 98vw;
+        width: 98vw;
+        margin: 0.75rem auto;
+    }
+    #rescheduleModal .modal-body {
+        padding: 1rem 1.25rem;
+    }
+    #rescheduleModal .modal-content {
+        min-height: calc(100vh - 1.5rem);
+    }
+    #rescheduleModal #rsGridTable th,
+    #rescheduleModal #rsGridTable td {
+        min-width: 140px;
+    }
+    #rescheduleModal #rsGridTable th:first-child,
+    #rescheduleModal #rsGridTable td:first-child {
+        min-width: 90px;
+        width: 90px;
+    }
+    #rescheduleModal #rsGridTable tbody tr {
+        height: 260px; /* bigger cells */
+    }
+    #rescheduleModal .rs-slot {
+        min-height: 9rem !important;
+        padding: 1.1rem 1.1rem !important;
+        border-radius: .65rem !important;
+    }
+    #rescheduleModal .rs-slot .fw-semibold {
+        font-size: 1.15rem;
+        line-height: 1.25;
+    }
+    #rescheduleModal .rs-slot .opacity-90 {
+        font-size: 1.02rem !important;
+        line-height: 1.3;
+        margin-top: .35rem !important;
+    }
+    #rescheduleModal .rs-slot.border-warning {
+        box-shadow: 0 0 0 .15rem rgba(255, 193, 7, .35);
+    }
 </style>
 @endpush
 
@@ -103,9 +145,17 @@
                 <input type="hidden" name="offering_id" id="offering_id" value="">
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-12">
-                            <label for="ten_hoc_phan" class="form-label">Tên học phần <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="ten_hoc_phan" name="ten_hoc_phan" required placeholder="VD: Toán cao cấp 1 - HK1 2024">
+                        <div class="col-md-6">
+                            <label for="hoc_ky" class="form-label">Học kì <span class="text-danger">*</span></label>
+                            <select class="form-select" id="hoc_ky" name="hoc_ky" required>
+                                <option value="1" selected>Học kì 1</option>
+                                <option value="2">Học kì 2</option>
+                                <option value="3">Học kì 3</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="khoa_hoc" class="form-label">Khóa học <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="khoa_hoc" name="khoa_hoc" required value="{{ now()->year }}-{{ now()->year + 1 }}">
                         </div>
                         <div class="col-md-6">
                             <label for="class_room_id" class="form-label">Phòng học <span class="text-danger">*</span></label>
@@ -124,10 +174,6 @@
                                     <option value="{{ $s->id }}">{{ $s->ma_mon_hoc }} - {{ $s->ten_mon_hoc }}</option>
                                 @endforeach
                             </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="si_so_lop" class="form-label">Sĩ số lớp <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="si_so_lop" name="si_so_lop" min="1" required placeholder="VD: 50">
                         </div>
                         <div class="col-md-6">
                             <label for="ngay_mo_dang_ky" class="form-label">Ngày bắt đầu mở đăng ký <span class="text-danger">*</span></label>
@@ -258,17 +304,18 @@
                     </template>
 
                     <hr class="my-4">
-                    <h6 class="text-primary mb-2"><i class="fas fa-flask me-1"></i> Buổi học thực hành</h6>
+                    <h6 class="text-primary mb-2"><i class="fas fa-flask me-1"></i> Nhóm học thực hành</h6>
+                    <input type="hidden" id="si_so_lop" name="si_so_lop" value="1">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-them-buoi-thuc-hanh"><i class="fas fa-plus me-1"></i> Thêm buổi thực hành</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-them-buoi-thuc-hanh"><i class="fas fa-plus me-1"></i> Thêm nhóm thực hành</button>
                         <span class="small text-muted">Môn không có thực hành có thể bỏ trống.</span>
                     </div>
                     <div id="blockThucHanh">
                         <div id="buoi-thuc-hanh-list">
                             <div class="buoi-thuc-hanh-row border rounded p-3 mb-3 bg-light">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <span class="small fw-bold text-secondary">Buổi TH 1</span>
-                                    <button type="button" class="btn btn-sm btn-outline-danger remove-buoi-th d-none" title="Xóa buổi này"><i class="fas fa-times"></i></button>
+                                    <span class="small fw-bold text-secondary">Nhóm TH 1</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-buoi-th d-none" title="Xóa nhóm này"><i class="fas fa-times"></i></button>
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-4">
@@ -286,6 +333,15 @@
                                             <option value="">-- Chọn giáo viên --</option>
                                             @foreach($teachers ?? [] as $t)
                                                 <option value="{{ $t->id }}">{{ $t->msgv }} - {{ $t->ho_ten }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Phòng học (Thực hành)</label>
+                                        <select class="form-select" name="class_room_id_thuc_hanh[]">
+                                            <option value="">-- Chọn phòng --</option>
+                                            @foreach($classes ?? [] as $c)
+                                                <option value="{{ $c->id }}">{{ $c->ma_lop }} - {{ $c->ten_lop }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -314,14 +370,18 @@
                                         <label class="form-label">Thi TH vào buổi thứ mấy</label>
                                         <input type="number" class="form-control" name="ngay_thi_thuc_hanh_buoi_thu[]" min="1" placeholder="VD: 3">
                                     </div>
+                                    <div class="col-md-4 mt-2">
+                                        <label class="form-label">Sĩ số</label>
+                                        <input type="number" class="form-control" name="si_so_thuc_hanh[]" min="1" placeholder="VD: 25">
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <template id="tpl-buoi-thuc-hanh">
                             <div class="buoi-thuc-hanh-row border rounded p-3 mb-3 bg-light">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <span class="small fw-bold text-secondary buoi-th-label">Buổi TH 2</span>
-                                    <button type="button" class="btn btn-sm btn-outline-danger remove-buoi-th" title="Xóa buổi này"><i class="fas fa-times"></i></button>
+                                    <span class="small fw-bold text-secondary buoi-th-label">Nhóm TH 2</span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-buoi-th" title="Xóa nhóm này"><i class="fas fa-times"></i></button>
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-4">
@@ -343,6 +403,15 @@
                                         </select>
                                     </div>
                                     <div class="col-md-4">
+                                        <label class="form-label">Phòng học (Thực hành)</label>
+                                        <select class="form-select" name="class_room_id_thuc_hanh[]">
+                                            <option value="">-- Chọn phòng --</option>
+                                            @foreach($classes ?? [] as $c)
+                                                <option value="{{ $c->id }}">{{ $c->ma_lop }} - {{ $c->ten_lop }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
                                         <label class="form-label">Tiết (3 tiết liên tiếp)</label>
                                         <div class="mb-2">
                                             <div class="btn-group btn-group-sm flex-wrap" role="group">
@@ -360,6 +429,10 @@
                                         <label class="form-label">Thi TH vào buổi thứ mấy</label>
                                         <input type="number" class="form-control" name="ngay_thi_thuc_hanh_buoi_thu[]" min="1" placeholder="VD: 3">
                                     </div>
+                                    <div class="col-md-4 mt-2">
+                                        <label class="form-label">Sĩ số</label>
+                                        <input type="number" class="form-control" name="si_so_thuc_hanh[]" min="1" placeholder="VD: 25">
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -370,6 +443,124 @@
                     <button type="submit" class="btn btn-primary" id="submitCourseOfferingBtn">Tạo học phần</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Dời lịch -->
+<div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rescheduleModalLabel">Dời lịch học phần</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2 fw-bold" id="rsOfferingName"></div>
+                <div class="small text-muted mb-3" id="rsOfferingMeta"></div>
+
+                <div class="row g-3">
+                    <div class="col-lg-7">
+                        <div class="border rounded">
+                            <div class="p-2 border-bottom bg-light d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                <div class="small fw-bold">Lịch tuần (bấm vào buổi cần dời)</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="rsPrevWeek">&lt; Tuần trước</button>
+                                    <div class="small text-muted" id="rsWeekLabel"></div>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="rsNextWeek">Tuần sau &gt;</button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0 text-center align-middle" id="rsGridTable">
+                                    <thead>
+                                        <tr style="background-color:#F3F7F9;">
+                                            <th style="width:80px;">Ca</th>
+                                            <th class="rs-day-head" data-d="0">Thứ 2</th>
+                                            <th class="rs-day-head" data-d="1">Thứ 3</th>
+                                            <th class="rs-day-head" data-d="2">Thứ 4</th>
+                                            <th class="rs-day-head" data-d="3">Thứ 5</th>
+                                            <th class="rs-day-head" data-d="4">Thứ 6</th>
+                                            <th class="rs-day-head" data-d="5">Thứ 7</th>
+                                            <th class="rs-day-head" data-d="6">CN</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr data-session="morning">
+                                            <th class="text-start ps-3 align-top pt-3" style="background-color: rgb(255,255,206);">Sáng</th>
+                                            @for($i=0;$i<7;$i++) <td class="align-top p-2 rs-cell" data-d="{{ $i }}"></td> @endfor
+                                        </tr>
+                                        <tr data-session="afternoon">
+                                            <th class="text-start ps-3 align-top pt-3" style="background-color: rgb(255,255,206);">Chiều</th>
+                                            @for($i=0;$i<7;$i++) <td class="align-top p-2 rs-cell" data-d="{{ $i }}"></td> @endfor
+                                        </tr>
+                                        <tr data-session="evening">
+                                            <th class="text-start ps-3 align-top pt-3" style="background-color: rgb(255,255,206);">Tối</th>
+                                            @for($i=0;$i<7;$i++) <td class="align-top p-2 rs-cell" data-d="{{ $i }}"></td> @endfor
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="px-3 py-2 border-top bg-white small">
+                                <span class="badge" style="background-color:#3498db;color:#fff;">&nbsp;</span> LT
+                                <span class="badge ms-3" style="background-color:#27ae60;color:#fff;">&nbsp;</span> TH
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="border rounded p-3">
+                            <div class="fw-bold mb-2">Thao tác</div>
+                            <div class="small text-muted mb-2">Chọn 1 buổi ở bảng bên trái để dời.</div>
+
+                            <input type="hidden" id="rsOfferingId" value="">
+                            <input type="hidden" id="rsSessionKey" value="">
+                            <input type="hidden" id="rsDateOld" value="">
+
+                            <div class="mb-2">
+                                <div class="small fw-bold">Buổi đang chọn</div>
+                                <div id="rsSelectedLabel" class="text-muted small">—</div>
+                            </div>
+
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small mb-1">Ngày dời (cố định)</label>
+                                    <input type="date" class="form-control form-control-sm" id="rsDateNew">
+                                    <div class="small text-muted mt-1" id="rsDateNewHint"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small mb-1">Tiết mới</label>
+                                    <input type="text" class="form-control form-control-sm" id="rsTiet" placeholder="VD: 10,11,12">
+                                </div>
+                            </div>
+
+                            <div class="mt-2">
+                                <div class="btn-group btn-group-sm flex-wrap" role="group">
+                                    <button type="button" class="btn btn-outline-secondary rs-quick" data-start="1">1-3</button>
+                                    <button type="button" class="btn btn-outline-secondary rs-quick" data-start="4">4-6</button>
+                                    <button type="button" class="btn btn-outline-secondary rs-quick" data-start="7">7-9</button>
+                                    <button type="button" class="btn btn-outline-secondary rs-quick" data-start="10">10-12</button>
+                                    <button type="button" class="btn btn-outline-secondary rs-quick" data-start="13">13-15</button>
+                                </div>
+                            </div>
+
+                            <div class="text-danger small mt-2 d-none" id="rsError"></div>
+                            <div class="mt-3 d-grid">
+                                <button type="button" class="btn btn-warning" id="btnSaveReschedule">
+                                    Lưu dời lịch
+                                </button>
+                                <button type="button" class="btn btn-outline-danger mt-2" id="btnForceReschedule">
+                                    Ép lịch
+                                </button>
+                                <button type="button" class="btn btn-danger mt-2" id="btnPauseSession">
+                                    Tạm ngưng buổi này
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary mt-2 d-none" id="btnUnpauseSession">
+                                    Bỏ tạm ngưng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -615,12 +806,12 @@
             }
         });
 
-        // Thêm buổi thực hành
+        // Thêm nhóm thực hành
         $('#btn-them-buoi-thuc-hanh').on('click', function() {
             var tpl = document.getElementById('tpl-buoi-thuc-hanh');
             var clone = $(tpl.content.cloneNode(true));
             var rowNum = $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').length;
-            clone.find('.buoi-th-label').text('Buổi TH ' + (rowNum + 1));
+            clone.find('.buoi-th-label').text('Nhóm TH ' + (rowNum + 1));
             var cbHtml = '';
             for (var i = 1; i <= 16; i++) {
                 cbHtml += '<div class="form-check form-check-inline"><input class="form-check-input tiet-thuc-hanh" type="checkbox" value="' + i + '" id="th_' + rowNum + '_' + i + '"><label class="form-check-label small" for="th_' + rowNum + '_' + i + '">T' + i + '</label></div>';
@@ -628,7 +819,7 @@
             clone.find('.tiet-th-checkboxes').html(cbHtml);
             $('#buoi-thuc-hanh-list').append(clone);
             $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').each(function(i) {
-                $(this).find('.buoi-th-label').first().text('Buổi TH ' + (i + 1));
+                $(this).find('.buoi-th-label').first().text('Nhóm TH ' + (i + 1));
             });
             $('#buoi-thuc-hanh-list .remove-buoi-th').removeClass('d-none');
         });
@@ -636,7 +827,7 @@
             if ($('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').length <= 1) return;
             $(this).closest('.buoi-thuc-hanh-row').remove();
             $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').each(function(i) {
-                $(this).find('.buoi-th-label').first().text('Buổi TH ' + (i + 1));
+                $(this).find('.buoi-th-label').first().text('Nhóm TH ' + (i + 1));
             });
             if ($('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').length === 1) {
                 $('#buoi-thuc-hanh-list .remove-buoi-th').addClass('d-none');
@@ -648,6 +839,8 @@
             $('#createCourseOfferingModal').removeClass('modal-edit');
             $('#createCourseOfferingModalLabel').text('Tạo học phần mới');
             $('#submitCourseOfferingBtn').text('Tạo học phần');
+            $('#hoc_ky').val('1');
+            $('#khoa_hoc').val('{{ now()->year }}-{{ now()->year + 1 }}');
         });
 
         // Chỉnh sửa học phần
@@ -661,10 +854,13 @@
                 url: '{{ url("admin/course-offerings") }}/' + id,
                 type: 'GET',
                 success: function(res) {
-                    $('#ten_hoc_phan').val(res.ten_hoc_phan);
+                    $('#hoc_ky').val((res.hoc_ky || '1').toString());
+                    $('#khoa_hoc').val(res.khoa_hoc || '{{ now()->year }}-{{ now()->year + 1 }}');
                     $('#class_room_id').val(res.class_room_id);
+                    var thRooms = res.class_room_id_thuc_hanh || [];
                     $('#subject_id').val(res.subject_id);
-                    $('#si_so_lop').val(res.si_so_lop);
+                    var thSizes = res.si_so_thuc_hanh || [];
+                    $('#si_so_lop').val(res.si_so_lop || 1);
                     $('#ngay_mo_dang_ky').val(res.ngay_mo_dang_ky);
                     $('#ngay_ket_thuc_dang_ky').val(res.ngay_ket_thuc_dang_ky);
                     $('#ngay_bat_dau_hoc').val(res.ngay_bat_dau_hoc);
@@ -712,7 +908,9 @@
                         var rowTh = $(this);
                         rowTh.find('select[name="thu_thuc_hanh[]"]').val(thuTh[idx] || '');
                         rowTh.find('select[name="teacher_id_thuc_hanh[]"]').val(gvTh[idx] || '');
+                        rowTh.find('select[name="class_room_id_thuc_hanh[]"]').val(thRooms[idx] || '');
                         rowTh.find('input[name="ngay_thi_thuc_hanh_buoi_thu[]"]').val(thiTh[idx] || '');
+                        rowTh.find('input[name="si_so_thuc_hanh[]"]').val(thSizes[idx] || '');
                         var tietStrTh = (tietTh[idx] || '').toString();
                         rowTh.find('.tiet-thuc-hanh').prop('checked', false);
                         if (tietStrTh) {
@@ -720,7 +918,7 @@
                                 rowTh.find('.tiet-thuc-hanh[value="' + t.trim() + '"]').prop('checked', true);
                             });
                         }
-                        rowTh.find('.buoi-th-label').first().text('Buổi TH ' + (idx + 1));
+                        rowTh.find('.buoi-th-label').first().text('Nhóm TH ' + (idx + 1));
                     });
                     if (thuTh.length > 1) $('#buoi-thuc-hanh-list .remove-buoi-th').removeClass('d-none');
                     syncAllTietLyThuyet();
@@ -767,6 +965,16 @@
             e.preventDefault();
             syncAllTietLyThuyet();
             syncAllTietThucHanh();
+            // si_so_lop = tổng sĩ số các nhóm TH (nếu có), fallback 1 để pass validate
+            var total = 0;
+            $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').each(function() {
+                var thu = $(this).find('select[name="thu_thuc_hanh[]"]').val();
+                var tiet = $(this).find('.tiet-th-hidden').val();
+                if (!thu || !tiet) return;
+                var n = parseInt($(this).find('input[name="si_so_thuc_hanh[]"]').val() || '0', 10);
+                if (!isNaN(n)) total += n;
+            });
+            $('#si_so_lop').val(total > 0 ? total : 1);
             var invalidLt = false;
             $('#buoi-ly-thuyet-list .buoi-ly-thuyet-row').each(function(i) {
                 if (!$(this).find('.tiet-lt-hidden').val()) {
@@ -821,6 +1029,321 @@
                         msg = Object.values(errors).flat().join('\n');
                     }
                     alert(msg);
+                }
+            });
+        });
+
+        // ===== Dời lịch =====
+        function fmtDate(iso) {
+            if (!iso) return '';
+            var p = String(iso).split('-');
+            if (p.length !== 3) return String(iso);
+            return p[2] + '/' + p[1] + '/' + p[0];
+        }
+        function weekdayLabelFromThuVn(thu) {
+            var m = {2:'Thứ 2',3:'Thứ 3',4:'Thứ 4',5:'Thứ 5',6:'Thứ 6',7:'Thứ 7',8:'Chủ nhật'};
+            return m[thu] || ('Thứ ' + thu);
+        }
+        function thuVnFromIsoDate(iso) {
+            if (!iso) return null;
+            var d = new Date(iso + 'T00:00:00');
+            var dow = d.getDay(); // 0..6 (Sun..Sat)
+            return dow === 0 ? 8 : (dow + 1);
+        }
+        function minPeriodFromTiet(tiet) {
+            if (!tiet) return null;
+            var parts = String(tiet).split(',');
+            for (var i=0;i<parts.length;i++){
+                var n = parseInt(String(parts[i]).trim(), 10);
+                if (!isNaN(n) && n >= 1 && n <= 16) return n;
+            }
+            return null;
+        }
+        function sessionKeyFromMinPeriod(p) {
+            if (!p) return 'morning';
+            if (p <= 6) return 'morning';
+            if (p <= 12) return 'afternoon';
+            return 'evening';
+        }
+        function dIndexFromThuVn(thu) {
+            // 2..8 => 0..6 (Mon..Sun)
+            if (thu === 8) return 6;
+            return Math.max(0, Math.min(6, (thu - 2)));
+        }
+        function renderRescheduleGrid(sessions) {
+            $('#rsGridTable .rs-cell').empty();
+            (sessions || []).forEach(function(s){
+                var p = minPeriodFromTiet(s.tiet);
+                var bucket = sessionKeyFromMinPeriod(p);
+                var d = dIndexFromThuVn(parseInt(s.thu, 10));
+                var cell = $('#rsGridTable tbody tr[data-session="'+bucket+'"]').find('.rs-cell[data-d="'+d+'"]');
+                var color = s.loai === 'ly_thuyet' ? '#3498db' : (s.loai === 'tam_ngung' ? '#e74c3c' : '#27ae60');
+                var html = $('<div/>', {
+                    class: 'rs-slot mb-2 px-3 py-3 rounded-2 text-white text-start shadow-sm',
+                    css: { backgroundColor: color, minHeight: '4.75rem', cursor: 'pointer' },
+                    'data-session-key': s.key,
+                    'data-date': s.date || '',
+                    'data-thu': s.thu,
+                    'data-tiet': s.tiet,
+                    'data-label': s.label,
+                });
+                html.append($('<div/>', { class: 'fw-semibold', text: s.label }));
+                var meta = (s.room ? (s.room + ' · ') : '') + 'Tiết ' + (s.tiet || '') + (s.teacher ? (' · ' + s.teacher) : '');
+                if (s.moved_from) {
+                    meta += ' · dời từ ' + s.moved_from;
+                }
+                html.append($('<div/>', { class: 'opacity-90 mt-1', css: { fontSize: '0.875rem' }, text: meta }));
+                cell.append(html);
+            });
+        }
+
+        var rescheduleModal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
+        var currentSessions = [];
+        var offeringStart = null;
+        var offeringEnd = null;
+        var rsCurrentDate = null; // ISO date inside the week being displayed
+
+        function addDaysIso(iso, days) {
+            var d = new Date(String(iso) + 'T00:00:00');
+            d.setDate(d.getDate() + days);
+            return d.toISOString().slice(0,10);
+        }
+        function startOfWeekIso(iso) {
+            var d = new Date(String(iso) + 'T00:00:00'); // local-ish
+            var dow = d.getDay(); // 0..6 (Sun..Sat)
+            var diff = (dow === 0 ? -6 : (1 - dow)); // Monday start
+            d.setDate(d.getDate() + diff);
+            return d.toISOString().slice(0,10);
+        }
+        function renderWeekHeader(weekStartIso) {
+            var ws = new Date(String(weekStartIso) + 'T00:00:00');
+            var days = [];
+            for (var i=0;i<7;i++){
+                var d = new Date(ws);
+                d.setDate(ws.getDate() + i);
+                days.push(d.toISOString().slice(0,10));
+            }
+            $('#rsGridTable thead .rs-day-head').each(function(){
+                var idx = parseInt($(this).data('d'), 10);
+                var iso = days[idx];
+                var label = idx === 6 ? 'CN' : ('Thứ ' + (idx + 2));
+                $(this).html('<div class="fw-bold text-primary">'+label+'</div><div class="fw-bold text-primary">'+fmtDate(iso)+'</div>');
+            });
+            var we = days[6];
+            $('#rsWeekLabel').text(fmtDate(days[0]) + ' → ' + fmtDate(we));
+        }
+
+        function loadRescheduleWeek(offeringId, dateIso) {
+            var sessionsUrl = '{{ route("admin.subject-registrations.offering-sessions", ["id" => "__ID__"]) }}'
+                .replace('__ID__', String(offeringId))
+                + '?date=' + encodeURIComponent(dateIso);
+            return $.get(sessionsUrl, function(resp){
+                var offering = resp.offering || {};
+                currentSessions = resp.sessions || [];
+                $('#rsOfferingName').text(offering.ten_hoc_phan || '—');
+                var meta = [offering.subject, offering.class, ('Học: ' + (offering.date_range || '—'))].filter(Boolean).join(' · ');
+                $('#rsOfferingMeta').text(meta);
+                offeringStart = offering.start_date || null;
+                offeringEnd = offering.end_date || null;
+
+                // date constraints for date_new
+                var today = new Date();
+                today.setDate(today.getDate() + 1);
+                var minIso = today.toISOString().slice(0,10);
+                if (offeringStart && offeringStart > minIso) minIso = offeringStart;
+                $('#rsDateNew').attr('min', minIso);
+                if (offeringEnd) $('#rsDateNew').attr('max', offeringEnd);
+                $('#rsDateNewHint').text(offeringEnd ? ('Chỉ chọn từ ' + fmtDate(minIso) + ' đến ' + fmtDate(offeringEnd)) : ('Chỉ chọn từ ' + fmtDate(minIso)));
+
+                var weekStartIso = resp.week_start || startOfWeekIso(dateIso);
+                renderWeekHeader(weekStartIso);
+                renderRescheduleGrid(currentSessions);
+            });
+        }
+
+        $(document).on('click', '.reschedule-offering-btn', function() {
+            var id = $(this).data('id');
+            $('#rsOfferingId').val(id);
+            $('#rsSessionKey').val('');
+            $('#rsDateOld').val('');
+            $('#rsSelectedLabel').text('—');
+            $('#rsTiet').val('');
+            $('#rsError').addClass('d-none').text('');
+            $('#btnUnpauseSession').addClass('d-none');
+            $('#btnSaveReschedule').prop('disabled', false);
+            $('#btnForceReschedule').prop('disabled', false);
+            $('#btnPauseSession').prop('disabled', false);
+
+            rsCurrentDate = new Date().toISOString().slice(0,10);
+            $('#rsDateNew').val('');
+            loadRescheduleWeek(id, rsCurrentDate).done(function(){
+                rescheduleModal.show();
+            }).fail(function(){
+                alert('Không tải được lịch học phần.');
+            });
+        });
+
+        $('#rsPrevWeek').on('click', function () {
+            var offeringId = $('#rsOfferingId').val();
+            if (!offeringId) return;
+            rsCurrentDate = addDaysIso(rsCurrentDate || new Date().toISOString().slice(0,10), -7);
+            $('#rsSessionKey').val('');
+            $('#rsDateOld').val('');
+            $('#rsSelectedLabel').text('—');
+            $('#rsError').addClass('d-none').text('');
+            loadRescheduleWeek(offeringId, rsCurrentDate);
+        });
+        $('#rsNextWeek').on('click', function () {
+            var offeringId = $('#rsOfferingId').val();
+            if (!offeringId) return;
+            rsCurrentDate = addDaysIso(rsCurrentDate || new Date().toISOString().slice(0,10), 7);
+            $('#rsSessionKey').val('');
+            $('#rsDateOld').val('');
+            $('#rsSelectedLabel').text('—');
+            $('#rsError').addClass('d-none').text('');
+            loadRescheduleWeek(offeringId, rsCurrentDate);
+        });
+
+        $(document).on('click', '.rs-slot', function() {
+            var key = String($(this).data('session-key') || '');
+            $('.rs-slot').removeClass('border border-3 border-warning');
+            $(this).addClass('border border-3 border-warning');
+            var dateOld = $(this).data('date') || '';
+            $('#rsDateOld').val(String(dateOld || ''));
+            var thu = parseInt($(this).data('thu'), 10);
+            var tiet = $(this).data('tiet');
+            var label = $(this).data('label');
+            $('#rsSessionKey').val(key);
+            var thuLabel = weekdayLabelFromThuVn(thu);
+            $('#rsSelectedLabel').text(label + (dateOld ? (' (' + thuLabel + ' · ' + fmtDate(dateOld) + ', tiết ' + tiet + ')') : (' (' + thuLabel + ', tiết ' + tiet + ')')));
+            $('#rsTiet').val(String(tiet || ''));
+            $('#rsError').addClass('d-none').text('');
+
+            var isPause = key.startsWith('pause_');
+            $('#btnUnpauseSession').toggleClass('d-none', !isPause);
+            $('#btnSaveReschedule').prop('disabled', isPause);
+            $('#btnForceReschedule').prop('disabled', isPause);
+            $('#btnPauseSession').prop('disabled', isPause);
+        });
+
+        $(document).on('click', '.rs-quick', function() {
+            var start = parseInt($(this).data('start'), 10);
+            var arr = [start, start+1, start+2].filter(function(x){ return x <= 16; });
+            $('#rsTiet').val(arr.join(','));
+        });
+
+        function doReschedule(force) {
+            var offeringId = $('#rsOfferingId').val();
+            var sessionKey = $('#rsSessionKey').val();
+            var dateOld = $('#rsDateOld').val();
+            var dateNew = $('#rsDateNew').val();
+            var tiet = ($('#rsTiet').val() || '').trim();
+            if (!sessionKey) {
+                $('#rsError').removeClass('d-none').text('Bạn chưa chọn buổi cần dời.');
+                return;
+            }
+            if (!dateOld) {
+                $('#rsError').removeClass('d-none').text('Không xác định được ngày của buổi cũ.');
+                return;
+            }
+            if (!dateNew) {
+                $('#rsError').removeClass('d-none').text('Vui lòng chọn ngày dời (cố định).');
+                return;
+            }
+            if (!tiet) {
+                $('#rsError').removeClass('d-none').text('Vui lòng nhập tiết mới.');
+                return;
+            }
+            $.ajax({
+                url: '{{ route("admin.subject-registrations.reschedule-session", ["id" => "__ID__"]) }}'.replace('__ID__', String(offeringId)),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    session_key: sessionKey,
+                    date_old: dateOld,
+                    date_new: dateNew,
+                    tiet: tiet,
+                    force: force ? 1 : 0
+                },
+                success: function(resp){
+                    rescheduleModal.hide();
+                    table.ajax.reload(null, false);
+                },
+                error: function(xhr){
+                    var msg = 'Không dời được lịch.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                    $('#rsError').removeClass('d-none').text(msg);
+                }
+            });
+        }
+
+        $('#btnSaveReschedule').on('click', function() { doReschedule(false); });
+        $('#btnForceReschedule').on('click', function() { doReschedule(true); });
+
+        $('#btnPauseSession').on('click', function () {
+            var offeringId = $('#rsOfferingId').val();
+            var sessionKey = $('#rsSessionKey').val();
+            if (!sessionKey) {
+                $('#rsError').removeClass('d-none').text('Bạn chưa chọn buổi cần tạm ngưng.');
+                return;
+            }
+            var dateOld = $('#rsDateOld').val();
+            if (!dateOld) {
+                $('#rsError').removeClass('d-none').text('Không xác định được ngày của buổi cần tạm ngưng.');
+                return;
+            }
+            if (String(sessionKey).startsWith('pause_')) {
+                $('#rsError').removeClass('d-none').text('Buổi này đã là tạm ngưng.');
+                return;
+            }
+            if (!confirm('Tạm ngưng buổi này? Buổi học sẽ bị hủy và hiển thị màu đỏ.')) {
+                return;
+            }
+            $.ajax({
+                url: '{{ route("admin.subject-registrations.pause-session", ["id" => "__ID__"]) }}'.replace('__ID__', String(offeringId)),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    session_key: sessionKey,
+                    date_old: dateOld
+                },
+                success: function () {
+                    rescheduleModal.hide();
+                    table.ajax.reload(null, false);
+                },
+                error: function (xhr) {
+                    var msg = 'Không tạm ngưng được.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                    $('#rsError').removeClass('d-none').text(msg);
+                }
+            });
+        });
+
+        $('#btnUnpauseSession').on('click', function () {
+            var offeringId = $('#rsOfferingId').val();
+            var key = $('#rsSessionKey').val();
+            if (!key || !String(key).startsWith('pause_')) {
+                $('#rsError').removeClass('d-none').text('Hãy chọn 1 buổi tạm ngưng (màu đỏ) để bỏ.');
+                return;
+            }
+            if (!confirm('Bỏ tạm ngưng buổi này?')) {
+                return;
+            }
+            $.ajax({
+                url: '{{ route("admin.subject-registrations.unpause-session", ["id" => "__ID__"]) }}'.replace('__ID__', String(offeringId)),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    pause_key: key
+                },
+                success: function () {
+                    rescheduleModal.hide();
+                    table.ajax.reload(null, false);
+                },
+                error: function (xhr) {
+                    var msg = 'Không bỏ tạm ngưng được.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                    $('#rsError').removeClass('d-none').text(msg);
                 }
             });
         });

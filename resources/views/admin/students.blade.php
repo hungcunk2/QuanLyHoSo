@@ -36,14 +36,24 @@
                     </form>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="d-flex align-items-center gap-3 justify-content-end">
-                    <div class="d-flex justify-content-end">
-                        <div class="input-group input-group-search ms-2">
-                            <span class="input-group-text" id="addon-wrapping"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control dt-search" placeholder="Search..." 
-                                aria-label="Search" aria-describedby="addon-wrapping" aria-controls="studentsTable">
+            <div class="col-md-6 col-lg-8 col-xl-9">
+                <div class="d-flex flex-wrap align-items-end gap-2 justify-content-md-end">
+                    <div class="flex-grow-1" style="min-width: 200px; max-width: 280px;">
+                        <label for="filter-ho-ten" class="form-label small mb-1 text-muted">Tìm theo tên</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" class="form-control" id="filter-ho-ten" placeholder="Nhập họ và tên..."
+                                aria-controls="studentsTable" autocomplete="off">
                         </div>
+                    </div>
+                    <div style="min-width: 220px; max-width: 320px;">
+                        <label for="filter-lop" class="form-label small mb-1 text-muted">Lớp</label>
+                        <select class="form-select form-select-sm" id="filter-lop" aria-controls="studentsTable">
+                            <option value="">Tất cả lớp</option>
+                            @foreach($lops ?? [] as $lopItem)
+                                <option value="{{ $lopItem->ma_lop }}">{{ $lopItem->ma_lop }} — {{ $lopItem->ten_lop }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>
@@ -85,8 +95,8 @@
                     <h6 class="text-muted border-bottom pb-1 mb-2">Thông tin học vấn</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="create_mssv" class="form-label">MSSV <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="create_mssv" name="mssv" required>
+                            <label for="create_mssv" class="form-label">MSSV</label>
+                            <input type="text" class="form-control" id="create_mssv" name="mssv">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="create_ho_ten" class="form-label">Họ và tên <span class="text-danger">*</span></label>
@@ -136,7 +146,11 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="create_co_so" class="form-label">Cơ sở</label>
-                            <input type="text" class="form-control" id="create_co_so" name="co_so">
+                            <select class="form-select" id="create_co_so" name="co_so">
+                                @foreach(\App\Models\Student::coSoOptions() as $coSo)
+                                    <option value="{{ $coSo }}" @selected($coSo === 'Cơ sở Hồ Chí Minh')>{{ $coSo }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     <div class="row">
@@ -165,7 +179,7 @@
                             <label for="create_khoa" class="form-label">Khoa</label>
                             <select class="form-select" id="create_khoa" name="khoa">
                                 <option value="">-- Chọn --</option>
-                                <option value="Khoa Công nghệ Thông tin">Khoa Công nghệ Thông tin</option>
+                                <option value="Khoa Công nghệ Thông tin" selected>Khoa Công nghệ Thông tin</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -189,7 +203,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="create_khoa_hoc" class="form-label">Khóa học</label>
-                            <input type="text" class="form-control" id="create_khoa_hoc" name="khoa_hoc" placeholder="VD: 2020 - 2021">
+                            <input type="text" class="form-control" id="create_khoa_hoc" name="khoa_hoc" value="{{ now()->year }}-{{ now()->year + 1 }}">
                         </div>
                     </div>
                     <div class="row">
@@ -273,7 +287,12 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="edit_co_so" class="form-label">Cơ sở</label>
-                            <input type="text" class="form-control" id="edit_co_so" name="co_so">
+                            <select class="form-select" id="edit_co_so" name="co_so">
+                                <option value="">-- Chọn --</option>
+                                @foreach(\App\Models\Student::coSoOptions() as $coSo)
+                                    <option value="{{ $coSo }}">{{ $coSo }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     <div class="row">
@@ -399,6 +418,38 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Reset Password -->
+<div class="modal fade" id="resetStudentPasswordModal" tabindex="-1" aria-labelledby="resetStudentPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetStudentPasswordModalLabel">Đổi mật khẩu học sinh</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="resetStudentPasswordForm">
+                <div class="modal-body">
+                    <input type="hidden" id="reset_student_id" name="id">
+                    <div class="mb-2">
+                        <div><strong>MSSV:</strong> <span id="reset_student_mssv"></span></div>
+                        <div><strong>Email:</strong> <span id="reset_student_email"></span></div>
+                    </div>
+                    <div class="alert alert-warning mb-3">
+                        <small>Hệ thống sẽ đổi mật khẩu và gửi email thông báo mật khẩu mới cho học sinh.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reset_student_password" class="form-label">Mật khẩu mới <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="reset_student_password" name="password" required minlength="6" autocomplete="new-password">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning" id="resetStudentPasswordSubmitBtn">Đổi mật khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -425,11 +476,13 @@
         var table = $('#studentsTable').DataTable({
             processing: true,
             serverSide: true,
+            searching: false,
             ajax: {
                 url: '{{ route("admin.students.data") }}',
                 type: 'GET',
                 data: function(d) {
-                    d.search = $('.dt-search').val();
+                    d.filter_ho_ten = $('#filter-ho-ten').val();
+                    d.filter_lop = $('#filter-lop').val();
                 }
             },
             columns: [
@@ -492,8 +545,16 @@
             dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">'
         });
         
-        $('.dt-search').on('keyup', function() {
-            table.search(this.value).draw();
+        var filterHoTenTimer = null;
+        $('#filter-ho-ten').on('keyup input', function() {
+            clearTimeout(filterHoTenTimer);
+            filterHoTenTimer = setTimeout(function() {
+                table.draw();
+            }, 300);
+        });
+
+        $('#filter-lop').on('change', function() {
+            table.draw();
         });
 
         table.on('draw', function() {
@@ -548,6 +609,28 @@
         // Reset create form when modal is closed
         $('#createStudentModal').on('hidden.bs.modal', function() {
             $('#createStudentForm')[0].reset();
+        });
+
+        $('#createStudentModal').on('shown.bs.modal', function() {
+            const $mssv = $('#create_mssv');
+            if ($mssv.val()) return;
+            $.ajax({
+                url: '{{ route("admin.students.next-mssv") }}',
+                type: 'GET',
+                success: function(res) {
+                    if (res?.next_mssv) $mssv.val(res.next_mssv);
+                }
+            });
+
+            const $maHoSo = $('#create_ma_ho_so');
+            if ($maHoSo.val()) return;
+            $.ajax({
+                url: '{{ route("admin.students.next-ma-ho-so") }}',
+                type: 'GET',
+                success: function(res) {
+                    if (res?.next_ma_ho_so) $maHoSo.val(res.next_ma_ho_so);
+                }
+            });
         });
 
         // Create form submit
@@ -663,37 +746,47 @@
             });
         });
 
-        // Send email button click
-        $(document).on('click', '.send-email-btn', function() {
-            var studentId = $(this).data('id');
-            var studentEmail = $(this).data('email');
-            
-            if (!studentEmail) {
-                alert('Học sinh này chưa có email!');
-                return;
-            }
-            
-            if (!confirm('Bạn có chắc muốn gửi email chào mừng đến ' + studentEmail + '?')) {
-                return;
-            }
-            
-            var btn = $(this);
-            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
-            
+        // Reset password button click
+        $(document).on('click', '.reset-password-btn', function() {
+            const studentId = $(this).data('id');
+            const email = $(this).data('email') || '';
+            const mssv = $(this).data('mssv') || '';
+
+            $('#reset_student_id').val(studentId);
+            $('#reset_student_email').text(email || '(chưa có email)');
+            $('#reset_student_mssv').text(mssv);
+            $('#reset_student_password').val('');
+
+            new bootstrap.Modal(document.getElementById('resetStudentPasswordModal')).show();
+        });
+
+        // Reset password submit
+        $('#resetStudentPasswordForm').on('submit', function(e) {
+            e.preventDefault();
+            const studentId = $('#reset_student_id').val();
+            const password = $('#reset_student_password').val();
+            if (!studentId) return;
+
+            const btn = $('#resetStudentPasswordSubmitBtn');
+            btn.prop('disabled', true).text('Đang đổi...');
+
             $.ajax({
-                url: '{{ url("admin/students") }}/' + studentId + '/send-email',
+                url: '{{ url("admin/students") }}/' + studentId + '/reset-password',
                 type: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    btn.prop('disabled', false).html('<i class="fas fa-envelope"></i>');
-                    alert(response.message || 'Email đã được gửi thành công!');
+                data: { password },
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function(res) {
+                    btn.prop('disabled', false).text('Đổi mật khẩu');
+                    bootstrap.Modal.getInstance(document.getElementById('resetStudentPasswordModal')).hide();
+                    alert(res.message || 'Đổi mật khẩu thành công!');
                 },
                 error: function(xhr) {
-                    btn.prop('disabled', false).html('<i class="fas fa-envelope"></i>');
-                    var errorMsg = xhr.responseJSON?.message || 'Không thể gửi email!';
-                    alert(errorMsg);
+                    btn.prop('disabled', false).text('Đổi mật khẩu');
+                    const msg =
+                        xhr.responseJSON?.errors?.password?.[0] ||
+                        xhr.responseJSON?.message ||
+                        'Không thể đổi mật khẩu!';
+                    alert(msg);
                 }
             });
         });

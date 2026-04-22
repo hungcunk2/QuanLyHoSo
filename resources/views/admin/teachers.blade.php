@@ -36,14 +36,24 @@
                     </form>
                 </div>
             </div>
-            <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="d-flex align-items-center gap-3 justify-content-end">
-                    <div class="d-flex justify-content-end">
-                        <div class="input-group input-group-search ms-2">
-                            <span class="input-group-text" id="addon-wrapping"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control dt-search" placeholder="Search..." 
-                                aria-label="Search" aria-describedby="addon-wrapping" aria-controls="teachersTable">
+            <div class="col-md-6 col-lg-8 col-xl-9">
+                <div class="d-flex flex-wrap align-items-end gap-2 justify-content-md-end">
+                    <div class="flex-grow-1" style="min-width: 200px; max-width: 280px;">
+                        <label for="filter-ho-ten" class="form-label small mb-1 text-muted">Tìm theo tên</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" class="form-control" id="filter-ho-ten" placeholder="Nhập họ và tên..."
+                                aria-controls="teachersTable" autocomplete="off">
                         </div>
+                    </div>
+                    <div style="min-width: 220px; max-width: 280px;">
+                        <label for="filter-chuyen-mon" class="form-label small mb-1 text-muted">Chuyên môn</label>
+                        <select class="form-select form-select-sm" id="filter-chuyen-mon" aria-controls="teachersTable">
+                            <option value="">Tất cả chuyên môn</option>
+                            @foreach (\App\Models\Teacher::chuyenMonOptions() as $chuyenMon)
+                                <option value="{{ $chuyenMon }}">{{ $chuyenMon }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>
@@ -84,8 +94,8 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="create_msgv" class="form-label">Mã số giáo viên <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="create_msgv" name="msgv" required>
+                            <label for="create_msgv" class="form-label">Mã số giáo viên</label>
+                            <input type="text" class="form-control" id="create_msgv" name="msgv">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="create_email" class="form-label">Email <span class="text-danger">*</span></label>
@@ -99,7 +109,12 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="create_chuyen_mon" class="form-label">Chuyên môn <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="create_chuyen_mon" name="chuyen_mon" required>
+                            <select class="form-select" id="create_chuyen_mon" name="chuyen_mon" required>
+                                <option value="" selected disabled>Chọn chuyên môn</option>
+                                @foreach (\App\Models\Teacher::chuyenMonOptions() as $chuyenMon)
+                                    <option value="{{ $chuyenMon }}">{{ $chuyenMon }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
                     <div class="alert alert-info">
@@ -139,7 +154,12 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_chuyen_mon" class="form-label">Chuyên môn</label>
-                            <input type="text" class="form-control" id="edit_chuyen_mon" name="chuyen_mon">
+                            <select class="form-select" id="edit_chuyen_mon" name="chuyen_mon">
+                                <option value="">Chọn chuyên môn</option>
+                                @foreach (\App\Models\Teacher::chuyenMonOptions() as $chuyenMon)
+                                    <option value="{{ $chuyenMon }}">{{ $chuyenMon }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="edit_sdt" class="form-label">Số điện thoại</label>
@@ -189,10 +209,46 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Reset Password -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Đổi mật khẩu giáo viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="resetPasswordForm">
+                <div class="modal-body">
+                    <input type="hidden" id="reset_teacher_id" name="id">
+                    <div class="mb-2">
+                        <div><strong>Mã GV:</strong> <span id="reset_teacher_msgv"></span></div>
+                        <div><strong>Email:</strong> <span id="reset_teacher_email"></span></div>
+                    </div>
+                    <div class="alert alert-warning mb-3">
+                        <small>
+                            Hệ thống sẽ đổi mật khẩu và gửi email thông báo mật khẩu mới cho giáo viên.
+                        </small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="reset_password" class="form-label">Mật khẩu mới <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="reset_password" name="password" required minlength="6" autocomplete="new-password">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning" id="resetPasswordSubmitBtn">Đổi mật khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+    const CHUYEN_MON_OPTIONS = @json(\App\Models\Teacher::chuyenMonOptions());
+
     function selectAllTable(checkbox) {
         const isChecked = checkbox.checked;
         // Only select checkboxes on current page (DataTables redraws)
@@ -216,11 +272,13 @@
         var table = $('#teachersTable').DataTable({
             processing: true,
             serverSide: true,
+            searching: false,
             ajax: {
                 url: '{{ route("admin.teachers.data") }}',
                 type: 'GET',
                 data: function(d) {
-                    d.search = $('.dt-search').val();
+                    d.filter_ho_ten = $('#filter-ho-ten').val();
+                    d.filter_chuyen_mon = $('#filter-chuyen-mon').val();
                 }
             },
             columns: [
@@ -283,8 +341,15 @@
             dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">'
         });
         
-        $('.dt-search').on('keyup', function() {
-            table.search(this.value).draw();
+        var filterHoTenTimer = null;
+        $('#filter-ho-ten').on('keyup input', function() {
+            clearTimeout(filterHoTenTimer);
+            filterHoTenTimer = setTimeout(function() {
+                table.draw();
+            }, 300);
+        });
+        $('#filter-chuyen-mon').on('change', function() {
+            table.draw();
         });
 
         // Reset select-all on redraw
@@ -341,6 +406,19 @@
             $('#createTeacherForm')[0].reset();
         });
 
+        // Prefill next teacher code when modal opens
+        $('#createTeacherModal').on('shown.bs.modal', function() {
+            const $msgv = $('#create_msgv');
+            if ($msgv.val()) return;
+            $.ajax({
+                url: '{{ route("admin.teachers.next-msgv") }}',
+                type: 'GET',
+                success: function(res) {
+                    if (res?.next_msgv) $msgv.val(res.next_msgv);
+                }
+            });
+        });
+
         // Create form submit
         $('#createTeacherForm').on('submit', function(e) {
             e.preventDefault();
@@ -380,37 +458,50 @@
             });
         });
 
-        // Send email button click
-        $(document).on('click', '.send-email-btn', function() {
-            var teacherId = $(this).data('id');
-            var teacherEmail = $(this).data('email');
-            
-            if (!teacherEmail) {
-                alert('Giáo viên này chưa có email!');
-                return;
-            }
-            
-            if (!confirm('Bạn có chắc muốn gửi email chào mừng đến ' + teacherEmail + '?')) {
-                return;
-            }
-            
-            var btn = $(this);
-            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
-            
+        // Reset password button click
+        var resetTeacherId = null;
+        $(document).on('click', '.reset-password-btn', function() {
+            resetTeacherId = $(this).data('id');
+            const email = $(this).data('email') || '';
+            const msgv = $(this).data('msgv') || '';
+
+            $('#reset_teacher_id').val(resetTeacherId);
+            $('#reset_teacher_email').text(email || '(chưa có email)');
+            $('#reset_teacher_msgv').text(msgv);
+            $('#reset_password').val('');
+
+            var modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+            modal.show();
+        });
+
+        // Reset password form submit
+        $('#resetPasswordForm').on('submit', function(e) {
+            e.preventDefault();
+            const teacherId = $('#reset_teacher_id').val();
+            const password = $('#reset_password').val();
+            if (!teacherId) return;
+
+            const btn = $('#resetPasswordSubmitBtn');
+            btn.prop('disabled', true).text('Đang đổi...');
+
             $.ajax({
-                url: '{{ url("admin/teachers") }}/' + teacherId + '/send-email',
+                url: '{{ url("admin/teachers") }}/' + teacherId + '/reset-password',
                 type: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    btn.prop('disabled', false).html('<i class="fas fa-envelope"></i>');
-                    alert(response.message || 'Email đã được gửi thành công!');
+                data: { password },
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                success: function(res) {
+                    btn.prop('disabled', false).text('Đổi mật khẩu');
+                    var modalInstance = bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal'));
+                    modalInstance.hide();
+                    alert(res.message || 'Đổi mật khẩu thành công!');
                 },
                 error: function(xhr) {
-                    btn.prop('disabled', false).html('<i class="fas fa-envelope"></i>');
-                    var errorMsg = xhr.responseJSON?.message || 'Không thể gửi email!';
-                    alert(errorMsg);
+                    btn.prop('disabled', false).text('Đổi mật khẩu');
+                    const msg =
+                        xhr.responseJSON?.errors?.password?.[0] ||
+                        xhr.responseJSON?.message ||
+                        'Không thể đổi mật khẩu!';
+                    alert(msg);
                 }
             });
         });
@@ -426,7 +517,13 @@
                     $('#edit_teacher_id').val(response.id);
                     $('#edit_msgv').val(response.msgv);
                     $('#edit_ho_ten').val(response.ho_ten);
-                    $('#edit_chuyen_mon').val(response.chuyen_mon);
+                    var cm = response.chuyen_mon || '';
+                    var $editCm = $('#edit_chuyen_mon');
+                    $editCm.find('option.chuyen-mon-legacy').remove();
+                    if (cm && CHUYEN_MON_OPTIONS.indexOf(cm) === -1) {
+                        $editCm.append($('<option>', { 'class': 'chuyen-mon-legacy', value: cm, text: cm }));
+                    }
+                    $editCm.val(cm);
                     $('#edit_sdt').val(response.sdt);
                     $('#edit_email').val(response.email);
                     $('#edit_ngay_sinh').val(response.ngay_sinh ? response.ngay_sinh.split('T')[0] : '');

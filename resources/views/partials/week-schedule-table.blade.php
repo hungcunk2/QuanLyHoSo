@@ -38,7 +38,12 @@
             </div>
             <div class="d-flex align-items-center gap-3 flex-nowrap">
                 <a href="{{ route($scheduleRouteName) }}" class="btn btn-primary btn-sm px-3" style="min-width: 90px; white-space: nowrap;">Hiện tại</a>
-                <button type="button" class="btn btn-outline-secondary btn-sm px-3" style="min-width: 90px; white-space: nowrap;">In lịch</button>
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm px-3 btn-print-schedule"
+                        style="min-width: 90px; white-space: nowrap;"
+                        data-date="{{ $currentDate->toDateString() }}">
+                    In lịch
+                </button>
                 <a href="{{ route($scheduleRouteName, ['date' => $currentDate->copy()->subWeek()->toDateString()]) }}" class="btn btn-outline-secondary btn-sm px-3" style="min-width: 90px; white-space: nowrap;">&lt; Trở về</a>
                 <a href="{{ route($scheduleRouteName, ['date' => $currentDate->copy()->addWeek()->toDateString()]) }}" class="btn btn-outline-secondary btn-sm px-3" style="min-width: 90px; white-space: nowrap;">Tiếp &gt;</a>
             </div>
@@ -115,6 +120,25 @@
     </div>
 </div>
 
+<!-- Modal in lịch -->
+<div class="modal fade" id="printScheduleModal" tabindex="-1" aria-labelledby="printScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="printScheduleModalLabel">In lịch (PDF)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="small text-muted mb-2" id="printScheduleHint"></div>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-primary" id="btnPrintWeek" href="#">Tuần này</a>
+                    <a class="btn btn-outline-primary" id="btnPrintMonth" href="#">Tháng này</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -125,7 +149,7 @@
                 var kind = el.getAttribute('data-kind') || 'study';
                 var show = true;
                 if (id === 'filterStudy') {
-                    show = kind === 'study';
+                    show = (kind === 'study' || kind === 'pause');
                 }
                 if (id === 'filterExam') {
                     show = kind === 'exam';
@@ -136,6 +160,32 @@
         document.querySelectorAll('input[name="scheduleFilter"]').forEach(function(r) {
             r.addEventListener('change', applyScheduleFilter);
         });
+
+        var printBtn = document.querySelector('.btn-print-schedule');
+        if (printBtn) {
+            printBtn.addEventListener('click', function () {
+                var date = this.getAttribute('data-date') || '';
+                var hint = document.getElementById('printScheduleHint');
+                if (hint && date) {
+                    hint.textContent = 'Ngày đang xem: ' + date.split('-').reverse().join('/');
+                }
+
+                var weekLink = document.getElementById('btnPrintWeek');
+                var monthLink = document.getElementById('btnPrintMonth');
+
+                var isTeacher = '{{ $scheduleRouteName }}' === 'teacher.schedule';
+                if (isTeacher) {
+                    if (weekLink) weekLink.onclick = function (e) { e.preventDefault(); window.print(); };
+                    if (monthLink) monthLink.onclick = function (e) { e.preventDefault(); window.print(); };
+                } else {
+                    if (weekLink) weekLink.href = '{{ route('student.schedule.pdf') }}' + '?range=week&date=' + encodeURIComponent(date);
+                    if (monthLink) monthLink.href = '{{ route('student.schedule.pdf') }}' + '?range=month&date=' + encodeURIComponent(date);
+                }
+
+                var modal = new bootstrap.Modal(document.getElementById('printScheduleModal'));
+                modal.show();
+            });
+        }
     });
 </script>
 @endpush

@@ -77,19 +77,42 @@ class CourseOfferingScheduleConflictService
     public static function slotsFromOffering(CourseOffering $o): array
     {
         $slots = [];
+        $o->loadMissing('schedules');
+        $paused = $o->schedules
+            ->where('loai', 'tam_ngung')
+            ->map(fn ($s) => ((int) ($s->thu ?? 0)).'|'.((string) ($s->tiet ?? '')))
+            ->filter(fn ($k) => $k !== '0|')
+            ->values()
+            ->all();
+        $pausedSet = array_fill_keys($paused, true);
+
         if ($o->thu_ly_thuyet && ($o->tiet_ly_thuyet ?? '') !== '') {
+            $k = ((int) $o->thu_ly_thuyet).'|'.((string) $o->tiet_ly_thuyet);
+            if (isset($pausedSet[$k])) {
+                // buổi gốc đã bị tạm ngưng -> không tính là "tiết học"
+            } else {
             $periods = self::parsePeriods((string) $o->tiet_ly_thuyet);
             if ($periods !== []) {
                 $slots[] = ['thu' => (int) $o->thu_ly_thuyet, 'periods' => $periods];
             }
+            }
         }
         if ($o->thu_thuc_hanh && ($o->tiet_thuc_hanh ?? '') !== '' && $o->tiet_thuc_hanh !== null) {
+            $k = ((int) $o->thu_thuc_hanh).'|'.((string) $o->tiet_thuc_hanh);
+            if (isset($pausedSet[$k])) {
+                // buổi gốc đã bị tạm ngưng -> không tính
+            } else {
             $periods = self::parsePeriods((string) $o->tiet_thuc_hanh);
             if ($periods !== []) {
                 $slots[] = ['thu' => (int) $o->thu_thuc_hanh, 'periods' => $periods];
             }
+            }
         }
         foreach ($o->schedules as $s) {
+            // Các buổi tạm ngưng không phải "tiết học" để đem đi check trùng
+            if (($s->loai ?? '') === 'tam_ngung') {
+                continue;
+            }
             if (! $s->thu || ($s->tiet ?? '') === '') {
                 continue;
             }

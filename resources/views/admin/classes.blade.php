@@ -79,8 +79,8 @@
             <form id="createClassForm">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="create_ma_lop" class="form-label">Mã phòng <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="create_ma_lop" name="ma_lop" required>
+                        <label for="create_ma_lop" class="form-label">Mã phòng</label>
+                        <input type="text" class="form-control" id="create_ma_lop" name="ma_lop">
                     </div>
                     <div class="mb-3">
                         <label for="create_ten_lop" class="form-label">Tên phòng <span class="text-danger">*</span></label>
@@ -273,6 +273,18 @@
         // Reset create form when modal is closed
         $('#createClassModal').on('hidden.bs.modal', function() {
             $('#createClassForm')[0].reset();
+        });
+
+        $('#createClassModal').on('shown.bs.modal', function() {
+            const $ma = $('#create_ma_lop');
+            if ($ma.val()) return;
+            $.ajax({
+                url: '{{ route("admin.classes.next-ma-lop") }}',
+                type: 'GET',
+                success: function(res) {
+                    if (res?.next_ma_lop) $ma.val(res.next_ma_lop);
+                }
+            });
         });
 
         // Create form submit

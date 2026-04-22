@@ -117,6 +117,17 @@
             $('#lopModalLabel').text('Tạo lớp mới');
             $('#lopSubmitBtn').text('Tạo mới');
             $('#lop_ma_lop').prop('readonly', false);
+
+            const $ma = $('#lop_ma_lop');
+            if (!$ma.val()) {
+                $.ajax({
+                    url: '{{ route("admin.lops.next-ma-lop") }}',
+                    type: 'GET',
+                    success: function(res) {
+                        if (res?.next_ma_lop) $ma.val(res.next_ma_lop);
+                    }
+                });
+            }
         });
 
         $('#lopForm').on('submit', function(e) {

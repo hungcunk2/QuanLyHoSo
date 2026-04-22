@@ -84,15 +84,22 @@
 
                                                         $ltSessions = collect();
                                                         if ($o->thu_ly_thuyet && $o->tiet_ly_thuyet) {
-                                                            $ltSessions->push(['thu' => (int) $o->thu_ly_thuyet, 'tiet' => (string) $o->tiet_ly_thuyet]);
-                                                        }
-                                                        $thSessions = collect();
-                                                        if ($o->thu_thuc_hanh && $o->tiet_thuc_hanh) {
-                                                            $thSessions->push(['thu' => (int) $o->thu_thuc_hanh, 'tiet' => (string) $o->tiet_thuc_hanh]);
+                                                            $ltSessions->push([
+                                                                'thu' => (int) $o->thu_ly_thuyet,
+                                                                'tiet' => (string) $o->tiet_ly_thuyet,
+                                                                'teacher' => $o->teacherLyThuyet?->ho_ten ?? '',
+                                                                'room' => $o->classRoom?->ma_lop ? ($o->classRoom->ma_lop.' - '.$o->classRoom->ten_lop) : '',
+                                                            ]);
                                                         }
                                                         foreach(($o->schedules ?? collect()) as $sc) {
-                                                            if ($sc->loai === 'ly_thuyet') $ltSessions->push(['thu' => (int) $sc->thu, 'tiet' => (string) $sc->tiet]);
-                                                            if ($sc->loai === 'thuc_hanh') $thSessions->push(['thu' => (int) $sc->thu, 'tiet' => (string) $sc->tiet]);
+                                                            if ($sc->loai === 'ly_thuyet') {
+                                                                $ltSessions->push([
+                                                                    'thu' => (int) $sc->thu,
+                                                                    'tiet' => (string) $sc->tiet,
+                                                                    'teacher' => $sc->teacher?->ho_ten ?? '',
+                                                                    'room' => $o->classRoom?->ma_lop ? ($o->classRoom->ma_lop.' - '.$o->classRoom->ten_lop) : '',
+                                                                ]);
+                                                            }
                                                         }
                                                         $teacherLtName = $o->teacherLyThuyet?->ho_ten ?? '';
                                                         $teacherThName = $o->teacherThucHanh?->ho_ten ?? '';
@@ -105,6 +112,33 @@
                                                             $teacherLabel = $teacherThName;
                                                         }
 
+                                                        $thGroupsForView = [];
+                                                        if ($o->thu_thuc_hanh && $o->tiet_thuc_hanh) {
+                                                            $thGroupsForView[] = [
+                                                                'index' => 1,
+                                                                'thu' => (int) $o->thu_thuc_hanh,
+                                                                'tiet' => (string) $o->tiet_thuc_hanh,
+                                                                'teacher' => $o->teacherThucHanh?->ho_ten ?? '',
+                                                                'room' => $o->classRoomThucHanh?->ma_lop ? ($o->classRoomThucHanh->ma_lop.' - '.$o->classRoomThucHanh->ten_lop) : '',
+                                                            ];
+                                                        }
+                                                        $thSchedulesForView = collect($o->schedules ?? collect())
+                                                            ->where('loai', 'thuc_hanh')
+                                                            ->sortBy('id')
+                                                            ->values();
+                                                        foreach ($thSchedulesForView as $sc) {
+                                                            if (! $sc->thu || ($sc->tiet ?? '') === '') {
+                                                                continue;
+                                                            }
+                                                            $thGroupsForView[] = [
+                                                                'index' => count($thGroupsForView) + 1,
+                                                                'thu' => (int) $sc->thu,
+                                                                'tiet' => (string) $sc->tiet,
+                                                                'teacher' => $sc->teacher?->ho_ten ?? '',
+                                                                'room' => $sc->classRoom?->ma_lop ? ($sc->classRoom->ma_lop.' - '.$sc->classRoom->ten_lop) : '',
+                                                            ];
+                                                        }
+
                                                         $schedulePayload = [
                                                             'ten_hoc_phan' => $o->ten_hoc_phan,
                                                             'subject' => ($o->subject?->ma_mon_hoc ? ($o->subject?->ma_mon_hoc . ' - ' . $o->subject?->ten_mon_hoc) : ''),
@@ -112,7 +146,7 @@
                                                             'teacher' => $teacherLabel,
                                                             'date_range' => (optional($o->ngay_bat_dau_hoc)->format('d/m/Y') ?? '—') . ' → ' . (optional($o->ngay_ket_thuc_hoc)->format('d/m/Y') ?? '—'),
                                                             'lt' => $ltSessions->values(),
-                                                            'th' => $thSessions->values(),
+                                                            'th_groups' => $thGroupsForView,
                                                         ];
                                                     @endphp
                                                     <tr>
@@ -176,8 +210,39 @@
                                                                     @php
                                                                         $coTheDangKy = $dangMoDangKy && $conLai > 0;
                                                                     @endphp
-                                                                    <form method="POST" action="{{ route('student.registration.register', $o->id) }}" class="mb-0">
+                                                                    @php
+                                                                        $thGroupsPayload = [];
+                                                                        // Nhóm TH 1 (từ cột chính của course_offerings)
+                                                                        if ($o->thu_thuc_hanh && $o->tiet_thuc_hanh) {
+                                                                            $thGroupsPayload[] = [
+                                                                                'index' => 1,
+                                                                                'thu' => (int) $o->thu_thuc_hanh,
+                                                                                'tiet' => (string) $o->tiet_thuc_hanh,
+                                                                                'teacher' => $o->teacherThucHanh?->ho_ten ?? '',
+                                                                                'room' => $o->classRoomThucHanh?->ma_lop ? ($o->classRoomThucHanh->ma_lop.' - '.$o->classRoomThucHanh->ten_lop) : '',
+                                                                            ];
+                                                                        }
+                                                                        // Các nhóm TH tiếp theo (từ schedules loai=thuc_hanh)
+                                                                        $thSchedules = collect($o->schedules ?? collect())
+                                                                            ->where('loai', 'thuc_hanh')
+                                                                            ->sortBy('id')
+                                                                            ->values();
+                                                                        foreach ($thSchedules as $idx => $sc) {
+                                                                            if (! $sc->thu || ($sc->tiet ?? '') === '') {
+                                                                                continue;
+                                                                            }
+                                                                            $thGroupsPayload[] = [
+                                                                                'index' => count($thGroupsPayload) + 1,
+                                                                                'thu' => (int) $sc->thu,
+                                                                                'tiet' => (string) $sc->tiet,
+                                                                                'teacher' => $sc->teacher?->ho_ten ?? '',
+                                                                                'room' => $sc->classRoom?->ma_lop ? ($sc->classRoom->ma_lop.' - '.$sc->classRoom->ten_lop) : '',
+                                                                            ];
+                                                                        }
+                                                                    @endphp
+                                                                    <form method="POST" action="{{ route('student.registration.register', $o->id) }}" class="mb-0 form-register-offering" data-th-groups='@json($thGroupsPayload)' data-offering-name="{{ $o->ten_hoc_phan }}">
                                                                         @csrf
+                                                                        <input type="hidden" name="th_group_index" value="">
                                                                         <button type="submit" class="btn btn-primary btn-sm w-100" @if(!$coTheDangKy) disabled @endif>
                                                                             Đăng ký
                                                                         </button>
@@ -230,13 +295,101 @@
     </div>
 </div>
 
+<!-- Modal chọn nhóm thực hành -->
+<div class="modal fade" id="thGroupModal" tabindex="-1" aria-labelledby="thGroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="thGroupModalLabel">Chọn nhóm thực hành</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2 fw-bold" id="thGroupOfferingName"></div>
+                <div class="small text-muted mb-3" id="thGroupHint"></div>
+                <div id="thGroupList"></div>
+                <div class="text-danger small mt-2 d-none" id="thGroupError">Vui lòng chọn nhóm thực hành.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmThGroup">Xác nhận đăng ký</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
     (function () {
         const weekday = {2:'Thứ 2',3:'Thứ 3',4:'Thứ 4',5:'Thứ 5',6:'Thứ 6',7:'Thứ 7',8:'Chủ nhật'};
-        function renderSessions(list) {
+        function esc(s) {
+            return String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function renderLtTable(list) {
             if (!list || !list.length) return '<span class="text-muted">—</span>';
-            return '<ul class="mb-0 ps-3">' + list.map(s => `<li>${weekday[s.thu] || ('Thứ ' + s.thu)} · tiết ${s.tiet}</li>`).join('') + '</ul>';
+            const rows = list.map(s => {
+                const thu = weekday[s.thu] || ('Thứ ' + s.thu);
+                const tiet = esc(s.tiet || '—');
+                const room = esc(s.room || '—');
+                const teacher = esc(s.teacher || '—');
+                return `
+                    <tr>
+                        <td class="text-nowrap">${esc(thu)}</td>
+                        <td class="text-nowrap">Tiết ${tiet}</td>
+                        <td>${room}</td>
+                        <td>${teacher}</td>
+                    </tr>
+                `;
+            }).join('');
+            return `
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="90">Thứ</th>
+                                <th width="120">Tiết</th>
+                                <th>Phòng</th>
+                                <th>Giáo viên</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+        function renderThGroupsTable(groups) {
+            if (!groups || !groups.length) return '<span class="text-muted">—</span>';
+            const rows = groups.map(g => {
+                const thu = weekday[g.thu] || ('Thứ ' + g.thu);
+                const tiet = esc(g.tiet || '—');
+                const room = esc(g.room || '—');
+                const teacher = esc(g.teacher || '—');
+                const idx = esc(g.index || '—');
+                return `
+                    <tr>
+                        <td class="text-nowrap"><span class="badge bg-info text-dark">Nhóm TH ${idx}</span></td>
+                        <td class="text-nowrap">${esc(thu)}</td>
+                        <td class="text-nowrap">Tiết ${tiet}</td>
+                        <td>${room}</td>
+                        <td>${teacher}</td>
+                    </tr>
+                `;
+            }).join('');
+            return `
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="120">Nhóm</th>
+                                <th width="90">Thứ</th>
+                                <th width="120">Tiết</th>
+                                <th>Phòng</th>
+                                <th>Giáo viên</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
         }
         document.addEventListener('click', function (e) {
             const btn = e.target.closest('.btn-view-schedule');
@@ -245,11 +398,106 @@
             document.getElementById('schTen').textContent = data.ten_hoc_phan || '—';
             const meta = [data.subject, data.class, data.teacher, ('Học: ' + (data.date_range || '—'))].filter(Boolean).join(' · ');
             document.getElementById('schMeta').textContent = meta;
-            document.getElementById('schLT').innerHTML = renderSessions(data.lt || []);
-            document.getElementById('schTH').innerHTML = renderSessions(data.th || []);
+            document.getElementById('schLT').innerHTML = renderLtTable(data.lt || []);
+            document.getElementById('schTH').innerHTML = renderThGroupsTable(data.th_groups || []);
             const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
             modal.show();
         });
+
+        let pendingRegisterForm = null;
+        const thModalEl = document.getElementById('thGroupModal');
+        const thModal = thModalEl ? new bootstrap.Modal(thModalEl) : null;
+        const thListEl = document.getElementById('thGroupList');
+        const thOfferingNameEl = document.getElementById('thGroupOfferingName');
+        const thHintEl = document.getElementById('thGroupHint');
+        const thErrEl = document.getElementById('thGroupError');
+
+        function openThGroupModal(form, groups, offeringName) {
+            if (!thModal) return;
+            pendingRegisterForm = form;
+            if (thOfferingNameEl) thOfferingNameEl.textContent = offeringName || '—';
+            if (thHintEl) thHintEl.textContent = 'Học phần có thực hành, bạn cần chọn 1 nhóm để đăng ký.';
+            if (thErrEl) thErrEl.classList.add('d-none');
+            if (thListEl) {
+                thListEl.innerHTML = '';
+                const wrap = document.createElement('div');
+                wrap.className = 'vstack gap-2';
+                groups.forEach((g) => {
+                    const id = 'th_group_' + String(g.index);
+                    const row = document.createElement('div');
+                    row.className = 'border rounded p-2 d-flex align-items-start gap-2 th-group-row';
+                    row.setAttribute('role', 'button');
+                    row.setAttribute('tabindex', '0');
+                    row.setAttribute('data-index', String(g.index));
+                    row.innerHTML = `
+                        <input class="form-check-input mt-1" type="radio" name="th_group_index_pick" id="${id}" value="${g.index}" tabindex="-1">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">Nhóm TH ${g.index}</div>
+                            <div class="small text-muted">
+                                ${weekday[g.thu] || ('Thứ ' + g.thu)} · tiết ${g.tiet}
+                                ${g.room ? (' · ' + g.room) : ''}
+                                ${g.teacher ? (' · GV: ' + g.teacher) : ''}
+                            </div>
+                        </div>
+                    `;
+                    wrap.appendChild(row);
+                });
+                thListEl.appendChild(wrap);
+
+                // Click anywhere on a row to pick its group
+                thListEl.querySelectorAll('.th-group-row').forEach((row) => {
+                    row.addEventListener('click', function () {
+                        const idx = this.getAttribute('data-index');
+                        const radio = this.querySelector('input[name="th_group_index_pick"]');
+                        if (radio) radio.checked = true;
+                        if (thErrEl) thErrEl.classList.add('d-none');
+                        thListEl.querySelectorAll('.th-group-row').forEach((r) => r.classList.remove('border-primary', 'bg-light'));
+                        this.classList.add('border-primary', 'bg-light');
+                    });
+                    row.addEventListener('keydown', function (ev) {
+                        if (ev.key === 'Enter' || ev.key === ' ') {
+                            ev.preventDefault();
+                            this.click();
+                        }
+                    });
+                });
+            }
+            thModal.show();
+        }
+
+        document.addEventListener('submit', function (e) {
+            const form = e.target.closest('.form-register-offering');
+            if (!form) return;
+
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn && btn.disabled) return;
+
+            const raw = form.getAttribute('data-th-groups') || '[]';
+            let groups = [];
+            try { groups = JSON.parse(raw) || []; } catch (_) { groups = []; }
+
+            if (Array.isArray(groups) && groups.length > 0) {
+                e.preventDefault();
+                const offeringName = form.getAttribute('data-offering-name') || '';
+                openThGroupModal(form, groups, offeringName);
+            }
+        });
+
+        const btnConfirm = document.getElementById('btnConfirmThGroup');
+        if (btnConfirm) {
+            btnConfirm.addEventListener('click', function () {
+                if (!pendingRegisterForm) return;
+                const picked = thModalEl.querySelector('input[name="th_group_index_pick"]:checked');
+                if (!picked || !picked.value) {
+                    if (thErrEl) thErrEl.classList.remove('d-none');
+                    return;
+                }
+                const hidden = pendingRegisterForm.querySelector('input[name="th_group_index"]');
+                if (hidden) hidden.value = picked.value;
+                thModal.hide();
+                pendingRegisterForm.submit();
+            });
+        }
     })();
 </script>
 @endpush

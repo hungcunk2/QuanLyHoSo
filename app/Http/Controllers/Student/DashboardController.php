@@ -9,7 +9,9 @@ use App\Models\Lop;
 use App\Models\SubjectRegistration;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\CourseOfferingScheduleConflictService;
 use App\Support\OfferingWeekCalendar;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -117,6 +119,7 @@ class DashboardController extends Controller
         $currentDate = $dateParam ? Carbon::parse($dateParam) : Carbon::now();
 
         $offerings = collect();
+        $thGroupIndexByOfferingId = [];
         if ($student) {
             $offeringIds = SubjectRegistration::query()
                 ->where('student_id', $student->id)
@@ -127,6 +130,14 @@ class DashboardController extends Controller
                 ->values();
 
             if ($offeringIds->isNotEmpty()) {
+                $thGroupIndexByOfferingId = SubjectRegistration::query()
+                    ->where('student_id', $student->id)
+                    ->where('status', '!=', 'cancelled')
+                    ->whereIn('course_offering_id', $offeringIds)
+                    ->pluck('th_group_index', 'course_offering_id')
+                    ->map(fn ($v) => $v === null ? null : (int) $v)
+                    ->all();
+
                 $offerings = CourseOffering::query()
                     ->whereIn('id', $offeringIds)
                     ->with(['subject', 'classRoom', 'teacherLyThuyet', 'teacherThucHanh', 'schedules.teacher'])
@@ -134,9 +145,89 @@ class DashboardController extends Controller
             }
         }
 
-        $scheduleGrid = OfferingWeekCalendar::buildGrid($offerings, $currentDate->copy());
+        $scheduleGrid = OfferingWeekCalendar::buildGrid($offerings, $currentDate->copy(), $thGroupIndexByOfferingId);
 
         return view('student.schedule', compact('user', 'currentDate', 'scheduleGrid'));
+    }
+
+    public function schedulePdf(Request $request)
+    {
+        $user = Auth::user();
+        $student = Student::where('email', $user->email)->first();
+        if (! $student) {
+            abort(404);
+        }
+
+        $range = (string) $request->query('range', 'week'); // week|month
+        if (! in_array($range, ['week', 'month'], true)) {
+            $range = 'week';
+        }
+
+        $dateParam = $request->query('date');
+        $baseDate = $dateParam ? Carbon::parse($dateParam) : Carbon::now();
+
+        $from = $range === 'month'
+            ? $baseDate->copy()->startOfMonth()->startOfDay()
+            : $baseDate->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+        $to = $range === 'month'
+            ? $baseDate->copy()->endOfMonth()->endOfDay()
+            : $baseDate->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+
+        $offerings = collect();
+        $thGroupIndexByOfferingId = SubjectRegistration::query()
+            ->where('student_id', $student->id)
+            ->where('status', '!=', 'cancelled')
+            ->whereNotNull('course_offering_id')
+            ->pluck('th_group_index', 'course_offering_id')
+            ->map(fn ($v) => $v === null ? null : (int) $v)
+            ->all();
+        $offeringIds = SubjectRegistration::query()
+            ->where('student_id', $student->id)
+            ->where('status', '!=', 'cancelled')
+            ->whereNotNull('course_offering_id')
+            ->pluck('course_offering_id')
+            ->unique()
+            ->values();
+
+        if ($offeringIds->isNotEmpty()) {
+            $offerings = CourseOffering::query()
+                ->whereIn('id', $offeringIds)
+                ->whereDate('ngay_bat_dau_hoc', '<=', $to->toDateString())
+                ->whereDate('ngay_ket_thuc_hoc', '>=', $from->toDateString())
+                ->with(['subject', 'classRoom', 'teacherLyThuyet', 'teacherThucHanh', 'schedules.teacher'])
+                ->get();
+        }
+
+        $weeks = [];
+        if ($range === 'month') {
+            $cursor = $from->copy()->startOfWeek(Carbon::MONDAY);
+            $endCursor = $to->copy()->endOfWeek(Carbon::SUNDAY);
+            while ($cursor->lte($endCursor)) {
+                $weeks[] = [
+                    'currentDate' => $cursor->copy(),
+                    'scheduleGrid' => OfferingWeekCalendar::buildGrid($offerings, $cursor->copy(), $thGroupIndexByOfferingId),
+                ];
+                $cursor->addWeek();
+            }
+        } else {
+            $weeks[] = [
+                'currentDate' => $from->copy(),
+                'scheduleGrid' => OfferingWeekCalendar::buildGrid($offerings, $from->copy(), $thGroupIndexByOfferingId),
+            ];
+        }
+
+        $fileName = $range === 'month'
+            ? ('Lich_hoc_thang_' . $baseDate->format('Y-m') . '.pdf')
+            : ('Lich_hoc_tuan_' . $from->format('Y-m-d') . '_' . $to->format('Y-m-d') . '.pdf');
+
+        return Pdf::loadView('student.schedule-pdf', [
+            'student' => $student,
+            'range' => $range,
+            'baseDate' => $baseDate,
+            'from' => $from,
+            'to' => $to,
+            'weeks' => $weeks,
+        ])->setPaper('a4', 'landscape')->download($fileName);
     }
 
     public function results()
@@ -186,7 +277,15 @@ class DashboardController extends Controller
 
         $today = Carbon::today();
 
-        $offerings = CourseOffering::with(['subject', 'classRoom', 'teacherLyThuyet', 'teacherThucHanh', 'schedules.teacher'])
+        $offerings = CourseOffering::with([
+            'subject',
+            'classRoom',
+            'classRoomThucHanh',
+            'teacherLyThuyet',
+            'teacherThucHanh',
+            'schedules.teacher',
+            'schedules.classRoom',
+        ])
             ->withCount([
                 'subjectRegistrations as registrations_count' => function ($q) {
                     $q->where('status', '!=', 'cancelled');
@@ -218,7 +317,7 @@ class DashboardController extends Controller
             'subjectRegistrations as registrations_count' => function ($q) {
                 $q->where('status', '!=', 'cancelled');
             }
-        ])->findOrFail($courseOfferingId);
+        ])->with('schedules')->findOrFail($courseOfferingId);
 
         $today = Carbon::today();
         if ($offering->ngay_mo_dang_ky && $offering->ngay_mo_dang_ky->gt($today)) {
@@ -233,6 +332,166 @@ class DashboardController extends Controller
             return back()->with('error', 'Lớp đã đủ sĩ số.');
         }
 
+        $roomTh = collect($offering->schedules ?? collect())
+            ->where('loai', 'thuc_hanh')
+            ->sortBy('id')
+            ->values();
+        $thGroups = [];
+        if ($offering->thu_thuc_hanh && $offering->tiet_thuc_hanh) {
+            $thGroups[] = [
+                'thu' => (int) $offering->thu_thuc_hanh,
+                'tiet' => (string) $offering->tiet_thuc_hanh,
+            ];
+        }
+        foreach ($roomTh as $sc) {
+            if ($sc->thu && $sc->tiet) {
+                $thGroups[] = ['thu' => (int) $sc->thu, 'tiet' => (string) $sc->tiet];
+            }
+        }
+        $hasTh = count($thGroups) > 0;
+
+        $selectedThGroupIndex = $request->input('th_group_index');
+        $selectedThGroupIndex = is_null($selectedThGroupIndex) ? null : (int) $selectedThGroupIndex;
+        if ($hasTh) {
+            if (! $selectedThGroupIndex || $selectedThGroupIndex < 1 || $selectedThGroupIndex > count($thGroups)) {
+                return back()->with('error', 'Vui lòng chọn nhóm thực hành.');
+            }
+        } else {
+            $selectedThGroupIndex = null;
+        }
+
+        // Chặn trùng lịch học với các học phần đã đăng ký (LT + nhóm TH đã chọn) nếu thời gian học giao nhau
+        $myRegsByOfferingId = SubjectRegistration::query()
+            ->where('student_id', $student->id)
+            ->where('status', '!=', 'cancelled')
+            ->whereNotNull('course_offering_id')
+            ->get()
+            ->keyBy('course_offering_id');
+
+        $myOfferingIds = $myRegsByOfferingId->keys();
+        if ($myOfferingIds->isNotEmpty()) {
+            $myOfferings = CourseOffering::query()
+                ->whereIn('id', $myOfferingIds)
+                ->with('schedules')
+                ->get();
+
+            $newSlots = [];
+            // LT slots (all)
+            $newSlots = CourseOfferingScheduleConflictService::slotsFromRequestArrays(
+                [$offering->thu_ly_thuyet, ...collect($offering->schedules ?? [])->where('loai', 'ly_thuyet')->sortBy('id')->pluck('thu')->all()],
+                [$offering->tiet_ly_thuyet, ...collect($offering->schedules ?? [])->where('loai', 'ly_thuyet')->sortBy('id')->pluck('tiet')->all()],
+                [$hasTh ? ($thGroups[$selectedThGroupIndex - 1]['thu'] ?? null) : null],
+                [$hasTh ? ($thGroups[$selectedThGroupIndex - 1]['tiet'] ?? '') : '']
+            );
+            $weekdays = CourseOffering::weekdays();
+
+            // Chặn trường hợp bản thân học phần bị trùng lịch (LT trùng TH của nhóm đã chọn)
+            if ($hasTh) {
+                $ltOnly = CourseOfferingScheduleConflictService::slotsFromRequestArrays(
+                    [$offering->thu_ly_thuyet, ...collect($offering->schedules ?? [])->where('loai', 'ly_thuyet')->sortBy('id')->pluck('thu')->all()],
+                    [$offering->tiet_ly_thuyet, ...collect($offering->schedules ?? [])->where('loai', 'ly_thuyet')->sortBy('id')->pluck('tiet')->all()],
+                    [],
+                    []
+                );
+                $thOnly = CourseOfferingScheduleConflictService::slotsFromRequestArrays(
+                    [],
+                    [],
+                    [($thGroups[$selectedThGroupIndex - 1]['thu'] ?? null)],
+                    [($thGroups[$selectedThGroupIndex - 1]['tiet'] ?? '')]
+                );
+                foreach ($ltOnly as $lt) {
+                    foreach ($thOnly as $th) {
+                        if ($lt['thu'] !== $th['thu']) {
+                            continue;
+                        }
+                        $intersect = array_values(array_intersect($lt['periods'], $th['periods']));
+                        if ($intersect === []) {
+                            continue;
+                        }
+                        sort($intersect);
+                        $tietStr = implode(', ', $intersect);
+                        $thuLabel = $weekdays[$lt['thu']] ?? ('Thứ '.$lt['thu']);
+
+                        return back()->with('error', 'Học phần này bị trùng lịch nội bộ: Lý thuyết trùng với Thực hành ('.$thuLabel.', tiết '.$tietStr.'). Vui lòng báo admin chỉnh lại lịch.');
+                    }
+                }
+            }
+
+            foreach ($myOfferings as $other) {
+                if ((int) $other->id === (int) $offering->id) {
+                    continue;
+                }
+
+                $startA = $offering->ngay_bat_dau_hoc;
+                $endA = $offering->ngay_ket_thuc_hoc;
+                $startB = $other->ngay_bat_dau_hoc;
+                $endB = $other->ngay_ket_thuc_hoc;
+
+                // Nếu thiếu ngày học, vẫn check theo thứ/tiết (an toàn hơn, tránh lọt trùng lịch)
+                if ($startA && $endA && $startB && $endB) {
+                    // Không giao nhau về thời gian học -> không cần so lịch tuần
+                    if ($startA->gt($endB) || $endA->lt($startB)) {
+                        continue;
+                    }
+                }
+
+                $regOther = $myRegsByOfferingId->get($other->id);
+                $otherThIndex = $regOther?->th_group_index ? (int) $regOther->th_group_index : null;
+
+                $otherThGroups = [];
+                $otherThSchedules = collect($other->schedules ?? collect())->where('loai', 'thuc_hanh')->sortBy('id')->values();
+                if ($other->thu_thuc_hanh && $other->tiet_thuc_hanh) {
+                    $otherThGroups[] = ['thu' => (int) $other->thu_thuc_hanh, 'tiet' => (string) $other->tiet_thuc_hanh];
+                }
+                foreach ($otherThSchedules as $osc) {
+                    if ($osc->thu && $osc->tiet) {
+                        $otherThGroups[] = ['thu' => (int) $osc->thu, 'tiet' => (string) $osc->tiet];
+                    }
+                }
+                $otherHasTh = count($otherThGroups) > 0;
+
+                $otherThuTh = null;
+                $otherTietTh = '';
+                if ($otherHasTh && $otherThIndex && $otherThIndex >= 1 && $otherThIndex <= count($otherThGroups)) {
+                    $otherThuTh = $otherThGroups[$otherThIndex - 1]['thu'];
+                    $otherTietTh = $otherThGroups[$otherThIndex - 1]['tiet'];
+                }
+
+                // Nếu học phần cũ có TH nhưng chưa có nhóm TH đã chọn (th_group_index null),
+                // thì check trùng với tất cả buổi TH của học phần đó để tránh lọt.
+                if ($otherHasTh && ! $otherThIndex) {
+                    $otherSlots = CourseOfferingScheduleConflictService::slotsFromOffering($other);
+                } else {
+                    $otherSlots = CourseOfferingScheduleConflictService::slotsFromRequestArrays(
+                        [$other->thu_ly_thuyet, ...collect($other->schedules ?? [])->where('loai', 'ly_thuyet')->sortBy('id')->pluck('thu')->all()],
+                        [$other->tiet_ly_thuyet, ...collect($other->schedules ?? [])->where('loai', 'ly_thuyet')->sortBy('id')->pluck('tiet')->all()],
+                        [$otherThuTh],
+                        [$otherTietTh]
+                    );
+                }
+
+                foreach ($newSlots as $ns) {
+                    foreach ($otherSlots as $os) {
+                        if ($ns['thu'] !== $os['thu']) {
+                            continue;
+                        }
+                        $intersect = array_values(array_intersect($ns['periods'], $os['periods']));
+                        if ($intersect === []) {
+                            continue;
+                        }
+                        sort($intersect);
+                        $tietStr = implode(', ', $intersect);
+                        $thuLabel = $weekdays[$ns['thu']] ?? ('Thứ '.$ns['thu']);
+
+                        return back()->with(
+                            'error',
+                            'Trùng lịch học với học phần "'.$other->ten_hoc_phan.'" ('.$thuLabel.', tiết '.$tietStr.').'
+                        );
+                    }
+                }
+            }
+        }
+
         $reg = SubjectRegistration::where('student_id', $student->id)
             ->where('course_offering_id', $offering->id)
             ->first();
@@ -242,13 +501,14 @@ class DashboardController extends Controller
         }
 
         if ($reg) {
-            $reg->update(['status' => 'approved']);
+            $reg->update(['status' => 'approved', 'th_group_index' => $selectedThGroupIndex]);
         } else {
             SubjectRegistration::create([
                 'course_offering_id' => $offering->id,
                 'student_id' => $student->id,
                 'subject_id' => $offering->subject_id,
                 'class_room_id' => $offering->class_room_id,
+                'th_group_index' => $selectedThGroupIndex,
                 'status' => 'approved',
             ]);
         }

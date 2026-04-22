@@ -55,12 +55,12 @@
                 <input type="hidden" id="lop_id" name="lop_id" value="">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="lop_ma_lop" class="form-label">Mã lớp <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="lop_ma_lop" name="ma_lop" required maxlength="50" placeholder="VD: D22-TH01">
+                        <label for="lop_ma_lop" class="form-label">Mã lớp</label>
+                        <input type="text" class="form-control" id="lop_ma_lop" name="ma_lop" maxlength="50">
                     </div>
                     <div class="mb-3">
                         <label for="lop_ten_lop" class="form-label">Tên lớp <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="lop_ten_lop" name="ten_lop" required maxlength="255" placeholder="VD: Lớp Tin học K22">
+                        <input type="text" class="form-control" id="lop_ten_lop" name="ten_lop" required maxlength="255">
                     </div>
                 </div>
                 <div class="modal-footer">

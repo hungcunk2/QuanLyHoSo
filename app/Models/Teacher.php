@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Teacher extends Model
 {
@@ -27,6 +28,45 @@ class Teacher extends Model
         'email',
         'ngay_sinh',
     ];
+
+    /**
+     * @return list<string>
+     */
+    public static function chuyenMonOptions(): array
+    {
+        return [
+            'Kỹ thuật phần mềm',
+            'Khoa học máy tính',
+            'Hệ thống thông tin',
+            'Công nghệ thông tin',
+            'Khoa học dữ liệu',
+        ];
+    }
+
+    public static function generateNextMsgv(string $prefix = 'GV', int $minNumberWidth = 2): string
+    {
+        $latest = DB::table('teachers')
+            ->select('msgv')
+            ->whereNotNull('msgv')
+            ->where('msgv', 'like', $prefix . '%')
+            ->orderByRaw("CAST(SUBSTRING(msgv, ?) AS UNSIGNED) DESC", [mb_strlen($prefix) + 1])
+            ->orderByDesc('msgv')
+            ->value('msgv');
+
+        $latestNumber = 0;
+        $latestWidth = $minNumberWidth;
+
+        if (is_string($latest) && $latest !== '') {
+            $numeric = mb_substr($latest, mb_strlen($prefix));
+            if (preg_match('/^\d+$/', $numeric)) {
+                $latestNumber = (int) $numeric;
+                $latestWidth = max($minNumberWidth, mb_strlen($numeric));
+            }
+        }
+
+        $next = $latestNumber + 1;
+        return $prefix . str_pad((string) $next, $latestWidth, '0', STR_PAD_LEFT);
+    }
 
     /**
      * Get the attributes that should be cast.

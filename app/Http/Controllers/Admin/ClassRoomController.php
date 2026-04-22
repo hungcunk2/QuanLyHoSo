@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ClassRoom;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 
 class ClassRoomController extends Controller
@@ -37,23 +39,60 @@ class ClassRoomController extends Controller
             ->make(true);
     }
 
+    public function nextMaLop()
+    {
+        return response()->json([
+            'success' => true,
+            'next_ma_lop' => ClassRoom::generateNextMaLop('PH', 2),
+        ]);
+    }
+
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'ma_lop' => 'required|string|max:50|unique:classes,ma_lop',
-            'ten_lop' => 'required|string|max:255',
-        ], [
-            'ma_lop.required' => 'Vui lòng nhập mã phòng.',
-            'ma_lop.unique' => 'Mã phòng đã tồn tại trong hệ thống.',
-            'ten_lop.required' => 'Vui lòng nhập tên phòng.',
+        $request->merge([
+            'ma_lop' => is_string($request->ma_lop) ? trim($request->ma_lop) : $request->ma_lop,
+            'ten_lop' => is_string($request->ten_lop) ? trim($request->ten_lop) : $request->ten_lop,
         ]);
 
-        $class = ClassRoom::create([
-            'ma_lop' => $validated['ma_lop'],
-            'ten_lop' => $validated['ten_lop'],
-            'giao_vien_chu_nhiem_id' => null,
-            'subject_id' => null,
+        $validated = $request->validate([
+            'ma_lop' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('classes', 'ma_lop')->whereNull('deleted_at'),
+            ],
+            'ten_lop' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('classes', 'ten_lop')->whereNull('deleted_at'),
+            ],
+        ], [
+            'ma_lop.unique' => 'Mã phòng đã tồn tại trong hệ thống.',
+            'ten_lop.required' => 'Vui lòng nhập tên phòng.',
+            'ten_lop.unique' => 'Tên phòng đã tồn tại trong hệ thống.',
         ]);
+
+        $class = DB::transaction(function () use ($validated, $request) {
+            $maLop = $request->ma_lop;
+            if (! is_string($maLop) || $maLop === '') {
+                DB::table('classes')
+                    ->select('ma_lop')
+                    ->where('ma_lop', 'like', 'PH%')
+                    ->orderByRaw('CAST(SUBSTRING(ma_lop, 3) AS UNSIGNED) DESC')
+                    ->lockForUpdate()
+                    ->first();
+
+                $maLop = ClassRoom::generateNextMaLop('PH', 2);
+            }
+
+            return ClassRoom::create([
+                'ma_lop' => $maLop,
+                'ten_lop' => $validated['ten_lop'],
+                'giao_vien_chu_nhiem_id' => null,
+                'subject_id' => null,
+            ]);
+        });
 
         return response()->json([
             'success' => true,
@@ -71,13 +110,29 @@ class ClassRoomController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->merge([
+            'ma_lop' => is_string($request->ma_lop) ? trim($request->ma_lop) : $request->ma_lop,
+            'ten_lop' => is_string($request->ten_lop) ? trim($request->ten_lop) : $request->ten_lop,
+        ]);
+
         $validated = $request->validate([
-            'ma_lop' => 'required|string|max:50|unique:classes,ma_lop,' . $id,
-            'ten_lop' => 'required|string|max:255',
+            'ma_lop' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('classes', 'ma_lop')->ignore($id)->whereNull('deleted_at'),
+            ],
+            'ten_lop' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('classes', 'ten_lop')->ignore($id)->whereNull('deleted_at'),
+            ],
         ], [
             'ma_lop.required' => 'Vui lòng nhập mã phòng.',
             'ma_lop.unique' => 'Mã phòng đã tồn tại trong hệ thống.',
             'ten_lop.required' => 'Vui lòng nhập tên phòng.',
+            'ten_lop.unique' => 'Tên phòng đã tồn tại trong hệ thống.',
         ]);
 
         $class = ClassRoom::findOrFail($id);

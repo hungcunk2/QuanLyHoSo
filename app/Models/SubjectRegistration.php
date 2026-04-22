@@ -17,6 +17,7 @@ class SubjectRegistration extends Model
         'student_id',
         'subject_id',
         'class_room_id',
+        'th_group_index',
         'status',
     ];
 

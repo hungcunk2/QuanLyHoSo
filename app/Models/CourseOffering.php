@@ -15,21 +15,28 @@ class CourseOffering extends Model
 
     protected $fillable = [
         'ten_hoc_phan',
+        'hoc_ky',
+        'khoa_hoc',
         'class_room_id',
+        'class_room_id_thuc_hanh',
         'subject_id',
         'teacher_id',
         'teacher_id_ly_thuyet',
         'teacher_id_thuc_hanh',
         'si_so_lop',
+        'si_so_thuc_hanh_nhom_1',
+        'si_so_thuc_hanh_nhom_2',
         'ngay_mo_dang_ky',
         'ngay_ket_thuc_dang_ky',
         'ngay_bat_dau_hoc',
         'ngay_ket_thuc_hoc',
         'thu_ly_thuyet',
         'tiet_ly_thuyet',
+        'lt_moved_from',
         'ngay_thi_ly_thuyet_buoi_thu',
         'thu_thuc_hanh',
         'tiet_thuc_hanh',
+        'th_moved_from',
         'ngay_thi_thuc_hanh_buoi_thu',
     ];
 
@@ -46,6 +53,11 @@ class CourseOffering extends Model
     public function classRoom(): BelongsTo
     {
         return $this->belongsTo(ClassRoom::class, 'class_room_id');
+    }
+
+    public function classRoomThucHanh(): BelongsTo
+    {
+        return $this->belongsTo(ClassRoom::class, 'class_room_id_thuc_hanh');
     }
 
     public function subject(): BelongsTo

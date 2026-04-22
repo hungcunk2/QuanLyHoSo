@@ -4,16 +4,34 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\StudentWelcomeMail;
+use App\Mail\StudentPasswordChangedMail;
 use App\Models\Lop;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\Facades\DataTables;
 
 class StudentController extends Controller
 {
+    public function nextMssv()
+    {
+        return response()->json([
+            'success' => true,
+            'next_mssv' => Student::generateNextAvailableMssv(8),
+        ]);
+    }
+
+    public function nextMaHoSo()
+    {
+        return response()->json([
+            'success' => true,
+            'next_ma_ho_so' => Student::generateNextAvailableMaHoSo('HS', 2),
+        ]);
+    }
+
     public function index()
     {
         $lops = Lop::orderBy('ma_lop')->get(['id', 'ma_lop', 'ten_lop']);
@@ -25,7 +43,20 @@ class StudentController extends Controller
     {
         $query = Student::query();
 
+        $filterName = $request->input('filter_ho_ten');
+        if (is_string($filterName) && trim($filterName) !== '') {
+            $needle = mb_strtolower(preg_replace('/\s+/u', ' ', trim($filterName)), 'UTF-8');
+            $pattern = '%'.addcslashes($needle, '%_\\').'%';
+            $query->whereRaw('LOWER(ho_ten) LIKE ?', [$pattern]);
+        }
+
+        $filterLop = $request->input('filter_lop');
+        if (is_string($filterLop) && trim($filterLop) !== '') {
+            $query->where('lop', trim($filterLop));
+        }
+
         return DataTables::of($query)
+            ->skipAutoFilter()
             ->addColumn('check', function ($student) {
                 return '<input type="checkbox" class="form-check-input row-checkbox" name="selected_ids[]" value="' . $student->id . '">';
             })
@@ -60,8 +91,8 @@ class StudentController extends Controller
                     <button type="button" class="btn btn-sm btn-primary me-1 edit-btn" data-id="' . (int) $student->id . '" data-edit="' . e($editJson) . '" title="Sửa">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-info me-1 send-email-btn" data-id="' . $student->id . '" data-email="' . e($student->email ?? '') . '" title="Gửi email">
-                        <i class="fas fa-envelope"></i>
+                    <button type="button" class="btn btn-sm btn-warning me-1 reset-password-btn" data-id="' . $student->id . '" data-email="' . e($student->email ?? '') . '" data-mssv="' . e($student->mssv ?? '') . '" title="Đổi mật khẩu">
+                        <i class="fas fa-key"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-danger delete-btn" data-id="' . $student->id . '" title="Xóa">
                         <i class="fas fa-trash"></i>
@@ -77,13 +108,47 @@ class StudentController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'mssv' => is_string($request->mssv) ? trim($request->mssv) : $request->mssv,
+            'email' => is_string($request->email) ? trim(mb_strtolower($request->email)) : $request->email,
+            'ma_ho_so' => is_string($request->ma_ho_so) ? trim($request->ma_ho_so) : $request->ma_ho_so,
+            'khoa' => is_string($request->khoa) ? trim($request->khoa) : $request->khoa,
+            'khoa_hoc' => is_string($request->khoa_hoc) ? trim($request->khoa_hoc) : $request->khoa_hoc,
+        ]);
+
+        if (! is_string($request->khoa) || $request->khoa === '') {
+            $request->merge(['khoa' => 'Khoa Công nghệ Thông tin']);
+        }
+        if (! is_string($request->khoa_hoc) || $request->khoa_hoc === '') {
+            $year = now()->year;
+            $request->merge(['khoa_hoc' => $year . '-' . ($year + 1)]);
+        }
+
         $request->validate([
-            'mssv' => 'required|string|max:50|unique:students,mssv|unique:users,username',
-            'email' => 'required|email|max:255|unique:students,email|unique:users,email',
+            'mssv' => [
+                'nullable',
+                'string',
+                'max:50',
+                Rule::unique('students', 'mssv')->whereNull('deleted_at'),
+                Rule::unique('users', 'username'),
+            ],
+            'ma_ho_so' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('students', 'ma_ho_so')->whereNull('deleted_at'),
+            ],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('students', 'email')->whereNull('deleted_at'),
+                Rule::unique('users', 'email'),
+            ],
             'ho_ten' => 'required|string|max:255',
             'lop' => 'required|string|max:50|exists:lops,ma_lop',
+            'co_so' => ['nullable', 'string', Rule::in(Student::coSoOptions())],
         ], [
-            'mssv.required' => 'Vui lòng nhập mã số học sinh.',
             'mssv.unique' => 'Mã số học sinh đã tồn tại trong hệ thống.',
             'email.required' => 'Vui lòng nhập email.',
             'email.email' => 'Email không hợp lệ.',
@@ -96,33 +161,64 @@ class StudentController extends Controller
         // Tạo mật khẩu 6 số ngẫu nhiên
         $password = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        // Tạo user trước
-        $user = User::create([
-            'username' => $request->mssv,
-            'email' => $request->email,
-            'password' => $password, // Sẽ được hash tự động bởi cast 'hashed'
-            'role' => 'student',
-            'status' => true,
-        ]);
+        // Tạo user + student atomically
+        [$user, $student] = DB::transaction(function () use ($request, $password) {
+            $mssv = $request->mssv;
+            if (! is_string($mssv) || trim($mssv) === '') {
+                DB::table('students')
+                    ->select('mssv')
+                    ->whereRaw("mssv REGEXP '^[0-9]+$'")
+                    ->orderByRaw('CAST(mssv AS UNSIGNED) DESC')
+                    ->lockForUpdate()
+                    ->first();
 
-        // Tạo student sau khi user đã được tạo thành công
-        $student = Student::create([
-            'mssv' => $request->mssv,
-            'email' => $request->email,
-            'ho_ten' => $request->ho_ten,
-            'lop' => $request->lop,
-            'gioi_tinh' => $request->gioi_tinh,
-            'trang_thai' => $request->trang_thai,
-            'ma_ho_so' => $request->ma_ho_so,
-            'ngay_vao_truong' => $request->ngay_vao_truong,
-            'co_so' => $request->co_so,
-            'bac_dao_tao' => $request->bac_dao_tao,
-            'loai_hinh_dao_tao' => $request->loai_hinh_dao_tao,
-            'khoa' => $request->khoa,
-            'nganh' => $request->nganh,
-            'chuyen_nganh' => $request->chuyen_nganh,
-            'khoa_hoc' => $request->khoa_hoc,
-        ]);
+                $mssv = Student::generateNextAvailableMssv(8);
+            } else {
+                $mssv = trim($mssv);
+            }
+
+            $maHoSo = $request->ma_ho_so;
+            if (! is_string($maHoSo) || trim($maHoSo) === '') {
+                DB::table('students')
+                    ->select('ma_ho_so')
+                    ->where('ma_ho_so', 'like', 'HS%')
+                    ->orderByRaw('CAST(SUBSTRING(ma_ho_so, 3) AS UNSIGNED) DESC')
+                    ->lockForUpdate()
+                    ->first();
+
+                $maHoSo = Student::generateNextAvailableMaHoSo('HS', 2);
+            } else {
+                $maHoSo = trim($maHoSo);
+            }
+
+            $user = User::create([
+                'username' => $mssv,
+                'email' => $request->email,
+                'password' => $password, // hash via cast 'hashed'
+                'role' => 'student',
+                'status' => true,
+            ]);
+
+            $student = Student::create([
+                'mssv' => $mssv,
+                'email' => $request->email,
+                'ho_ten' => $request->ho_ten,
+                'lop' => $request->lop,
+                'gioi_tinh' => $request->gioi_tinh,
+                'trang_thai' => $request->trang_thai,
+                'ma_ho_so' => $maHoSo,
+                'ngay_vao_truong' => $request->ngay_vao_truong,
+                'co_so' => $request->co_so,
+                'bac_dao_tao' => $request->bac_dao_tao,
+                'loai_hinh_dao_tao' => $request->loai_hinh_dao_tao,
+                'khoa' => $request->khoa,
+                'nganh' => $request->nganh,
+                'chuyen_nganh' => $request->chuyen_nganh,
+                'khoa_hoc' => $request->khoa_hoc,
+            ]);
+
+            return [$user, $student];
+        });
 
         // Gửi email chào mừng với thông tin đăng nhập
         try {
@@ -158,7 +254,7 @@ class StudentController extends Controller
             'trang_thai' => 'nullable|string|max:50',
             'ma_ho_so' => 'nullable|string|max:100',
             'ngay_vao_truong' => 'nullable|date',
-            'co_so' => 'nullable|string|max:255',
+            'co_so' => ['nullable', 'string', Rule::in(Student::coSoOptions())],
             'bac_dao_tao' => 'nullable|string|max:100',
             'loai_hinh_dao_tao' => 'nullable|string|max:100',
             'khoa' => 'nullable|string|max:255',
@@ -209,10 +305,69 @@ class StudentController extends Controller
         }
     }
 
+    public function resetPassword(Request $request, $id)
+    {
+        $student = Student::findOrFail($id);
+
+        if (! $student->email) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Học sinh chưa có email nên không thể gửi thông báo đổi mật khẩu.',
+            ], 400);
+        }
+
+        $request->validate([
+            'password' => ['required', 'string', 'min:6', 'max:255'],
+        ], [
+            'password.required' => 'Vui lòng nhập mật khẩu mới.',
+            'password.min' => 'Mật khẩu mới phải có ít nhất 6 ký tự.',
+        ]);
+
+        $newPassword = (string) $request->input('password');
+
+        DB::transaction(function () use ($student, $newPassword) {
+            $user = User::where('username', $student->mssv)->first();
+
+            if (! $user) {
+                $user = User::create([
+                    'username' => $student->mssv,
+                    'email' => $student->email,
+                    'password' => $newPassword, // hash via cast 'hashed'
+                    'role' => 'student',
+                    'status' => true,
+                ]);
+            } else {
+                $user->forceFill([
+                    'email' => $student->email ?: $user->email,
+                    'password' => $newPassword, // hash via cast 'hashed'
+                ])->save();
+            }
+        });
+
+        try {
+            Mail::to($student->email)->send(new StudentPasswordChangedMail($student, $newPassword));
+        } catch (\Throwable $e) {
+            report($e);
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã đổi mật khẩu nhưng không thể gửi email. Vui lòng kiểm tra cấu hình mail (MAIL_*).',
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đổi mật khẩu thành công và đã gửi email thông báo cho học sinh.',
+        ]);
+    }
+
     public function destroy($id)
     {
         $student = Student::findOrFail($id);
-        $student->delete();
+        DB::transaction(function () use ($student) {
+            // Delete linked user (username = mssv)
+            User::where('username', $student->mssv)->where('role', 'student')->delete();
+            $student->forceDelete();
+        });
 
         return response()->json([
             'success' => true,
@@ -251,9 +406,7 @@ class StudentController extends Controller
             if (count($usernames)) {
                 User::whereIn('username', $usernames)->where('role', 'student')->delete();
             }
-            foreach ($students as $student) {
-                $student->delete();
-            }
+            Student::whereIn('id', $students->pluck('id')->all())->forceDelete();
         });
 
         return response()->json([
