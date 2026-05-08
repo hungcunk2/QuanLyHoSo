@@ -70,6 +70,12 @@
                                 <span>Chấm điểm</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('teacher.notifications.manage.index') }}" class="nav-link">
+                                <i class="fas fa-bell"></i>
+                                <span>Thông Báo</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 
@@ -111,10 +117,64 @@
                     <button class="header-icon-btn theme-toggle" id="themeToggle">
                         <i class="fas fa-sun"></i>
                     </button>
-                    <button class="header-icon-btn notification-btn" id="notificationBtn">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">3</span>
-                    </button>
+                    @php
+                        $userId = (int) (Auth::id() ?? 0);
+                        $topAnnouncements = \App\Models\Announcement::query()
+                            ->whereIn('audience', ['all', 'teacher'])
+                            ->orderByDesc('created_at')
+                            ->limit(6)
+                            ->get();
+
+                        $readIds = $userId
+                            ? \Illuminate\Support\Facades\DB::table('announcement_reads')
+                                ->where('user_id', $userId)
+                                ->pluck('announcement_id')
+                                ->all()
+                            : [];
+
+                        $unreadCount = $userId
+                            ? \App\Models\Announcement::query()
+                                ->whereIn('audience', ['all', 'teacher'])
+                                ->whereNotIn('id', $readIds)
+                                ->count()
+                            : 0;
+                    @endphp
+                    <div class="dropdown">
+                        <button
+                            class="header-icon-btn notification-btn"
+                            id="notificationBtn"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                        >
+                            <i class="fas fa-bell"></i>
+                            @if($unreadCount > 0)
+                                <span class="badge">{{ $unreadCount }}</span>
+                            @endif
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notificationBtn" style="width: 360px; max-width: 90vw;">
+                            <div class="px-3 py-2 border-bottom fw-bold">Thông báo</div>
+                            <div style="max-height: 360px; overflow: auto;">
+                                @forelse($topAnnouncements as $a)
+                                    @php($isUnread = $userId && !in_array($a->id, $readIds, true))
+                                    <a class="dropdown-item py-2" href="{{ route('announcements.show', $a->slug) }}">
+                                        <div class="fw-bold" style="white-space: normal;">{{ $a->title }}</div>
+                                        @if($a->summary)
+                                            <div class="text-muted" style="font-size: 12px; white-space: normal;">{{ $a->summary }}</div>
+                                        @endif
+                                        @if($isUnread)
+                                            <div class="text-primary" style="font-size: 12px;">Chưa đọc</div>
+                                        @endif
+                                    </a>
+                                @empty
+                                    <div class="px-3 py-3 text-muted">Chưa có thông báo.</div>
+                                @endforelse
+                            </div>
+                            <div class="border-top">
+                                <a class="dropdown-item text-center py-2" href="{{ route('teacher.notifications.manage.index') }}">Quản lý thông báo</a>
+                            </div>
+                        </div>
+                    </div>
                     <div class="user-profile dropdown">
                         <button type="button" class="btn btn-link p-0 text-decoration-none user-name dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                             {{ $authDisplayName ?? (Auth::user()->email ?? 'GIÁO VIÊN') }}

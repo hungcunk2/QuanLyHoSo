@@ -30,7 +30,7 @@ class PasswordResetLinkController extends Controller
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
-        $request->validate([
+        $request->validateWithBag('forgot', [
             'email' => ['required', 'email'],
         ], [
             'email.required' => 'Vui lòng nhập email.',
@@ -89,7 +89,7 @@ class PasswordResetLinkController extends Controller
                     'errors' => ['email' => [$msg]],
                 ], 422);
             }
-            return back()->withErrors(['email' => $msg])->withInput($request->only('email'));
+            return back()->withErrors(['email' => $msg], 'forgot')->withInput($request->only('email'));
         }
 
         $newPassword = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -103,7 +103,7 @@ class PasswordResetLinkController extends Controller
             if ($request->expectsJson()) {
                 return response()->json(['message' => $msg], 500);
             }
-            return back()->withErrors(['email' => $msg])->withInput($request->only('email'));
+            return back()->withErrors(['email' => $msg], 'forgot')->withInput($request->only('email'));
         }
 
         $message = 'Mật khẩu mới đã được gửi về email.';

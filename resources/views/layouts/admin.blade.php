@@ -32,18 +32,6 @@
             
             <nav class="sidebar-nav">
                 <div class="nav-section">
-                    <div class="nav-section-title">MAIN</div>
-                    <ul class="nav-menu">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.dashboard') }}" class="nav-link">
-                                <i class="fas fa-home"></i>
-                                <span>Bảng Điều Khiển</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                
-                <div class="nav-section">
                     <div class="nav-section-title">QUẢN LÝ</div>
                     <ul class="nav-menu">
                         <li class="nav-item">
@@ -82,18 +70,24 @@
                                 <span>Quản Lý Đăng Ký Học Phần</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.reports.index') }}" class="nav-link">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Báo cáo / Thống kê</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('admin.notifications.index') }}" class="nav-link">
+                                <i class="fas fa-bell"></i>
+                                <span>Thông Báo</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 
                 <div class="nav-section">
                     <div class="nav-section-title">SYSTEM</div>
                     <ul class="nav-menu">
-                        <li class="nav-item">
-                            <a href="#" class="nav-link">
-                                <i class="fas fa-cog"></i>
-                                <span>Settings</span>
-                            </a>
-                        </li>
                         <li class="nav-item">
                             <a href="{{ route('account.password.edit') }}" class="nav-link">
                                 <i class="fas fa-key"></i>
@@ -129,27 +123,10 @@
                     <button class="header-icon-btn theme-toggle" id="themeToggle">
                         <i class="fas fa-sun"></i>
                     </button>
-                    <button class="header-icon-btn notification-btn" id="notificationBtn">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">3</span>
-                    </button>
-                    <div class="user-profile dropdown">
-                        <button type="button" class="btn btn-link p-0 text-decoration-none user-name dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="user-profile d-flex align-items-center">
+                        <span class="user-name">
                             {{ $authDisplayName ?? (Auth::user()->email ?? 'SUPER ADMIN') }}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Thông tin cá nhân</a></li>
-                            <li><a class="dropdown-item" href="{{ route('account.password.edit') }}"><i class="fas fa-key me-2"></i>Đổi mật khẩu</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
+                        </span>
                     </div>
                 </div>
             </header>

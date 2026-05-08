@@ -51,7 +51,7 @@
                         <select class="form-select form-select-sm" id="filter-lop" aria-controls="studentsTable">
                             <option value="">Tất cả lớp</option>
                             @foreach($lops ?? [] as $lopItem)
-                                <option value="{{ $lopItem->ma_lop }}">{{ $lopItem->ma_lop }} — {{ $lopItem->ten_lop }}</option>
+                                <option value="{{ $lopItem->ma_lop }}">{{ $lopItem->ten_lop }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -140,7 +140,7 @@
                             <select class="form-select" id="create_lop" name="lop" required>
                                 <option value="">-- Chọn lớp --</option>
                                 @foreach($lops ?? [] as $lopItem)
-                                    <option value="{{ $lopItem->ma_lop }}">{{ $lopItem->ma_lop }} — {{ $lopItem->ten_lop }}</option>
+                                    <option value="{{ $lopItem->ma_lop }}">{{ $lopItem->ten_lop }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -281,7 +281,7 @@
                             <select class="form-select" id="edit_lop" name="lop">
                                 <option value="">-- Chọn lớp --</option>
                                 @foreach($lops ?? [] as $lopItem)
-                                    <option value="{{ $lopItem->ma_lop }}">{{ $lopItem->ma_lop }} — {{ $lopItem->ten_lop }}</option>
+                                    <option value="{{ $lopItem->ma_lop }}">{{ $lopItem->ten_lop }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -506,7 +506,7 @@
                     name: 'email'
                 },
                 {
-                    data: 'lop',
+                    data: 'lop_ten',
                     name: 'lop'
                 },
                 {

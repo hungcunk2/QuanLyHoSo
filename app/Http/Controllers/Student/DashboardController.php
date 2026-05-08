@@ -23,7 +23,193 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $student = Student::where('email', $user->email)->first();
-        return view('student.dashboard', compact('user', 'student'));
+        $remindersCount = 0;
+        $lopTen = null;
+        if ($student && $student->lop) {
+            $lopTen = Lop::query()
+                ->where('ma_lop', $student->lop)
+                ->value('ten_lop');
+        }
+
+        $offerings = collect();
+        $offeringsLhp = collect();
+        $gradesByOffering = collect();
+        $hocKyOptions = collect();
+
+        // tách 2 dropdown độc lập: kết quả học tập và lớp học phần
+        $selectedDotKq = (string) request()->query('dot_kq', '');
+        $selectedDotLhp = (string) request()->query('dot_lhp', '');
+
+        $parseDot = function (string $dot): array {
+            if ($dot === '' || !str_contains($dot, '|')) return [null, null];
+            [$hk, $kh] = array_pad(explode('|', $dot, 2), 2, '');
+            $hk = $hk !== '' ? $hk : null;
+            $kh = $kh !== '' ? $kh : null;
+            return [$hk, $kh];
+        };
+
+        [$kqHocKy, $kqKhoaHoc] = $parseDot($selectedDotKq);
+        [$lhpHocKy, $lhpKhoaHoc] = $parseDot($selectedDotLhp);
+
+        $weekClassCount = 0;
+        $weekExamCount = 0;
+
+        if ($student) {
+            $offeringIds = SubjectRegistration::query()
+                ->where('student_id', $student->id)
+                ->where('status', '!=', 'cancelled')
+                ->whereNotNull('course_offering_id')
+                ->pluck('course_offering_id')
+                ->unique()
+                ->values();
+
+            if ($offeringIds->isNotEmpty()) {
+                $allOfferings = CourseOffering::query()
+                    ->whereIn('id', $offeringIds)
+                    ->where('is_cancelled', false)
+                    ->with(['subject', 'classRoom', 'schedules'])
+                    ->get();
+
+                $hocKyOptions = $allOfferings
+                    ->map(fn ($o) => [
+                        'khoa_hoc' => $o->khoa_hoc,
+                        'hoc_ky' => $o->hoc_ky,
+                    ])
+                    ->unique(fn ($x) => (string) ($x['khoa_hoc'] ?? '') . '|' . (string) ($x['hoc_ky'] ?? ''))
+                    ->values();
+
+                // điểm và tiến độ tính theo toàn bộ học phần đã đăng ký (không phụ thuộc dropdown)
+                $offerings = $allOfferings
+                    ->sortBy(fn ($o) => (string) ($o->subject?->ten_mon_hoc ?? $o->ten_hoc_phan ?? ''))
+                    ->values();
+
+                $gradesByOffering = CourseOfferingGrade::query()
+                    ->whereIn('course_offering_id', $allOfferings->pluck('id'))
+                    ->where('student_id', $student->id)
+                    ->get()
+                    ->keyBy('course_offering_id');
+
+                $filterByDot = function ($collection, $hk, $kh) {
+                    if ($hk !== null && $hk !== '') {
+                        $collection = $collection->where('hoc_ky', $hk)->values();
+                    }
+                    if ($kh !== null && $kh !== '') {
+                        $collection = $collection->where('khoa_hoc', $kh)->values();
+                    }
+                    return $collection;
+                };
+
+                // danh sách lớp học phần (dropdown riêng)
+                $offeringsLhp = $filterByDot($allOfferings, $lhpHocKy, $lhpKhoaHoc)
+                    ->sortBy(fn ($o) => (string) ($o->subject?->ten_mon_hoc ?? $o->ten_hoc_phan ?? ''))
+                    ->values();
+
+                // lớp học phần để vẽ chart kết quả (dropdown riêng)
+                $offeringsKq = $filterByDot($allOfferings, $kqHocKy, $kqKhoaHoc)
+                    ->sortBy(fn ($o) => (string) ($o->subject?->ten_mon_hoc ?? $o->ten_hoc_phan ?? ''))
+                    ->values();
+
+                $startWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->startOfDay();
+                $endWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+                $weekOfferings = $baseOfferings = CourseOffering::query()
+                    ->whereIn('id', $offeringIds)
+                    ->where('is_cancelled', false)
+                    ->with('schedules')
+                    ->get()
+                    ->filter(function ($o) use ($startWeek, $endWeek) {
+                        $from = $o->ngay_bat_dau_hoc ? $o->ngay_bat_dau_hoc->startOfDay() : null;
+                        $to = $o->ngay_ket_thuc_hoc ? $o->ngay_ket_thuc_hoc->endOfDay() : null;
+                        if ($from && $to) {
+                            return $from->lte($endWeek) && $to->gte($startWeek);
+                        }
+                        return true;
+                    })
+                    ->values();
+
+                $weekClassCount = (int) $weekOfferings->count();
+            }
+        }
+
+        $totalCredits = (int) ($offerings->sum(fn ($o) => (int) ($o->subject?->so_tin_chi ?? 0)));
+        $passedCredits = (int) ($offerings->sum(function ($o) use ($gradesByOffering) {
+            if (!$o->grades_finalized_at) return 0;
+            $g = $gradesByOffering[$o->id] ?? null;
+            $tk = $g?->diem_tong_ket;
+            if ($tk === null || $tk === '') return 0;
+            $n = (float) str_replace(',', '.', (string) $tk);
+            return $n >= 5 ? (int) ($o->subject?->so_tin_chi ?? 0) : 0;
+        }));
+
+        $resultsChartLabels = [];
+        $resultsChartValues = [];
+        $resultsChartAverages = [];
+        $offeringsForResults = $offeringsKq ?? collect();
+        if ($offeringsForResults->isNotEmpty()) {
+            $finalizedOfferingIds = $offeringsForResults
+                ->filter(fn ($o) => (bool) $o->grades_finalized_at)
+                ->pluck('id')
+                ->values();
+
+            $avgByOffering = collect();
+            if ($finalizedOfferingIds->isNotEmpty()) {
+                $avgByOffering = CourseOfferingGrade::query()
+                    ->selectRaw('course_offering_id, AVG(diem_tong_ket) as avg_tk')
+                    ->whereIn('course_offering_id', $finalizedOfferingIds)
+                    ->whereNotNull('diem_tong_ket')
+                    ->groupBy('course_offering_id')
+                    ->get()
+                    ->keyBy('course_offering_id');
+            }
+
+            foreach ($offeringsForResults as $o) {
+                if (!$o->grades_finalized_at) continue;
+
+                $label = (string) ($o->subject?->ten_mon_hoc ?? $o->ten_hoc_phan ?? $o->subject?->ma_mon_hoc ?? '—');
+                $resultsChartLabels[] = $label;
+
+                $g = $gradesByOffering[$o->id] ?? null;
+                $tk = $g?->diem_tong_ket;
+                $studentVal = 0.0;
+                if ($tk !== null && $tk !== '') {
+                    $studentVal = (float) str_replace(',', '.', (string) $tk);
+                }
+                $resultsChartValues[] = round($studentVal, 2);
+
+                $avgRow = $avgByOffering[$o->id] ?? null;
+                $avgVal = $avgRow?->avg_tk;
+                $resultsChartAverages[] = round((float) ($avgVal ?? 0), 2);
+            }
+        }
+
+        $programTotalCredits = 167;
+
+        return view('student.dashboard', compact(
+            'user',
+            'student',
+            'lopTen',
+            'remindersCount',
+            'weekClassCount',
+            'weekExamCount',
+            'offerings',
+            'offeringsLhp',
+            'gradesByOffering',
+            'hocKyOptions',
+            'selectedDotKq',
+            'selectedDotLhp',
+            'totalCredits',
+            'passedCredits',
+            'programTotalCredits',
+            'resultsChartLabels',
+            'resultsChartValues',
+            'resultsChartAverages',
+        ));
+    }
+
+    public function profile()
+    {
+        $user = Auth::user();
+        $student = Student::where('email', $user->email)->first();
+        return view('student.profile', compact('user', 'student'));
     }
 
     public function editProfile()
@@ -250,9 +436,15 @@ class DashboardController extends Controller
             if ($offeringIds->isNotEmpty()) {
                 $offerings = CourseOffering::query()
                     ->whereIn('id', $offeringIds)
+                    ->where('is_cancelled', false)
                     ->with(['subject', 'classRoom'])
-                    ->orderByDesc('ngay_bat_dau_hoc')
-                    ->orderByDesc('created_at')
+                    ->orderByRaw('khoa_hoc is null')
+                    ->orderBy('khoa_hoc')
+                    ->orderByRaw('hoc_ky is null')
+                    ->orderBy('hoc_ky')
+                    ->orderByRaw('ngay_bat_dau_hoc is null')
+                    ->orderBy('ngay_bat_dau_hoc')
+                    ->orderBy('created_at')
                     ->get();
 
                 $gradesByOffering = CourseOfferingGrade::query()
@@ -266,6 +458,62 @@ class DashboardController extends Controller
         return view('student.results', compact('user', 'student', 'offerings', 'gradesByOffering'));
     }
 
+    public function resultsPdf()
+    {
+        $user = Auth::user();
+        $student = Student::where('email', $user->email)->first();
+        if (! $student) {
+            abort(404);
+        }
+
+        $lopTen = null;
+        if ($student->lop) {
+            $lopTen = Lop::query()->where('ma_lop', $student->lop)->value('ten_lop');
+        }
+
+        $offerings = collect();
+        $gradesByOffering = collect();
+
+        $offeringIds = SubjectRegistration::query()
+            ->where('student_id', $student->id)
+            ->where('status', '!=', 'cancelled')
+            ->whereNotNull('course_offering_id')
+            ->pluck('course_offering_id')
+            ->unique()
+            ->values();
+
+        if ($offeringIds->isNotEmpty()) {
+            $offerings = CourseOffering::query()
+                ->whereIn('id', $offeringIds)
+                ->where('is_cancelled', false)
+                ->with(['subject', 'classRoom'])
+                ->orderByRaw('khoa_hoc is null')
+                ->orderBy('khoa_hoc')
+                ->orderByRaw('hoc_ky is null')
+                ->orderBy('hoc_ky')
+                ->orderByRaw('ngay_bat_dau_hoc is null')
+                ->orderBy('ngay_bat_dau_hoc')
+                ->orderBy('created_at')
+                ->get();
+
+            $gradesByOffering = CourseOfferingGrade::query()
+                ->whereIn('course_offering_id', $offerings->pluck('id'))
+                ->where('student_id', $student->id)
+                ->get()
+                ->keyBy('course_offering_id');
+        }
+
+        $fileName = 'Bang_diem_' . ($student->mssv ?? 'sinhvien') . '_' . now()->format('Ymd-His') . '.pdf';
+
+        return Pdf::loadView('student.results-pdf', [
+            'user' => $user,
+            'student' => $student,
+            'lopTen' => $lopTen,
+            'offerings' => $offerings,
+            'gradesByOffering' => $gradesByOffering,
+        ])->setPaper('a4', 'landscape')->download($fileName);
+    }
+
     public function registration()
     {
         $user = Auth::user();
@@ -277,6 +525,32 @@ class DashboardController extends Controller
 
         $today = Carbon::today();
 
+        // Filter by current academic year (3 semesters)
+        $currentKhoaHoc = (string) (CourseOffering::query()
+            ->whereNotNull('khoa_hoc')
+            ->where('khoa_hoc', '!=', '')
+            ->orderByDesc('khoa_hoc')
+            ->value('khoa_hoc') ?? '');
+        if (trim($currentKhoaHoc) === '') {
+            $month = (int) $today->format('n');
+            $year = (int) $today->format('Y');
+            $academicStart = $month >= 8 ? $year : ($year - 1);
+            $currentKhoaHoc = $academicStart . '-' . ($academicStart + 1);
+        }
+
+        $month = (int) $today->format('n');
+        $defaultHocKy = $month >= 8 ? '1' : ($month <= 5 ? '2' : '3');
+        $selectedHocKy = (string) request()->query('hoc_ky', $defaultHocKy);
+        if (! in_array($selectedHocKy, ['1', '2', '3'], true)) {
+            $selectedHocKy = $defaultHocKy;
+        }
+
+        $hocKyOptions = [
+            ['value' => '1', 'label' => 'Học kỳ 1 ' . $currentKhoaHoc],
+            ['value' => '2', 'label' => 'Học kỳ 2 ' . $currentKhoaHoc],
+            ['value' => '3', 'label' => 'Học kỳ 3 ' . $currentKhoaHoc],
+        ];
+
         $offerings = CourseOffering::with([
             'subject',
             'classRoom',
@@ -286,6 +560,9 @@ class DashboardController extends Controller
             'schedules.teacher',
             'schedules.classRoom',
         ])
+            ->where('is_cancelled', false)
+            ->whereRaw('TRIM(khoa_hoc) = ?', [$currentKhoaHoc])
+            ->where('hoc_ky', (int) $selectedHocKy)
             ->withCount([
                 'subjectRegistrations as registrations_count' => function ($q) {
                     $q->where('status', '!=', 'cancelled');
@@ -294,15 +571,63 @@ class DashboardController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        // Count registrations per offering per TH group
+        $thCountsByOffering = SubjectRegistration::query()
+            ->where('status', '!=', 'cancelled')
+            ->whereNotNull('course_offering_id')
+            ->whereNotNull('th_group_index')
+            ->selectRaw('course_offering_id, th_group_index, COUNT(*) as cnt')
+            ->groupBy('course_offering_id', 'th_group_index')
+            ->get()
+            ->groupBy('course_offering_id')
+            ->map(function ($rows) {
+                return $rows->keyBy(fn ($r) => (int) $r->th_group_index)
+                    ->map(fn ($r) => (int) $r->cnt)
+                    ->all();
+            })
+            ->all();
+
         $myRegs = collect();
+        $myRegisteredOfferings = collect();
         if ($student) {
             $myRegs = SubjectRegistration::where('student_id', $student->id)
                 ->whereNotNull('course_offering_id')
                 ->get()
                 ->keyBy('course_offering_id');
+
+            $myOfferingIdsInTerm = SubjectRegistration::query()
+                ->where('student_id', $student->id)
+                ->where('status', '!=', 'cancelled')
+                ->whereNotNull('course_offering_id')
+                ->pluck('course_offering_id')
+                ->unique()
+                ->values();
+
+            if ($myOfferingIdsInTerm->isNotEmpty()) {
+                $myRegisteredOfferings = CourseOffering::query()
+                    ->whereIn('id', $myOfferingIdsInTerm)
+                    ->where('is_cancelled', false)
+                    ->whereRaw('TRIM(khoa_hoc) = ?', [$currentKhoaHoc])
+                    ->where('hoc_ky', (int) $selectedHocKy)
+                    ->with(['subject', 'classRoom', 'teacherLyThuyet', 'teacherThucHanh'])
+                    ->orderByDesc('created_at')
+                    ->get();
+            }
         }
 
-        return view('student.registration', compact('user', 'student', 'studentLop', 'offerings', 'myRegs', 'today'));
+        return view('student.registration', compact(
+            'user',
+            'student',
+            'studentLop',
+            'offerings',
+            'myRegs',
+            'today',
+            'thCountsByOffering',
+            'hocKyOptions',
+            'selectedHocKy',
+            'currentKhoaHoc',
+            'myRegisteredOfferings'
+        ));
     }
 
     public function registerOffering(Request $request, $courseOfferingId)
@@ -318,6 +643,10 @@ class DashboardController extends Controller
                 $q->where('status', '!=', 'cancelled');
             }
         ])->with('schedules')->findOrFail($courseOfferingId);
+
+        if ($offering->is_cancelled) {
+            return back()->with('error', $offering->cancel_reason ?: 'Học phần đã bị hủy.');
+        }
 
         $today = Carbon::today();
         if ($offering->ngay_mo_dang_ky && $offering->ngay_mo_dang_ky->gt($today)) {

@@ -30,6 +30,10 @@ class CourseOffering extends Model
         'ngay_ket_thuc_dang_ky',
         'ngay_bat_dau_hoc',
         'ngay_ket_thuc_hoc',
+        'is_cancelled',
+        'cancel_reason',
+        'cancelled_at',
+        'grades_finalized_at',
         'thu_ly_thuyet',
         'tiet_ly_thuyet',
         'lt_moved_from',
@@ -47,6 +51,9 @@ class CourseOffering extends Model
             'ngay_ket_thuc_dang_ky' => 'date',
             'ngay_bat_dau_hoc' => 'date',
             'ngay_ket_thuc_hoc' => 'date',
+            'is_cancelled' => 'boolean',
+            'cancelled_at' => 'datetime',
+            'grades_finalized_at' => 'datetime',
         ];
     }
 

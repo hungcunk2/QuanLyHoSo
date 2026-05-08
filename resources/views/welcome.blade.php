@@ -7,432 +7,439 @@
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
     <title>Đại học Công nghiệp Thành phố Hồ Chí Minh - IIUH</title>
-    
-    <!-- Bootstrap CSS -->
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- AOS Animation -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ asset('css/landing.css') }}">
+
+    <style>
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            font-family: Helvetica, Arial, sans-serif;
+            background: #0b1220;
+        }
+        .auth-bg {
+            min-height: 100vh;
+            background-image:
+                linear-gradient(0deg, rgba(6, 10, 18, .35), rgba(6, 10, 18, .35)),
+                url("{{ asset('images/iuh-campus.png') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            position: relative;
+            --news-panel-h: 700px;
+            --login-panel-h: 540px;
+            --login-w: 520px;
+            --login-shift-x: 400px;
+        }
+        .auth-shell {
+            width: 100%;
+            padding: 24px;
+        }
+        .auth-grid {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .login-news-wrap {
+            position: absolute;
+            left: 100px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: min(1280px, calc(100vw - 100px - 24px - var(--login-w) - 26px));
+            z-index: 2;
+        }
+        .login-news {
+            max-width: 1280px;
+            color: #fff;
+            margin-left: 0;
+        }
+        .auth-card-wrap {
+            flex: 0 0 auto;
+            display: flex;
+            justify-content: flex-end;
+            transform: translateX(var(--login-shift-x));
+        }
+        .login-news__panel {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.20);
+            border-radius: 12px;
+            overflow: hidden;
+            backdrop-filter: blur(6px);
+            height: var(--news-panel-h);
+            display: flex;
+            flex-direction: column;
+        }
+        .login-news__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px;
+            background: rgba(2, 6, 23, 0.28);
+            border-bottom: 1px solid rgba(255,255,255,0.16);
+        }
+        .login-news__title {
+            font-weight: 800;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+            font-size: 16px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .login-news__title-badge {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
+        }
+        .login-news__more {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffedd5;
+            text-decoration: none;
+        }
+        .login-news__more:hover { text-decoration: underline; }
+        .login-news__list {
+            max-height: none;
+            flex: 1 1 auto;
+            overflow: auto;
+            padding: 6px 0;
+        }
+        .login-news__item {
+            display: flex;
+            gap: 16px;
+            padding: 18px 22px;
+            border-bottom: 1px solid rgba(255,255,255,0.14);
+        }
+        .login-news__item:last-child { border-bottom: 0; }
+        .login-news__date {
+            width: 86px;
+            flex: 0 0 86px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.22);
+            background: rgba(255,255,255,0.10);
+        }
+        .login-news__month {
+            background: rgba(37, 99, 235, 0.88);
+            color: #fff;
+            font-size: 12.5px;
+            font-weight: 800;
+            text-align: center;
+            padding: 6px 0;
+            line-height: 1;
+        }
+        .login-news__day {
+            color: #fff;
+            font-size: 32px;
+            font-weight: 800;
+            text-align: center;
+            padding: 16px 0 14px;
+            line-height: 1;
+        }
+        .login-news__content { min-width: 0; }
+        .login-news__headline {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.25;
+        }
+        .login-news__desc {
+            margin: 4px 0 0;
+            font-size: 14.5px;
+            color: rgba(255,255,255,0.82);
+            line-height: 1.35;
+        }
+        .login-news__link {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 14px;
+            font-weight: 800;
+            color: #bfdbfe;
+            text-decoration: none;
+        }
+        .login-news__link:hover { text-decoration: underline; }
+
+        .auth-card {
+            width: var(--login-w);
+            max-width: none;
+            margin-left: auto;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.65);
+            border-radius: 12px;
+            box-shadow: 0 18px 50px rgba(0,0,0,.25);
+            overflow: hidden;
+            height: var(--login-panel-h);
+            display: flex;
+            flex-direction: column;
+        }
+        .auth-card__header {
+            padding: 20px 22px 14px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+            text-align: center;
+        }
+        .auth-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .auth-logo img { height: 38px; width: auto; }
+        .auth-title {
+            margin: 10px 0 0;
+            font-size: 14px;
+            font-weight: 700;
+            color: #2563eb;
+            letter-spacing: .02em;
+            text-transform: uppercase;
+        }
+        .auth-card__body {
+            padding: 18px 22px 22px;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .form-control { height: 46px; font-size: 14px; }
+        .btn-login {
+            height: 46px;
+            background: #f97316;
+            border-color: #f97316;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .btn-login:hover { background: #ea580c; border-color: #ea580c; }
+        .muted-note { font-size: 12px; color: #64748b; }
+
+        @media (max-width: 991.98px) {
+            .auth-grid { flex-direction: column; align-items: stretch; }
+            .login-news-wrap {
+                position: static;
+                width: auto;
+                transform: none;
+                margin-bottom: 14px;
+            }
+            .login-news { max-width: none; margin-left: 0; margin-right: 0; }
+            .auth-card { width: 100%; max-width: none; margin-left: 0; }
+            .login-news__list { max-height: 340px; }
+            .auth-shell { padding: 18px 12px; }
+            .auth-bg { --login-shift-x: 0px; }
+        }
+    </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="main-header">
-        <nav class="navbar navbar-expand-lg navbar-light">
-            <div class="container">
-                <a class="navbar-brand" href="#">
-                    <div class="logo-wrapper">
-                        <img src="{{ asset('images/logo.png') }}" alt="IIUH" style="height: 64px; width: auto;">
-                        <span class="logo-text">IIUH</span>
-                    </div>
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" href="#about">Giới thiệu</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#news">Tin tức</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#admission">Tuyển sinh</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#training">Đào tạo</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#contact">Liên hệ</a>
-                        </li>
-                    </ul>
-                    <div class="header-actions ms-3">
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#loginModal">
-                            <i class="fas fa-sign-in-alt"></i> Đăng nhập
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
+    <div class="auth-bg">
+        <div class="login-news-wrap">
+            @php
+                $loginAnnouncements = \App\Models\Announcement::query()
+                    ->where(function ($q) {
+                        // Trang đăng nhập chỉ hiển thị thông báo do Admin tạo (hoặc dữ liệu cũ chưa có created_by_user_id)
+                        $adminIds = \App\Models\User::query()
+                            ->where('role', 'admin')
+                            ->pluck('id')
+                            ->all();
+                        $q->whereNull('created_by_user_id')
+                          ->orWhereIn('created_by_user_id', $adminIds);
+                    })
+                    ->orderByDesc('created_at')
+                    ->limit(6)
+                    ->get();
+                $newsMoreUrl = route('announcements.index');
+            @endphp
 
-    <!-- Hero Section -->
-    <section class="hero-section">
-        <div class="hero-overlay"></div>
-        <div class="container">
-            <div class="row align-items-center min-vh-100">
-                <div class="col-lg-8" data-aos="fade-right">
-                    <h1 class="hero-title">Chào mừng bạn đến với<br>Đại học Công nghiệp Thành phố Hồ Chí Minh</h1>
-                    <p class="hero-subtitle">Với mục tiêu và tầm nhìn trở thành một trong những trường đại học hàng đầu Việt Nam, tiên phong trong giáo dục, nghiên cứu ứng dụng, chuyển giao công nghệ và đổi mới sáng tạo.</p>
-                    <div class="hero-buttons">
-                        <a href="#about" class="btn btn-primary btn-lg me-3">
-                            <i class="fas fa-info-circle"></i> Tìm hiểu thêm
-                        </a>
-                        <a href="#admission" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-graduation-cap"></i> Tuyển sinh 2026
-                        </a>
+            <div class="login-news">
+                <div class="login-news__panel">
+                    <div class="login-news__header">
+                        <h2 class="login-news__title">
+                            <span class="login-news__title-badge" aria-hidden="true"></span>
+                            <span>Tin tức - Sự kiện</span>
+                        </h2>
+                        <a class="login-news__more" href="{{ $newsMoreUrl }}">XEM THÊM</a>
                     </div>
-                </div>
-                <div class="col-lg-4 text-center" data-aos="fade-left">
-                    <div class="hero-badges">
-                        <div class="badge-item">
-                            <i class="fas fa-trophy"></i>
-                            <span>IIUH 2026</span>
-                        </div>
-                        <div class="badge-item">
-                            <i class="fas fa-star"></i>
-                            <span>QS 2026</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="hero-scroll">
-            <a href="#about" class="scroll-down">
-                <i class="fas fa-chevron-down"></i>
-            </a>
-        </div>
-    </section>
-
-    <!-- Core Values Section -->
-    <section id="about" class="core-values-section py-5">
-        <div class="container">
-            <div class="row mb-5">
-                <div class="col-lg-8 mx-auto text-center" data-aos="fade-up">
-                    <h2 class="section-title">Giá trị cốt lõi</h2>
-                    <p class="section-subtitle">Trường Đại học Công nghiệp Thành phố Hồ Chí Minh xác định và đúc kết hệ giá trị cốt lõi: "Đổi mới – Đoàn kết – Nhân văn"</p>
-                </div>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="value-card">
-                        <div class="value-icon innovation">
-                            <i class="fas fa-lightbulb"></i>
-                        </div>
-                        <h3 class="value-title">Đổi mới</h3>
-                        <p class="value-description">Liên tục tìm kiếm những cách làm mới và tốt hơn, sáng tạo, đổi mới và dám nghĩ, dám làm để thử những điều mới và tạo cơ hội để cải tiến và đạt đến tầm cao mới.</p>
-                    </div>
-                </div>
-                <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                    <div class="value-card">
-                        <div class="value-icon unity">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h3 class="value-title">Đoàn kết</h3>
-                        <p class="value-description">Chịu trách nhiệm và làm chủ, đồng thời phối hợp làm việc với tất cả các đơn vị và các bên liên quan để khai thác triệt để các nguồn lực và năng lực.</p>
-                    </div>
-                </div>
-                <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-                    <div class="value-card">
-                        <div class="value-icon humanity">
-                            <i class="fas fa-heart"></i>
-                        </div>
-                        <h3 class="value-title">Nhân văn</h3>
-                        <p class="value-description">Đối xử với từng cá nhân và tập thể bằng lòng nhân ái, vị tha, công bằng, công tâm và hướng đến phát triển tiềm năng và hiện thực hóa nguyện vọng.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section class="about-section py-5 bg-light">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6" data-aos="fade-right">
-                    <h2 class="section-title">Về chúng tôi</h2>
-                    <p class="about-text">Tiền thân của Đại học Công nghiệp Thành phố Hồ Chí Minh là Trường Huấn nghiệp Gò Vấp do các tu sĩ dòng Don Bosco thành lập 11/11/1956 tại xã Hạnh Thông.</p>
-                    <p class="about-text">Bằng việc không ngừng đổi mới và nâng cao chất lượng giáo dục, cũng như cải thiện cơ sở vật chất phục vụ học tập, nghiên cứu và các hoạt động, IIUH đã và đang khẳng định vị thế của mình trong hệ thống giáo dục đại học Việt Nam.</p>
-                    <div class="stats-row mt-4">
-                        <div class="stat-item">
-                            <div class="stat-number">500+</div>
-                            <div class="stat-label">Giảng đường</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">350+</div>
-                            <div class="stat-label">Phòng thí nghiệm</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-number">50+</div>
-                            <div class="stat-label">Năm kinh nghiệm</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6" data-aos="fade-left">
-                    <div class="about-image">
-                        <div class="image-placeholder">
-                            <i class="fas fa-university"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- News Section -->
-    <section id="news" class="news-section py-5">
-        <div class="container">
-            <div class="row mb-5">
-                <div class="col-lg-8 mx-auto text-center" data-aos="fade-up">
-                    <h2 class="section-title">Tin tức</h2>
-                    <p class="section-subtitle">Cập nhật những thông tin mới nhất từ IIUH</p>
-                </div>
-            </div>
-            <div class="row g-4">
-                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="news-card">
-                        <div class="news-badge">Mới</div>
-                        <div class="news-image">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
-                        <div class="news-content">
-                            <div class="news-date">15/01/2026</div>
-                            <h3 class="news-title">Nâng tầm chất lượng giảng dạy: Hội thi giảng viên dạy giỏi GDQP&AN - GDTC tại IIUH</h3>
-                            <p class="news-excerpt">Hội thi giảng viên dạy giỏi các môn Giáo dục quốc phòng và an ninh; Giáo dục thể chất năm học 2025-2026 được tổ chức nhằm đánh giá thực chất trình độ chuyên môn...</p>
-                            <a href="#" class="news-link">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
-                    <div class="news-card">
-                        <div class="news-badge">Mới</div>
-                        <div class="news-image">
-                            <i class="fas fa-trophy"></i>
-                        </div>
-                        <div class="news-content">
-                            <div class="news-date">13/01/2026</div>
-                            <h3 class="news-title">Nhiều sinh viên IIUH đạt danh hiệu "Sinh viên 5 tốt"</h3>
-                            <p class="news-excerpt">Hành trình trở thành "Sinh viên 5 tốt" là chặng đường dài của sự kiên trì, kỷ luật và nỗ lực vượt qua chính mình...</p>
-                            <a href="#" class="news-link">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
-                    <div class="news-card">
-                        <div class="news-image">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
-                        <div class="news-content">
-                            <div class="news-date">10/01/2026</div>
-                            <h3 class="news-title">Nam sinh IIUH trở thành thủ khoa ngành Công nghệ Kỹ thuật Máy tính</h3>
-                            <p class="news-excerpt">Với niềm đam mê sáng tạo trong lĩnh vực công nghệ ứng dụng cùng khả năng tiếp thu nhanh, ghi nhớ tốt...</p>
-                            <a href="#" class="news-link">Xem chi tiết <i class="fas fa-arrow-right"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Admission Section -->
-    <section id="admission" class="admission-section py-5 bg-primary text-white">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6" data-aos="fade-right">
-                    <h2 class="section-title text-white">Tuyển sinh 2026</h2>
-                    <p class="admission-text">Đăng ký ngay để trở thành sinh viên của Đại học Công nghiệp TP.HCM. Chúng tôi cam kết mang đến cho bạn môi trường học tập tốt nhất với đội ngũ giảng viên giàu kinh nghiệm và cơ sở vật chất hiện đại.</p>
-                    <ul class="admission-features">
-                        <li><i class="fas fa-check-circle"></i> Nhiều ngành đào tạo đa dạng</li>
-                        <li><i class="fas fa-check-circle"></i> Học bổng hấp dẫn</li>
-                        <li><i class="fas fa-check-circle"></i> Cơ hội việc làm cao</li>
-                        <li><i class="fas fa-check-circle"></i> Môi trường học tập hiện đại</li>
-                    </ul>
-                    <a href="#" class="btn btn-light btn-lg mt-4">
-                        <i class="fas fa-file-alt"></i> Đăng ký tuyển sinh
-                    </a>
-                </div>
-                <div class="col-lg-6" data-aos="fade-left">
-                    <div class="admission-info-box">
-                        <h3>Thông tin liên hệ tuyển sinh</h3>
-                        <div class="info-item">
-                            <i class="fas fa-phone"></i>
-                            <div>
-                                <strong>Hotline:</strong>
-                                <p>028 3985 1932 - 028 3895 5858 - 028 3985 1917</p>
+                    <div class="login-news__list">
+                        @foreach($loginAnnouncements as $a)
+                            @php
+                                $dt = $a->published_at ? \Carbon\Carbon::parse($a->published_at) : \Carbon\Carbon::parse($a->created_at);
+                                $day = $dt->format('d');
+                                $month = 'Tháng ' . $dt->format('m');
+                            @endphp
+                            <div class="login-news__item">
+                                <div class="login-news__date" aria-hidden="true">
+                                    <div class="login-news__month">{{ $month }}</div>
+                                    <div class="login-news__day">{{ $day }}</div>
+                                </div>
+                                <div class="login-news__content">
+                                    <p class="login-news__headline">{{ $a->title }}</p>
+                                    @if(!empty($a->summary))
+                                        <p class="login-news__desc">{{ $a->summary }}</p>
+                                    @endif
+                                    <a class="login-news__link" href="{{ route('announcements.show', $a->slug) }}">Xem chi tiết</a>
+                                </div>
                             </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-envelope"></i>
-                            <div>
-                                <strong>Email:</strong>
-                                <p>dhcn@hdu.edu.vn</p>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <div>
-                                <strong>Địa chỉ:</strong>
-                                <p>Số 12 Nguyễn Văn Bảo, P. Hạnh Thông, TP.HCM</p>
-                            </div>
-                        </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Login Modal -->
-    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="loginModalLabel">
-                        <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="loginForm" data-login-url="{{ route('login') }}" data-dashboard-url="{{ route('admin.dashboard') }}">
-                        @csrf
-                        <div id="loginError" class="alert alert-danger d-none" role="alert">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            <span id="loginErrorText"></span>
+        <div class="container auth-shell">
+            <div class="auth-grid">
+                <div class="auth-card-wrap">
+                    <div class="auth-card">
+                    <div class="auth-card__header">
+                        <div class="auth-logo">
+                            <span>Cổng thông tin sinh viên</span>
                         </div>
-                        <div class="mb-3">
-                            <label for="loginEmail" class="form-label">
-                                <i class="fas fa-user me-2"></i>Tài khoản (MSSV / MSGV / Email)
-                            </label>
-                            <input type="text" class="form-control" id="loginEmail" name="email" required autocomplete="username" autofocus placeholder="Nhập MSSV, MSGV hoặc Email">
-                            <div class="invalid-feedback">
-                                Vui lòng nhập tài khoản.
+                        <div class="auth-title">Đăng nhập hệ thống</div>
+                    </div>
+                    <div class="auth-card__body">
+                        @if (session('status'))
+                            <div class="alert alert-success py-2" role="alert">{{ session('status') }}</div>
+                        @endif
+                    @if ($errors->any())
+                        <div class="alert alert-danger py-2" role="alert">
+                            Thông tin tài khoản, mật khẩu không đúng. Vui lòng sử dụng chức năng quên mật khẩu.
+                        </div>
+                    @endif
+
+                        <form method="POST" action="{{ route('login') }}" autocomplete="on">
+                            @csrf
+                            <div class="mb-3">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="loginUsername"
+                                    name="email"
+                                    value="{{ old('email') }}"
+                                    placeholder="Nhập tài khoản"
+                                    required
+                                    autofocus
+                                    autocomplete="username"
+                                >
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="loginPassword" class="form-label">
-                                <i class="fas fa-lock me-2"></i>Mật khẩu
-                            </label>
-                            <input type="password" class="form-control" id="loginPassword" name="password" required autocomplete="current-password">
-                            <div class="invalid-feedback">
-                                Vui lòng nhập mật khẩu.
+                            <div class="mb-3">
+                                <input
+                                    type="password"
+                                    class="form-control"
+                                    name="password"
+                                    placeholder="Nhập mật khẩu"
+                                    required
+                                    autocomplete="current-password"
+                                >
                             </div>
-                        </div>
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                            <label class="form-check-label" for="remember">
-                                Ghi nhớ đăng nhập
-                            </label>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary" id="loginSubmitBtn">
-                                <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
-                            </button>
-                        </div>
-                    </form>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" name="remember" id="rememberMe">
+                                    <span class="form-check-label">Ghi nhớ</span>
+                                </label>
+                                @if (Route::has('password.request'))
+                                    <a class="muted-note text-decoration-none" href="{{ url('/?forgot=1') }}">Quên mật khẩu?</a>
+                                @endif
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-login text-white">ĐĂNG NHẬP</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <a href="{{ route('password.request') }}" class="text-decoration-none" id="openForgotPasswordLink">
-                        <i class="fas fa-key me-1"></i>Quên mật khẩu?
-                    </a>
-                </div>
+                    </div>
             </div>
         </div>
     </div>
 
-    <!-- Forgot Password Modal -->
-    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <!-- Forgot password modal -->
+    <div class="modal fade" id="forgotModal" tabindex="-1" aria-labelledby="forgotModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="forgotPasswordModalLabel">
-                        <i class="fas fa-key me-2"></i>Quên mật khẩu
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="forgotModalLabel">Quên mật khẩu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                 </div>
-                <div class="modal-body">
-                    <div id="forgotSuccess" class="alert alert-success d-none" role="alert"></div>
-                    <div id="forgotError" class="alert alert-danger d-none" role="alert"></div>
-
-                    <form id="forgotPasswordForm" data-forgot-url="{{ route('password.email') }}">
-                        @csrf
-                        <div class="mb-3">
-                            <label for="forgotEmail" class="form-label">
-                                <i class="fas fa-envelope me-2"></i>Email
-                            </label>
-                            <input type="email" class="form-control" id="forgotEmail" name="email" required placeholder="Nhập email đã đăng ký">
-                            <div class="invalid-feedback">Vui lòng nhập email hợp lệ.</div>
+                <form method="POST" action="{{ route('password.email') }}">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-2 text-muted" style="font-size: 13px;">
+                            Nhập email để nhận mật khẩu mới (6 chữ số).
                         </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary" id="forgotSubmitBtn">
-                                <i class="fas fa-paper-plane me-2"></i>Khôi phục
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Đóng</button>
-                </div>
+                        <input
+                            type="email"
+                            class="form-control"
+                            name="email"
+                            value="{{ old('email') }}"
+                            placeholder="Nhập email"
+                            required
+                            autocomplete="email"
+                        >
+                        @if($errors->forgot->has('email'))
+                            <div class="text-danger mt-2" style="font-size: 13px;">
+                                {{ $errors->forgot->first('email') }}
+                            </div>
+                        @endif
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Gửi</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer id="contact" class="main-footer py-5 bg-dark text-white">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-lg-4">
-                    <div class="footer-brand mb-4">
-                        <div class="logo-wrapper">
-                            <i class="fas fa-graduation-cap"></i>
-                            <span class="logo-text">IIUH</span>
-                        </div>
-                        <p class="mt-3">Đại học Công nghiệp Thành phố Hồ Chí Minh - Một trong những trường đại học hàng đầu Việt Nam.</p>
-                    </div>
-                    <div class="social-links">
-                        <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <h5 class="footer-title">Thông tin liên hệ</h5>
-                    <ul class="footer-list">
-                        <li>
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>Số 12 Nguyễn Văn Bảo, P. Hạnh Thông, TP.HCM</span>
-                        </li>
-                        <li>
-                            <i class="fas fa-phone"></i>
-                            <span>0283 8940 390</span>
-                        </li>
-                        <li>
-                            <i class="fas fa-envelope"></i>
-                            <span>dhcn@hdu.edu.vn</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col-lg-4">
-                    <h5 class="footer-title">Các cơ sở và phân hiệu</h5>
-                    <ul class="footer-list">
-                        <li><i class="fas fa-building"></i> Nguyễn Văn Dung</li>
-                        <li><i class="fas fa-building"></i> Phạm Văn Chiêu</li>
-                        <li><i class="fas fa-building"></i> Nhơn Trạch</li>
-                        <li><i class="fas fa-building"></i> Thanh Hóa</li>
-                        <li><i class="fas fa-building"></i> Quảng Ngãi</li>
-                    </ul>
-                </div>
-            </div>
-            <hr class="footer-divider my-4">
-            <div class="row">
-                <div class="col-12 text-center">
-                    <p class="footer-copyright mb-0">© 2025 Đại học Công nghiệp TP.HCM - IIUH. All rights reserved.</p>
-                    <p class="mt-2 mb-0">
-                        <small>Số lượng truy cập: 288,618,885 | Đang online: <strong>160</strong></small>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- AOS Animation -->
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <!-- Custom JS -->
-    <script src="{{ asset('js/landing.js') }}"></script>
+    <script>
+        (function () {
+            // Remember username on this device (do NOT store password)
+            try {
+                var userEl = document.getElementById('loginUsername');
+                var rememberEl = document.getElementById('rememberMe');
+                if (userEl && rememberEl) {
+                    var key = 'qlhs_login_username';
+                    var saved = localStorage.getItem(key);
+                    if (!userEl.value && saved) {
+                        userEl.value = saved;
+                    }
+                    if (saved) {
+                        rememberEl.checked = true;
+                    }
+                    rememberEl.addEventListener('change', function () {
+                        if (!rememberEl.checked) {
+                            localStorage.removeItem(key);
+                        } else if (userEl.value) {
+                            localStorage.setItem(key, userEl.value);
+                        }
+                    });
+                    userEl.addEventListener('input', function () {
+                        if (rememberEl.checked) {
+                            localStorage.setItem(key, userEl.value);
+                        }
+                    });
+                }
+            } catch (e) {}
+
+            var params = new URLSearchParams(window.location.search || '');
+            var shouldOpen = params.get('forgot') === '1';
+            var hasEmailError = {{ $errors->forgot->has('email') ? 'true' : 'false' }};
+
+            if (!shouldOpen && !hasEmailError) return;
+            var el = document.getElementById('forgotModal');
+            if (!el || !window.bootstrap) return;
+            var modal = window.bootstrap.Modal.getOrCreateInstance(el);
+            modal.show();
+
+            if (shouldOpen) {
+                params.delete('forgot');
+                var qs = params.toString();
+                var newUrl = window.location.pathname + (qs ? ('?' + qs) : '') + window.location.hash;
+                window.history.replaceState({}, '', newUrl);
+            }
+        })();
+    </script>
 </body>
 </html>

@@ -1,43 +1,12 @@
-@extends('layouts.student')
+@extends('layouts.teacher')
 
 @section('title', 'Thông Báo')
 @section('page-title', '')
 
 @section('content')
 @php
-    $student = \App\Models\Student::where('email', Auth::user()->email)->first();
-    $offeringIds = $student
-        ? \App\Models\SubjectRegistration::query()
-            ->where('student_id', $student->id)
-            ->where('status', '!=', 'cancelled')
-            ->whereNotNull('course_offering_id')
-            ->pluck('course_offering_id')
-            ->unique()
-            ->values()
-            ->all()
-        : [];
-
-    $targetedIds = !empty($offeringIds)
-        ? \Illuminate\Support\Facades\DB::table('announcement_offering_targets')
-            ->whereIn('course_offering_id', $offeringIds)
-            ->pluck('announcement_id')
-            ->unique()
-            ->values()
-            ->all()
-        : [];
-
     $items = \App\Models\Announcement::query()
-        ->where(function ($q) use ($targetedIds) {
-            $q->where('audience', 'all')
-                ->orWhere(function ($sq) use ($targetedIds) {
-                    $sq->where('audience', 'student');
-                    if (!empty($targetedIds)) {
-                        $sq->whereIn('id', $targetedIds);
-                    } else {
-                        $sq->whereRaw('1=0');
-                    }
-                });
-        })
+        ->whereIn('audience', ['all', 'teacher'])
         ->orderByDesc('created_at')
         ->paginate(15);
 @endphp
@@ -45,6 +14,7 @@
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Thông Báo</h5>
+        <a href="{{ route('announcements.index') }}" class="btn btn-light btn-sm">Xem tất cả</a>
     </div>
     <div class="card-body">
         <div class="list-group">

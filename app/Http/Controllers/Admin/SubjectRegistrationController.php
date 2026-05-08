@@ -77,6 +77,9 @@ class SubjectRegistrationController extends Controller
             })
             ->addColumn('offering_status', function ($row) {
                 $today = Carbon::today();
+                if ($row->is_cancelled) {
+                    return '<span class="badge bg-danger">Đã hủy</span>';
+                }
                 if ($row->ngay_bat_dau_hoc && $row->ngay_bat_dau_hoc->lte($today)) {
                     return '<span class="badge bg-success">Đang học</span>';
                 }

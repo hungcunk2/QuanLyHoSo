@@ -57,7 +57,7 @@
                                     <td class="fw-semibold">{{ $s?->ho_ten ?? '—' }}</td>
                                     <td>{{ $s?->mssv ?? '—' }}</td>
                                     <td>{{ $s?->email ?? '—' }}</td>
-                                    <td>{{ $s?->lop ?? '—' }}</td>
+                                    <td>{{ $lopNameByCode[$s?->lop ?? ''] ?? ($s?->lop ?? '—') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

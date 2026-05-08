@@ -43,6 +43,9 @@ class StudentController extends Controller
     {
         $query = Student::query();
 
+        // Map ma_lop -> ten_lop for display
+        $lopNameByCode = Lop::query()->pluck('ten_lop', 'ma_lop')->all();
+
         $filterName = $request->input('filter_ho_ten');
         if (is_string($filterName) && trim($filterName) !== '') {
             $needle = mb_strtolower(preg_replace('/\s+/u', ' ', trim($filterName)), 'UTF-8');
@@ -101,6 +104,10 @@ class StudentController extends Controller
             })
             ->editColumn('ngay_sinh', function ($student) {
                 return $student->ngay_sinh ? $student->ngay_sinh->format('d/m/Y') : '';
+            })
+            ->addColumn('lop_ten', function ($student) use ($lopNameByCode) {
+                $code = is_string($student->lop) ? $student->lop : '';
+                return $lopNameByCode[$code] ?? $code;
             })
             ->rawColumns(['check', 'action'])
             ->make(true);

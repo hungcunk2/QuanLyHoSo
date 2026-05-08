@@ -8,19 +8,45 @@ use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\SubjectRegistrationController;
 use App\Http\Controllers\Admin\CourseOfferingController;
 use App\Http\Controllers\Admin\LopController;
+use App\Http\Controllers\Admin\AnnouncementController as AdminAnnouncementController;
 use App\Http\Controllers\Account\PasswordController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
+use App\Http\Controllers\Teacher\AnnouncementManageController as TeacherAnnouncementManageController;
 
 require __DIR__ . '/auth.php';
 
 Route::get('/', function () {
+    $user = auth()->user();
+    if ($user) {
+        return match ($user->role) {
+            'student' => redirect()->route('student.dashboard'),
+            'teacher' => redirect()->route('teacher.dashboard'),
+            default => redirect()->route('admin.dashboard'),
+        };
+    }
     return view('welcome');
 });
+
+Route::get('/thong-bao', [AnnouncementController::class, 'index'])->name('announcements.index');
+Route::get('/thong-bao/{slug}', [AnnouncementController::class, 'show'])->name('announcements.show');
 
 Route::middleware('auth')->group(function () {
     Route::get('/account/change-password', [PasswordController::class, 'edit'])->name('account.password.edit');
     Route::post('/account/change-password', [PasswordController::class, 'update'])->name('account.password.update');
+});
+
+// Convenience GET logout (avoid redirect loops with "intended=/logout")
+Route::get('/logout', function () {
+    if (\Illuminate\Support\Facades\Auth::check()) {
+        \Illuminate\Support\Facades\Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+    }
+
+    // Always send users back to home (or login via your auth setup)
+    return redirect()->to('/');
 });
 
 // Some templates/packages still reference route('home')
@@ -41,6 +67,15 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return view('admin.dashboard');
     })->name('dashboard');
+
+    Route::get('/reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('reports.index');
+    Route::get('/reports/duplicates/{field}.csv', [\App\Http\Controllers\Admin\ReportsController::class, 'exportDuplicates'])->name('reports.duplicates.csv');
+    Route::get('/notifications', [AdminAnnouncementController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/create', [AdminAnnouncementController::class, 'create'])->name('notifications.create');
+    Route::post('/notifications', [AdminAnnouncementController::class, 'store'])->name('notifications.store');
+    Route::get('/notifications/{announcement}/edit', [AdminAnnouncementController::class, 'edit'])->name('notifications.edit');
+    Route::put('/notifications/{announcement}', [AdminAnnouncementController::class, 'update'])->name('notifications.update');
+    Route::delete('/notifications/{announcement}', [AdminAnnouncementController::class, 'destroy'])->name('notifications.destroy');
     
     Route::get('/students', [StudentController::class, 'index'])->name('students');
     Route::get('/students/data', [StudentController::class, 'getData'])->name('students.data');
@@ -101,11 +136,13 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
 Route::prefix('student')->name('student.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [StudentDashboardController::class, 'profile'])->name('profile');
     Route::get('/profile/edit', [StudentDashboardController::class, 'editProfile'])->name('profile.edit');
     Route::put('/profile', [StudentDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::get('/schedule', [StudentDashboardController::class, 'schedule'])->name('schedule');
     Route::get('/schedule.pdf', [StudentDashboardController::class, 'schedulePdf'])->name('schedule.pdf');
     Route::get('/results', [StudentDashboardController::class, 'results'])->name('results');
+    Route::get('/results.pdf', [StudentDashboardController::class, 'resultsPdf'])->name('results.pdf');
     Route::get('/registration', [StudentDashboardController::class, 'registration'])->name('registration');
     Route::post('/registration/{courseOfferingId}/register', [StudentDashboardController::class, 'registerOffering'])->name('registration.register');
     Route::post('/registration/{courseOfferingId}/cancel', [StudentDashboardController::class, 'cancelOffering'])->name('registration.cancel');
@@ -118,7 +155,17 @@ Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function (
     Route::get('/grading', [TeacherDashboardController::class, 'grading'])->name('grading');
     Route::get('/grading/{courseOffering}', [TeacherDashboardController::class, 'gradingClass'])->name('grading.class');
     Route::post('/grading/{courseOffering}', [TeacherDashboardController::class, 'saveGrades'])->name('grading.save');
+    Route::post('/grading/{courseOffering}/finalize', [TeacherDashboardController::class, 'finalizeGrades'])->name('grading.finalize');
     Route::get('/grading/{courseOffering}/export.xlsx', [TeacherDashboardController::class, 'exportGradesXlsx'])->name('grading.export.xlsx');
     Route::get('/my-classes', [TeacherDashboardController::class, 'myClasses'])->name('my-classes');
     Route::get('/my-classes/{courseOffering}/students', [TeacherDashboardController::class, 'offeringRoster'])->name('my-classes.roster');
+    Route::get('/notifications', [TeacherDashboardController::class, 'notifications'])->name('notifications');
+
+    // Teacher manages (send) announcements
+    Route::get('/notifications/manage', [TeacherAnnouncementManageController::class, 'index'])->name('notifications.manage.index');
+    Route::get('/notifications/manage/create', [TeacherAnnouncementManageController::class, 'create'])->name('notifications.manage.create');
+    Route::post('/notifications/manage', [TeacherAnnouncementManageController::class, 'store'])->name('notifications.manage.store');
+    Route::get('/notifications/manage/{announcement}/edit', [TeacherAnnouncementManageController::class, 'edit'])->name('notifications.manage.edit');
+    Route::put('/notifications/manage/{announcement}', [TeacherAnnouncementManageController::class, 'update'])->name('notifications.manage.update');
+    Route::delete('/notifications/manage/{announcement}', [TeacherAnnouncementManageController::class, 'destroy'])->name('notifications.manage.destroy');
 });

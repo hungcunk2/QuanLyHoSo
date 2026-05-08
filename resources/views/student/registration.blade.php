@@ -26,6 +26,19 @@
 
     <div class="card">
         <div class="card-body">
+            <div class="d-flex justify-content-end mb-3">
+                <form method="GET" class="d-flex align-items-center gap-2">
+                    <div class="text-muted small">Năm học: <strong>{{ $currentKhoaHoc ?? '' }}</strong></div>
+                    <select name="hoc_ky" class="form-select form-select-sm" style="width: 220px;" onchange="this.form.submit()">
+                        @foreach(($hocKyOptions ?? []) as $opt)
+                            <option value="{{ $opt['value'] }}" {{ ($selectedHocKy ?? '') === (string)$opt['value'] ? 'selected' : '' }}>
+                                {{ $opt['label'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                </form>
+            </div>
+
             @php
                 $todayX = ($today ?? \Carbon\Carbon::today());
                 $grouped = collect($offerings ?? [])->groupBy(function($o){
@@ -214,12 +227,16 @@
                                                                         $thGroupsPayload = [];
                                                                         // Nhóm TH 1 (từ cột chính của course_offerings)
                                                                         if ($o->thu_thuc_hanh && $o->tiet_thuc_hanh) {
+                                                                            $cap = (int) ($o->si_so_thuc_hanh_nhom_1 ?? 0);
+                                                                            $regCnt = (int) (($thCountsByOffering[$o->id][1] ?? 0) ?? 0);
                                                                             $thGroupsPayload[] = [
                                                                                 'index' => 1,
                                                                                 'thu' => (int) $o->thu_thuc_hanh,
                                                                                 'tiet' => (string) $o->tiet_thuc_hanh,
                                                                                 'teacher' => $o->teacherThucHanh?->ho_ten ?? '',
                                                                                 'room' => $o->classRoomThucHanh?->ma_lop ? ($o->classRoomThucHanh->ma_lop.' - '.$o->classRoomThucHanh->ten_lop) : '',
+                                                                                'capacity' => $cap,
+                                                                                'registered' => $regCnt,
                                                                             ];
                                                                         }
                                                                         // Các nhóm TH tiếp theo (từ schedules loai=thuc_hanh)
@@ -231,12 +248,17 @@
                                                                             if (! $sc->thu || ($sc->tiet ?? '') === '') {
                                                                                 continue;
                                                                             }
+                                                                            $groupIndex = count($thGroupsPayload) + 1;
+                                                                            $cap = $groupIndex === 2 ? (int) ($o->si_so_thuc_hanh_nhom_2 ?? 0) : 0;
+                                                                            $regCnt = (int) (($thCountsByOffering[$o->id][$groupIndex] ?? 0) ?? 0);
                                                                             $thGroupsPayload[] = [
-                                                                                'index' => count($thGroupsPayload) + 1,
+                                                                                'index' => $groupIndex,
                                                                                 'thu' => (int) $sc->thu,
                                                                                 'tiet' => (string) $sc->tiet,
                                                                                 'teacher' => $sc->teacher?->ho_ten ?? '',
                                                                                 'room' => $sc->classRoom?->ma_lop ? ($sc->classRoom->ma_lop.' - '.$sc->classRoom->ten_lop) : '',
+                                                                                'capacity' => $cap,
+                                                                                'registered' => $regCnt,
                                                                             ];
                                                                         }
                                                                     @endphp
@@ -264,6 +286,66 @@
                             </div>
                         </div>
                     @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h6 class="mb-0 fw-bold">Lớp học phần đã đăng ký ({{ ($myRegisteredOfferings ?? collect())->count() }})</h6>
+            <div class="small text-muted">
+                Kỳ: <strong>HK{{ $selectedHocKy ?? '' }} ({{ $currentKhoaHoc ?? '' }})</strong>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            @if(($myRegisteredOfferings ?? collect())->isEmpty())
+                <div class="p-3 text-muted">Bạn chưa đăng ký lớp học phần nào trong kỳ này.</div>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="min-width: 320px;">Học phần</th>
+                                <th style="min-width: 180px;">Lớp / Phòng</th>
+                                <th style="min-width: 220px;">Giáo viên</th>
+                                <th style="min-width: 120px;">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($myRegisteredOfferings as $o)
+                                @php
+                                    $sub = $o->subject;
+                                    $name = $sub ? ($sub->ma_mon_hoc.' — '.$sub->ten_mon_hoc) : ($o->ten_hoc_phan ?? '—');
+                                    $room = $o->classRoom?->ma_lop ? ($o->classRoom->ma_lop.' — '.$o->classRoom->ten_lop) : '—';
+                                    $lt = $o->teacherLyThuyet?->ho_ten ?? '';
+                                    $th = $o->teacherThucHanh?->ho_ten ?? '';
+                                    $teacherLabel = $lt && $th && $lt !== $th ? ('LT: '.$lt.' / TH: '.$th) : ($lt ?: ($th ?: '—'));
+                                    $reg = ($myRegs ?? collect())->get($o->id);
+                                    $status = $reg->status ?? null;
+                                @endphp
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ $name }}</div>
+                                        @if($o->ten_hoc_phan)
+                                            <div class="small text-muted">{{ $o->ten_hoc_phan }}</div>
+                                        @endif
+                                    </td>
+                                    <td>{{ $room }}</td>
+                                    <td>{{ $teacherLabel }}</td>
+                                    <td>
+                                        @if($status === 'approved')
+                                            <span class="badge bg-success">Đã đăng ký</span>
+                                        @elseif($status === 'cancelled')
+                                            <span class="badge bg-secondary">Đã hủy</span>
+                                        @else
+                                            <span class="badge bg-light text-dark">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             @endif
         </div>
@@ -437,9 +519,21 @@
                                 ${weekday[g.thu] || ('Thứ ' + g.thu)} · tiết ${g.tiet}
                                 ${g.room ? (' · ' + g.room) : ''}
                                 ${g.teacher ? (' · GV: ' + g.teacher) : ''}
+                                ${(typeof g.capacity === 'number' && g.capacity > 0)
+                                    ? (` · ${g.registered || 0}/${g.capacity} (còn ${Math.max(0, g.capacity - (g.registered || 0))})`)
+                                    : ''}
                             </div>
                         </div>
                     `;
+                    const cap = (typeof g.capacity === 'number' ? g.capacity : 0);
+                    const reg = (typeof g.registered === 'number' ? g.registered : (g.registered ? parseInt(g.registered, 10) : 0));
+                    const full = cap > 0 && reg >= cap;
+                    if (full) {
+                        row.classList.add('opacity-50');
+                        row.setAttribute('aria-disabled', 'true');
+                        const radio = row.querySelector('input[name="th_group_index_pick"]');
+                        if (radio) radio.disabled = true;
+                    }
                     wrap.appendChild(row);
                 });
                 thListEl.appendChild(wrap);
@@ -447,6 +541,7 @@
                 // Click anywhere on a row to pick its group
                 thListEl.querySelectorAll('.th-group-row').forEach((row) => {
                     row.addEventListener('click', function () {
+                        if (this.getAttribute('aria-disabled') === 'true') return;
                         const idx = this.getAttribute('data-index');
                         const radio = this.querySelector('input[name="th_group_index_pick"]');
                         if (radio) radio.checked = true;

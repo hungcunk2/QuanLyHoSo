@@ -36,6 +36,12 @@
                     <ul class="nav-menu">
                         <li class="nav-item">
                             <a href="{{ route('student.dashboard') }}" class="nav-link">
+                                <i class="fas fa-gauge"></i>
+                                <span>Bảng điều khiển</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('student.profile') }}" class="nav-link">
                                 <i class="fas fa-user"></i>
                                 <span>Thông tin cá nhân</span>
                             </a>
@@ -62,12 +68,6 @@
                             <a href="{{ route('student.registration') }}" class="nav-link">
                                 <i class="fas fa-clipboard-list"></i>
                                 <span>Đăng Ký Học Phần</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('student.notifications') }}" class="nav-link">
-                                <i class="fas fa-bell"></i>
-                                <span>Thông Báo</span>
                             </a>
                         </li>
                     </ul>
@@ -111,26 +111,112 @@
                     <button class="header-icon-btn theme-toggle" id="themeToggle">
                         <i class="fas fa-sun"></i>
                     </button>
-                    <button class="header-icon-btn notification-btn" id="notificationBtn">
-                        <i class="fas fa-bell"></i>
-                        <span class="badge">3</span>
-                    </button>
-                    <div class="user-profile dropdown">
-                        <button type="button" class="btn btn-link p-0 text-decoration-none user-name dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                            {{ $authDisplayName ?? (Auth::user()->email ?? 'HỌC SINH') }}
+                    @php
+                        $userId = (int) (Auth::id() ?? 0);
+                        $student = \App\Models\Student::where('email', Auth::user()->email)->first();
+                        $offeringIds = $student
+                            ? \App\Models\SubjectRegistration::query()
+                                ->where('student_id', $student->id)
+                                ->where('status', '!=', 'cancelled')
+                                ->whereNotNull('course_offering_id')
+                                ->pluck('course_offering_id')
+                                ->unique()
+                                ->values()
+                                ->all()
+                            : [];
+
+                        $targetedIds = !empty($offeringIds)
+                            ? \Illuminate\Support\Facades\DB::table('announcement_offering_targets')
+                                ->whereIn('course_offering_id', $offeringIds)
+                                ->pluck('announcement_id')
+                                ->unique()
+                                ->values()
+                                ->all()
+                            : [];
+
+                        $topAnnouncements = \App\Models\Announcement::query()
+                            ->where(function ($q) use ($targetedIds) {
+                                $q->where('audience', 'all')
+                                    ->orWhere(function ($sq) use ($targetedIds) {
+                                        $sq->where('audience', 'student');
+                                        if (!empty($targetedIds)) {
+                                            $sq->whereIn('id', $targetedIds);
+                                        } else {
+                                            // nếu không có lớp, chỉ lấy thông báo "all"
+                                            $sq->whereRaw('1=0');
+                                        }
+                                    });
+                            })
+                            ->orderByDesc('created_at')
+                            ->limit(6)
+                            ->get();
+
+                        $readIds = $userId
+                            ? \Illuminate\Support\Facades\DB::table('announcement_reads')
+                                ->where('user_id', $userId)
+                                ->pluck('announcement_id')
+                                ->all()
+                            : [];
+
+                        $unreadCount = 0;
+                        if ($userId) {
+                            $visibleIds = \App\Models\Announcement::query()
+                                ->where(function ($q) use ($targetedIds) {
+                                    $q->where('audience', 'all')
+                                        ->orWhere(function ($sq) use ($targetedIds) {
+                                            $sq->where('audience', 'student');
+                                            if (!empty($targetedIds)) {
+                                                $sq->whereIn('id', $targetedIds);
+                                            } else {
+                                                $sq->whereRaw('1=0');
+                                            }
+                                        });
+                                })
+                                ->pluck('id')
+                                ->all();
+                            $unreadCount = count(array_diff($visibleIds, $readIds));
+                        }
+                    @endphp
+                    <div class="dropdown">
+                        <button
+                            class="header-icon-btn notification-btn"
+                            id="notificationBtn"
+                            type="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false"
+                        >
+                            <i class="fas fa-bell"></i>
+                            @if($unreadCount > 0)
+                                <span class="badge">{{ $unreadCount }}</span>
+                            @endif
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ route('account.password.edit') }}"><i class="fas fa-key me-2"></i>Đổi mật khẩu</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
+                        <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="notificationBtn" style="width: 360px; max-width: 90vw;">
+                            <div class="px-3 py-2 border-bottom fw-bold">Thông báo</div>
+                            <div style="max-height: 360px; overflow: auto;">
+                                @forelse($topAnnouncements as $a)
+                                    @php($isUnread = $userId && !in_array($a->id, $readIds, true))
+                                    <a class="dropdown-item py-2" href="{{ route('announcements.show', $a->slug) }}">
+                                        <div class="fw-bold" style="white-space: normal;">{{ $a->title }}</div>
+                                        @if($a->summary)
+                                            <div class="text-muted" style="font-size: 12px; white-space: normal;">{{ $a->summary }}</div>
+                                        @endif
+                                        @if($isUnread)
+                                            <div class="text-primary" style="font-size: 12px;">Chưa đọc</div>
+                                        @endif
+                                    </a>
+                                @empty
+                                    <div class="px-3 py-3 text-muted">Chưa có thông báo.</div>
+                                @endforelse
+                            </div>
+                            <div class="border-top">
+                                <a class="dropdown-item text-center py-2" href="{{ route('student.notifications') }}">Xem tất cả</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="user-profile d-flex align-items-center">
+                        <span class="user-name">
+                            {{ $authDisplayName ?? (Auth::user()->email ?? 'HỌC SINH') }}
+                        </span>
                     </div>
                 </div>
             </header>

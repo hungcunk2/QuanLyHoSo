@@ -19,7 +19,6 @@
                         @endif
                         !
                     </h5>
-                    <p class="card-text mb-0">Đây là trang quản lý dành cho giáo viên. Vào <a href="{{ route('teacher.my-classes') }}">Lớp học của tôi</a> để xem các học phần được phân công.</p>
                 </div>
             </div>
         </div>
@@ -44,19 +43,21 @@
             </a>
         </div>
         <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <i class="fas fa-user-graduate fa-2x text-info"></i>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <h6 class="mb-0">Học Sinh</h6>
-                            <p class="text-muted mb-0">Quản lý học sinh</p>
+            <a href="{{ route('teacher.my-classes') }}" class="text-decoration-none text-reset">
+                <div class="card h-100 shadow-sm border-info border-opacity-25">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-user-graduate fa-2x text-info"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0">Học Sinh</h6>
+                                <p class="text-muted mb-0 small">Vào lớp học phần để xem danh sách</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-md-3">
             <a href="{{ route('teacher.grading') }}" class="text-decoration-none text-reset">
