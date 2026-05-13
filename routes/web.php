@@ -35,6 +35,7 @@ Route::get('/thong-bao/{slug}', [AnnouncementController::class, 'show'])->name('
 Route::middleware('auth')->group(function () {
     Route::get('/account/change-password', [PasswordController::class, 'edit'])->name('account.password.edit');
     Route::post('/account/change-password', [PasswordController::class, 'update'])->name('account.password.update');
+    Route::post('/ai/chat', [\App\Http\Controllers\AiChatController::class, 'store'])->name('ai.chat');
 });
 
 // Convenience GET logout (avoid redirect loops with "intended=/logout")

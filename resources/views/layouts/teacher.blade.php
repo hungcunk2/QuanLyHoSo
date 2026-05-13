@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/ai-chatbox.css') }}">
     
     @stack('styles')
 </head>
@@ -202,7 +203,8 @@
             </main>
         </div>
     </div>
-    
+    @include('partials.ai-chatbox')
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Bootstrap JS -->
@@ -212,6 +214,7 @@
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <!-- Custom JS -->
     <script src="{{ asset('js/admin.js') }}"></script>
+    <script src="{{ asset('js/ai-chatbox.js') }}"></script>
     
     @stack('scripts')
 </body>
