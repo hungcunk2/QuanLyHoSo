@@ -8,6 +8,6 @@
     'scheduleRouteName' => 'teacher.schedule',
     'currentDate' => $currentDate,
     'scheduleGrid' => $scheduleGrid,
-    'headingText' => 'Lịch dạy theo tuần (theo học phần được phân công)',
+    'headingText' => 'Lịch dạy theo tuần',
 ])
 @endsection

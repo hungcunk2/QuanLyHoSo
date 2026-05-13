@@ -41,6 +41,48 @@ class OfferingWeekCalendar
         return null;
     }
 
+    /**
+     * @return list<int>
+     */
+    public static function parseTietPeriods(?string $tiet): array
+    {
+        if ($tiet === null || $tiet === '') {
+            return [];
+        }
+        $out = [];
+        foreach (preg_split('/[,]+/', $tiet) as $part) {
+            $part = trim((string) $part);
+            if ($part === '') {
+                continue;
+            }
+            if (preg_match('/(\d+)/', $part, $m)) {
+                $n = (int) $m[1];
+                if ($n >= 1 && $n <= 16) {
+                    $out[$n] = true;
+                }
+            }
+        }
+
+        return array_keys($out);
+    }
+
+    public static function tietPeriodsOverlap(?string $tietA, ?string $tietB): bool
+    {
+        $a = self::parseTietPeriods($tietA);
+        $b = self::parseTietPeriods($tietB);
+        if ($a === [] || $b === []) {
+            return false;
+        }
+        $setA = array_fill_keys($a, true);
+        foreach ($b as $p) {
+            if (isset($setA[$p])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static function sessionKeyFromMinPeriod(?int $period): string
     {
         if ($period === null) {
@@ -164,7 +206,7 @@ class OfferingWeekCalendar
 
     /**
      * @param  Collection<int, CourseOffering>  $offerings
-     * @return array{morning: array<int, list<array{kind: string, title: string, meta: string, badge: string}>>, afternoon: array, evening: array}
+     * @return array{morning: array<int, list<array{kind: string, title: string, meta: string, badge: string, sort_period?: int}>>, afternoon: array, evening: array}
      */
     public static function buildGrid(Collection $offerings, Carbon $weekStart, array $thGroupIndexByOfferingId = []): array
     {
@@ -214,9 +256,23 @@ class OfferingWeekCalendar
                         continue;
                     }
 
-                    // Nếu buổi này là ngày thi, bỏ lịch học của buổi đó (chỉ hiển thị lịch thi).
-                    if (isset($examDates[$idx]) && $examDates[$idx]->isSameDay($date)) {
-                        continue;
+                    // Thi LT/TH: ẩn mọi buổi học trùng tiết trong cùng ngày (tránh LT thi mà vẫn hiện TH cùng tiết).
+                    if ($sess['loai'] !== 'tam_ngung') {
+                        $hiddenByExam = false;
+                        foreach ($examDates as $exIdx => $examDate) {
+                            if (! $examDate->isSameDay($date)) {
+                                continue;
+                            }
+                            $exSess = $sessions[$exIdx];
+                            if ((int) $exSess['thu'] === $thuVn
+                                && self::tietPeriodsOverlap($sess['tiet'], $exSess['tiet'])) {
+                                $hiddenByExam = true;
+                                break;
+                            }
+                        }
+                        if ($hiddenByExam) {
+                            continue;
+                        }
                     }
 
                     $minP = self::minPeriodFromTiet($sess['tiet']);
@@ -225,6 +281,7 @@ class OfferingWeekCalendar
                     $isPause = $sess['loai'] === 'tam_ngung';
                     $badge = $isPause ? '#e74c3c' : ($isLt ? '#3498db' : '#27ae60');
 
+                    $sortP = $minP ?? 99;
                     $grid[$bucket][$d][] = [
                         'kind' => $isPause ? 'pause' : 'study',
                         'title' => $isPause ? ('Tạm ngưng: ' . $offering->ten_hoc_phan) : $offering->ten_hoc_phan,
@@ -235,6 +292,7 @@ class OfferingWeekCalendar
                             .(! empty($sess['moved_from']) ? (' · dời từ '.$sess['moved_from']) : '')
                         ),
                         'badge' => $badge,
+                        'sort_period' => $sortP,
                     ];
                 }
 
@@ -247,6 +305,7 @@ class OfferingWeekCalendar
                     $minP = self::minPeriodFromTiet($sess['tiet']);
                     $bucket = self::sessionKeyFromMinPeriod($minP);
                     $isLt = $sess['loai'] === 'ly_thuyet';
+                    $sortP = $minP ?? 99;
                     $grid[$bucket][$d][] = [
                         'kind' => 'exam',
                         'title' => 'Thi: ' . $offering->ten_hoc_phan,
@@ -256,8 +315,23 @@ class OfferingWeekCalendar
                             .' · Tiết '.$sess['tiet']
                         ),
                         'badge' => '#f39c12',
+                        'sort_period' => $sortP,
                     ];
                 }
+            }
+        }
+
+        foreach (['morning', 'afternoon', 'evening'] as $bucket) {
+            for ($d = 0; $d < 7; $d++) {
+                usort($grid[$bucket][$d], function (array $a, array $b): int {
+                    $pa = (int) ($a['sort_period'] ?? 99);
+                    $pb = (int) ($b['sort_period'] ?? 99);
+                    if ($pa !== $pb) {
+                        return $pa <=> $pb;
+                    }
+
+                    return strcmp((string) ($a['title'] ?? ''), (string) ($b['title'] ?? ''));
+                });
             }
         }
 

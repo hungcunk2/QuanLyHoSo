@@ -642,7 +642,7 @@ class DashboardController extends Controller
             'subjectRegistrations as registrations_count' => function ($q) {
                 $q->where('status', '!=', 'cancelled');
             }
-        ])->with('schedules')->findOrFail($courseOfferingId);
+        ])->with(['schedules', 'subject'])->findOrFail($courseOfferingId);
 
         if ($offering->is_cancelled) {
             return back()->with('error', $offering->cancel_reason ?: 'Học phần đã bị hủy.');
@@ -659,6 +659,49 @@ class DashboardController extends Controller
         $conLai = (int) $offering->si_so_lop - (int) $offering->registrations_count;
         if ($conLai <= 0) {
             return back()->with('error', 'Lớp đã đủ sĩ số.');
+        }
+
+        // Chặn đăng ký lại nếu sinh viên đang học (chưa kết thúc) cùng môn học này ở học phần khác
+        if ($offering->subject_id) {
+            $activeSameSubjectReg = SubjectRegistration::query()
+                ->where('student_id', $student->id)
+                ->where('status', '!=', 'cancelled')
+                ->where('subject_id', $offering->subject_id)
+                ->where('course_offering_id', '!=', $offering->id)
+                ->whereHas('courseOffering', function ($q) use ($today) {
+                    $q->where('is_cancelled', false)
+                        // Chưa finalize điểm -> coi như chưa kết thúc
+                        ->whereNull('grades_finalized_at')
+                        // Nếu có ngày kết thúc học: phải qua ngày mới được đăng ký lại
+                        ->where(function ($qq) use ($today) {
+                            $qq->whereNull('ngay_ket_thuc_hoc')
+                                ->orWhereDate('ngay_ket_thuc_hoc', '>=', $today->toDateString());
+                        });
+                })
+                ->with(['courseOffering.subject'])
+                ->orderByDesc('id')
+                ->first();
+
+            if ($activeSameSubjectReg) {
+                $other = $activeSameSubjectReg->courseOffering;
+                $mon = (string) ($other?->subject?->ten_mon_hoc ?? $offering->subject?->ten_mon_hoc ?? 'môn này');
+                $hp = (string) ($other?->ten_hoc_phan ?? 'học phần hiện tại');
+
+                $from = $other?->ngay_bat_dau_hoc ? $other->ngay_bat_dau_hoc->format('d/m/Y') : null;
+                $to = $other?->ngay_ket_thuc_hoc ? $other->ngay_ket_thuc_hoc->format('d/m/Y') : null;
+
+                $timeStr = '';
+                if ($from && $to) {
+                    $timeStr = ' (thời gian học: ' . $from . ' - ' . $to . ')';
+                } elseif ($to) {
+                    $timeStr = ' (dự kiến kết thúc: ' . $to . ')';
+                }
+
+                return back()->with(
+                    'error',
+                    'Không thể đăng ký lại môn "' . $mon . '" vì bạn đang học môn này ở học phần "' . $hp . '"' . $timeStr . '. Vui lòng đăng ký lại sau khi kết thúc thời gian học.'
+                );
+            }
         }
 
         $roomTh = collect($offering->schedules ?? collect())

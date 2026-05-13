@@ -332,33 +332,47 @@ class StudentController extends Controller
 
         $newPassword = (string) $request->input('password');
 
-        DB::transaction(function () use ($student, $newPassword) {
-            $user = User::where('username', $student->mssv)->first();
+        try {
+            DB::transaction(function () use ($student, $newPassword) {
+                $user = User::where('username', $student->mssv)->first();
+                if (! $user && $student->email) {
+                    $user = User::where('email', $student->email)->first();
+                }
 
-            if (! $user) {
-                $user = User::create([
-                    'username' => $student->mssv,
-                    'email' => $student->email,
-                    'password' => $newPassword, // hash via cast 'hashed'
-                    'role' => 'student',
-                    'status' => true,
-                ]);
-            } else {
-                $user->forceFill([
-                    'email' => $student->email ?: $user->email,
-                    'password' => $newPassword, // hash via cast 'hashed'
-                ])->save();
-            }
-        });
+                if ($user) {
+                    $user->forceFill([
+                        'username' => $student->mssv ?: $user->username,
+                        'email' => $student->email ?: $user->email,
+                        'password' => $newPassword,
+                        'role' => 'student',
+                        'status' => true,
+                    ])->save();
+                } else {
+                    User::create([
+                        'username' => $student->mssv,
+                        'email' => $student->email,
+                        'password' => $newPassword,
+                        'role' => 'student',
+                        'status' => true,
+                    ]);
+                }
+            });
+        } catch (\Illuminate\Database\QueryException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể đổi mật khẩu. Vui lòng thử lại.',
+            ], 500);
+        }
 
         try {
             Mail::to($student->email)->send(new StudentPasswordChangedMail($student, $newPassword));
         } catch (\Throwable $e) {
             report($e);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Đã đổi mật khẩu nhưng không thể gửi email. Vui lòng kiểm tra cấu hình mail (MAIL_*).',
-            ], 500);
+                'success' => true,
+                'message' => 'Đã đổi mật khẩu thành công. Không gửi được email thông báo — kiểm tra cấu hình MAIL_* trong .env.',
+            ]);
         }
 
         return response()->json([

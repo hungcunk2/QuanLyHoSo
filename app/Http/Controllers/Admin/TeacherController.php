@@ -177,21 +177,28 @@ class TeacherController extends Controller
 
         try {
             DB::transaction(function () use ($teacher, $newPassword) {
+                // Tài khoản seed/demo thường có email trùng nhưng chưa gán username = MSGV → tránh tạo user trùng email
                 $user = User::where('username', $teacher->msgv)->first();
+                if (! $user && $teacher->email) {
+                    $user = User::where('email', $teacher->email)->first();
+                }
 
-                if (! $user) {
-                    $user = User::create([
-                        'username' => $teacher->msgv,
-                        'email' => $teacher->email,
+                if ($user) {
+                    $user->forceFill([
+                        'username' => $teacher->msgv ?: $user->username,
+                        'email' => $teacher->email ?: $user->email,
                         'password' => $newPassword, // hash via cast 'hashed'
                         'role' => 'teacher',
                         'status' => true,
-                    ]);
-                } else {
-                    $user->forceFill([
-                        'email' => $teacher->email ?: $user->email,
-                        'password' => $newPassword, // hash via cast 'hashed'
                     ])->save();
+                } else {
+                    User::create([
+                        'username' => $teacher->msgv,
+                        'email' => $teacher->email,
+                        'password' => $newPassword,
+                        'role' => 'teacher',
+                        'status' => true,
+                    ]);
                 }
             });
         } catch (QueryException $e) {
@@ -205,10 +212,11 @@ class TeacherController extends Controller
             Mail::to($teacher->email)->send(new TeacherPasswordChangedMail($teacher, $newPassword));
         } catch (\Throwable $e) {
             report($e);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Đã đổi mật khẩu nhưng không thể gửi email. Vui lòng kiểm tra cấu hình mail (MAIL_*).',
-            ], 500);
+                'success' => true,
+                'message' => 'Đã đổi mật khẩu thành công. Không gửi được email thông báo — kiểm tra cấu hình MAIL_* trong .env.',
+            ]);
         }
 
         return response()->json([

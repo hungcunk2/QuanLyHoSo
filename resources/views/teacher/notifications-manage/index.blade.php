@@ -33,12 +33,11 @@
                                 @if($it->summary)
                                     <div class="text-muted" style="font-size: 13px;">{{ $it->summary }}</div>
                                 @endif
-                                <div class="mt-1" style="font-size: 13px;">
-                                    <span class="text-muted">Slug:</span> <code>{{ $it->slug }}</code>
-                                    @if($it->attachment_path)
-                                        <span class="badge bg-info text-dark ms-2">PDF</span>
-                                    @endif
-                                </div>
+                                @if($it->attachment_path)
+                                    <div class="mt-1" style="font-size: 13px;">
+                                        <span class="badge bg-info text-dark">PDF</span>
+                                    </div>
+                                @endif
                             </td>
                             <td>
                                 @php

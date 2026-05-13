@@ -26,6 +26,7 @@ class Teacher extends Model
         'sdt',
         'dia_chi',
         'email',
+        'avatar',
         'ngay_sinh',
     ];
 

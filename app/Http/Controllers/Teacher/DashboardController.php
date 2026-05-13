@@ -11,6 +11,9 @@ use App\Support\OfferingWeekCalendar;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\CourseOfferingGradesExport;
 
@@ -92,7 +95,131 @@ class DashboardController extends Controller
         $user = Auth::user();
         $teacher = $this->currentTeacher();
 
-        return view('teacher.dashboard', compact('user', 'teacher'));
+        $remindersCount = 0;
+        $weekClassCount = 0;
+        $weekExamCount = 0;
+
+        if ($user && $user->role === 'teacher') {
+            $userId = (int) ($user->id ?? 0);
+            if ($userId > 0) {
+                $readIds = DB::table('announcement_reads')
+                    ->where('user_id', $userId)
+                    ->pluck('announcement_id')
+                    ->all();
+
+                $remindersCount = (int) \App\Models\Announcement::query()
+                    ->whereIn('audience', ['all', 'teacher'])
+                    ->when(count($readIds) > 0, fn ($q) => $q->whereNotIn('id', $readIds))
+                    ->count();
+            }
+        }
+
+        if ($teacher) {
+            $startWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->startOfDay();
+            $endWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+            $today = Carbon::today();
+
+            $offeringsAll = CourseOffering::query()
+                ->where(function ($q) use ($teacher) {
+                    $q->where('teacher_id_ly_thuyet', $teacher->id)
+                        ->orWhere('teacher_id_thuc_hanh', $teacher->id)
+                        ->orWhereHas('schedules', fn ($sq) => $sq->where('teacher_id', $teacher->id));
+                })
+                ->get()
+                ->values();
+
+            $weekOfferings = $offeringsAll->filter(function ($o) use ($startWeek, $endWeek) {
+                    $from = $o->ngay_bat_dau_hoc ? $o->ngay_bat_dau_hoc->startOfDay() : null;
+                    $to = $o->ngay_ket_thuc_hoc ? $o->ngay_ket_thuc_hoc->endOfDay() : null;
+                    if ($from && $to) {
+                        return $from->lte($endWeek) && $to->gte($startWeek);
+                    }
+                    return true;
+                })
+                ->values();
+
+            $weekClassCount = (int) $weekOfferings->count();
+
+            $offeringsStudy = $offeringsAll
+                ->filter(function ($o) use ($today) {
+                    $from = $o->ngay_bat_dau_hoc ? $o->ngay_bat_dau_hoc->startOfDay() : null;
+                    $to = $o->ngay_ket_thuc_hoc ? $o->ngay_ket_thuc_hoc->endOfDay() : null;
+                    if ($from && $to) {
+                        return $from->lte($today) && $to->gte($today);
+                    }
+                    return false;
+                })
+                ->values();
+            $weekExamCount = (int) $offeringsStudy->count();
+        }
+
+        return view('teacher.dashboard', compact(
+            'user',
+            'teacher',
+            'remindersCount',
+            'weekClassCount',
+            'weekExamCount',
+        ));
+    }
+
+    public function profile()
+    {
+        $user = Auth::user();
+        $teacher = $this->currentTeacher();
+        return view('teacher.profile', compact('user', 'teacher'));
+    }
+
+    public function editProfile()
+    {
+        $user = Auth::user();
+        $teacher = $this->currentTeacher();
+        if (! $teacher) {
+            return redirect()->route('teacher.dashboard')->with('message', 'Chưa có hồ sơ giáo viên.');
+        }
+        return view('teacher.profile_edit', compact('user', 'teacher'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+        $teacher = $this->currentTeacher();
+        if (! $teacher) {
+            return redirect()->route('teacher.dashboard')->with('message', 'Chưa có hồ sơ giáo viên.');
+        }
+
+        $request->validate([
+            'ho_ten' => 'nullable|string|max:255',
+            'email' => 'required|email|max:255|unique:teachers,email,' . $teacher->id . '|unique:users,email,' . $user->id,
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'ngay_sinh' => 'nullable|date',
+            'sdt' => 'nullable|string|max:20',
+            'dia_chi' => 'nullable|string',
+            'chuyen_mon' => 'nullable|string|max:255',
+        ], [
+            'email.required' => 'Vui lòng nhập email.',
+            'email.email' => 'Email không hợp lệ.',
+            'avatar.image' => 'File phải là ảnh (jpeg, png, jpg, gif, webp).',
+            'avatar.max' => 'Ảnh tối đa 2MB.',
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            if ($teacher->avatar && Storage::disk('public')->exists($teacher->avatar)) {
+                Storage::disk('public')->delete($teacher->avatar);
+            }
+            Storage::disk('public')->makeDirectory('avatars/teachers');
+            $path = $request->file('avatar')->store('avatars/teachers', 'public');
+            $teacher->avatar = $path;
+        }
+
+        $fillable = array_diff($teacher->getFillable(), ['msgv', 'avatar']);
+        $teacher->fill($request->only($fillable));
+        $teacher->save();
+
+        if ($user->email !== $request->email) {
+            User::where('id', $user->id)->update(['email' => $request->email]);
+        }
+
+        return redirect()->route('teacher.profile')->with('success', 'Cập nhật thông tin thành công.');
     }
 
     public function notifications()

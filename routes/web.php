@@ -151,6 +151,9 @@ Route::prefix('student')->name('student.')->middleware('auth')->group(function (
 
 Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function () {
     Route::get('/dashboard', [TeacherDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [TeacherDashboardController::class, 'profile'])->name('profile');
+    Route::get('/profile/edit', [TeacherDashboardController::class, 'editProfile'])->name('profile.edit');
+    Route::put('/profile', [TeacherDashboardController::class, 'updateProfile'])->name('profile.update');
     Route::get('/schedule', [TeacherDashboardController::class, 'schedule'])->name('schedule');
     Route::get('/grading', [TeacherDashboardController::class, 'grading'])->name('grading');
     Route::get('/grading/{courseOffering}', [TeacherDashboardController::class, 'gradingClass'])->name('grading.class');

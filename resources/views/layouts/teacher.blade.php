@@ -47,7 +47,7 @@
                     <div class="nav-section-title">QUẢN LÝ</div>
                     <ul class="nav-menu">
                         <li class="nav-item">
-                            <a href="{{ route('teacher.dashboard') }}" class="nav-link">
+                            <a href="{{ route('teacher.profile') }}" class="nav-link">
                                 <i class="fas fa-user"></i>
                                 <span>Thông Tin Cá Nhân</span>
                             </a>
