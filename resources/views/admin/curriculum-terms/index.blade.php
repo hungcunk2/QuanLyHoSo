@@ -30,9 +30,8 @@
                 <thead>
                     <tr>
                         <th style="width: 70px;">STT</th>
-                        <th>Tên môn học/Học phần</th>
+                        <th>Tên môn học</th>
                         <th style="width: 150px;">Mã học phần</th>
-                        <th style="width: 140px;">Học phần</th>
                         <th style="width: 90px;">Số TC</th>
                         <th style="width: 110px;">Số tiết LT</th>
                         <th style="width: 110px;">Số tiết TH</th>
@@ -56,7 +55,7 @@
                             $electiveCredits = (int) $electiveSubjects->sum('so_tin_chi');
                         @endphp
                         <tr class="curriculum-table__term-row curriculum-term-toggle" data-term-target="{{ $termRowKey }}" aria-expanded="false">
-                            <td colspan="4" class="fw-bold text-center">
+                            <td colspan="3" class="fw-bold text-center">
                                 <div class="d-flex align-items-center justify-content-center">
                                     <span>{{ $it->ten_ky }}</span>
                                 </div>
@@ -78,7 +77,7 @@
 
                         @if($requiredSubjects->isNotEmpty())
                             <tr class="curriculum-table__section-row curriculum-detail-row" data-term-row="{{ $termRowKey }}" style="display: none;">
-                                <td colspan="4" class="fw-bold">Học phần bắt buộc</td>
+                                <td colspan="3" class="fw-bold">Học phần bắt buộc</td>
                                 <td class="fw-bold text-center">{{ $requiredCredits }}</td>
                                 <td colspan="5"></td>
                             </tr>
@@ -88,7 +87,6 @@
                                     <td class="text-center">{{ $rowNumber++ }}</td>
                                     <td>{{ $subject->ten_mon_hoc }}</td>
                                     <td class="text-center">{{ $subject->ma_mon_hoc }}</td>
-                                    <td class="text-center">-</td>
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
@@ -101,7 +99,7 @@
 
                         @if($electiveSubjects->isNotEmpty())
                             <tr class="curriculum-table__section-row curriculum-detail-row" data-term-row="{{ $termRowKey }}" style="display: none;">
-                                <td colspan="4" class="fw-bold">Học phần tự chọn</td>
+                                <td colspan="3" class="fw-bold">Học phần tự chọn</td>
                                 <td class="fw-bold text-center">{{ $electiveCredits }}</td>
                                 <td colspan="5"></td>
                             </tr>
@@ -111,7 +109,6 @@
                                     <td class="text-center">{{ $rowNumber++ }}</td>
                                     <td>{{ $subject->ten_mon_hoc }}</td>
                                     <td class="text-center">{{ $subject->ma_mon_hoc }}</td>
-                                    <td class="text-center">-</td>
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
@@ -123,22 +120,22 @@
                         @endif
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted py-4">Chưa có kỳ chương trình khung nào.</td>
+                            <td colspan="9" class="text-center text-muted py-4">Chưa có kỳ chương trình khung nào.</td>
                         </tr>
                     @endforelse
                     @if($items->isNotEmpty())
                         <tr class="curriculum-table__summary-row">
-                            <td colspan="4" class="fw-bold">Tổng TC yêu cầu</td>
+                            <td colspan="3" class="fw-bold">Tổng TC yêu cầu</td>
                             <td class="fw-bold text-center text-danger">{{ $totalCreditsAll }}</td>
                             <td colspan="5"></td>
                         </tr>
                         <tr class="curriculum-table__summary-row">
-                            <td colspan="4" class="fw-bold">Tổng TC bắt buộc</td>
+                            <td colspan="3" class="fw-bold">Tổng TC bắt buộc</td>
                             <td class="fw-bold text-center text-danger">{{ $totalRequiredCreditsAll }}</td>
                             <td colspan="5"></td>
                         </tr>
                         <tr class="curriculum-table__summary-row">
-                            <td colspan="4" class="fw-bold">Tổng TC tự chọn</td>
+                            <td colspan="3" class="fw-bold">Tổng TC tự chọn</td>
                             <td class="fw-bold text-center text-danger">{{ $totalElectiveCreditsAll }}</td>
                             <td colspan="5"></td>
                         </tr>
