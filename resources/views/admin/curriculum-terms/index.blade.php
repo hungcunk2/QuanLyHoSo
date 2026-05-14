@@ -36,10 +36,8 @@
                         <th style="width: 90px;">Số TC</th>
                         <th style="width: 110px;">Số tiết LT</th>
                         <th style="width: 110px;">Số tiết TH</th>
-                        <th style="width: 110px;">Nhóm TH</th>
-                        <th style="width: 150px;">Số TC bắt buộc môn</th>
                         <th style="width: 110px;">Nhóm tự chọn</th>
-                        <th style="width: 160px;">Số TC bắt buộc nhóm</th>
+                        <th style="width: 160px;">Số TC bắt buộc của nhóm</th>
                         <th style="width: 180px;">Thao tác</th>
                     </tr>
                 </thead>
@@ -67,7 +65,7 @@
                                 @endif
                             </td>
                             <td class="fw-bold text-center">{{ $totalCredits }}</td>
-                            <td colspan="6"></td>
+                            <td colspan="4"></td>
                             <td class="text-end curriculum-table__actions">
                                 <a href="{{ route('admin.curriculum-terms.edit', $it) }}" class="btn btn-outline-primary btn-sm">Sửa</a>
                                 <form method="POST" action="{{ route('admin.curriculum-terms.destroy', $it) }}" class="d-inline" onsubmit="return confirm('Xóa kỳ chương trình khung này?')">
@@ -82,7 +80,7 @@
                             <tr class="curriculum-table__section-row curriculum-detail-row" data-term-row="{{ $termRowKey }}" style="display: none;">
                                 <td colspan="4" class="fw-bold">Học phần bắt buộc</td>
                                 <td class="fw-bold text-center">{{ $requiredCredits }}</td>
-                                <td colspan="7"></td>
+                                <td colspan="5"></td>
                             </tr>
 
                             @foreach($requiredSubjects as $subject)
@@ -94,9 +92,7 @@
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '-' }}</td>
-                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '-' }}</td>
-                                    <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) > 0 ? (int) $subject->pivot->nhom_tu_chon : '-' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) }}</td>
                                     <td class="text-center">{{ (int) ($subject->pivot->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->pivot->so_tc_bat_buoc_cua_nhom : '-' }}</td>
                                     <td></td>
                                 </tr>
@@ -107,7 +103,7 @@
                             <tr class="curriculum-table__section-row curriculum-detail-row" data-term-row="{{ $termRowKey }}" style="display: none;">
                                 <td colspan="4" class="fw-bold">Học phần tự chọn</td>
                                 <td class="fw-bold text-center">{{ $electiveCredits }}</td>
-                                <td colspan="7"></td>
+                                <td colspan="5"></td>
                             </tr>
 
                             @foreach($electiveSubjects as $subject)
@@ -119,9 +115,7 @@
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '-' }}</td>
-                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '-' }}</td>
-                                    <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) > 0 ? (int) $subject->pivot->nhom_tu_chon : '-' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) }}</td>
                                     <td class="text-center">{{ (int) ($subject->pivot->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->pivot->so_tc_bat_buoc_cua_nhom : '-' }}</td>
                                     <td></td>
                                 </tr>
@@ -129,24 +123,24 @@
                         @endif
                     @empty
                         <tr>
-                            <td colspan="12" class="text-center text-muted py-4">Chưa có kỳ chương trình khung nào.</td>
+                            <td colspan="10" class="text-center text-muted py-4">Chưa có kỳ chương trình khung nào.</td>
                         </tr>
                     @endforelse
                     @if($items->isNotEmpty())
                         <tr class="curriculum-table__summary-row">
                             <td colspan="4" class="fw-bold">Tổng TC yêu cầu</td>
                             <td class="fw-bold text-center text-danger">{{ $totalCreditsAll }}</td>
-                            <td colspan="7"></td>
+                            <td colspan="5"></td>
                         </tr>
                         <tr class="curriculum-table__summary-row">
                             <td colspan="4" class="fw-bold">Tổng TC bắt buộc</td>
                             <td class="fw-bold text-center text-danger">{{ $totalRequiredCreditsAll }}</td>
-                            <td colspan="7"></td>
+                            <td colspan="5"></td>
                         </tr>
                         <tr class="curriculum-table__summary-row">
                             <td colspan="4" class="fw-bold">Tổng TC tự chọn</td>
                             <td class="fw-bold text-center text-danger">{{ $totalElectiveCreditsAll }}</td>
-                            <td colspan="7"></td>
+                            <td colspan="5"></td>
                         </tr>
                     @endif
                 </tbody>
