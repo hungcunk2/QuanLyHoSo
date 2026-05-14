@@ -21,5 +21,14 @@ class Subject extends Model
         'ma_mon_hoc',
         'ten_mon_hoc',
         'so_tin_chi',
+        'so_tiet_ly_thuyet',
+        'so_tiet_thuc_hanh',
     ];
+
+    public function curriculumTerms()
+    {
+        return $this->belongsToMany(CurriculumTerm::class, 'curriculum_term_subject')
+            ->withPivot('sort_order', 'loai_hoc_phan', 'nhom_tu_chon', 'so_tc_bat_buoc_cua_nhom')
+            ->withTimestamps();
+    }
 }

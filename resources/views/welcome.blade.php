@@ -15,7 +15,7 @@
         html, body { height: 100%; }
         body {
             margin: 0;
-            font-family: Helvetica, Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             background: #0b1220;
         }
         .auth-bg {
@@ -54,6 +54,11 @@
             max-width: 1280px;
             color: #fff;
             margin-left: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .login-news,
+        .login-news * {
+            font-family: Arial, Helvetica, sans-serif !important;
         }
         .auth-card-wrap {
             flex: 0 0 auto;
@@ -62,27 +67,42 @@
             transform: translateX(var(--login-shift-x));
         }
         .login-news__panel {
-            background: rgba(255,255,255,0.12);
+            background: rgba(15, 23, 42, 0.34);
             border: 1px solid rgba(255,255,255,0.20);
             border-radius: 12px;
             overflow: hidden;
-            backdrop-filter: blur(6px);
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
             height: var(--news-panel-h);
             display: flex;
             flex-direction: column;
+        }
+        .login-news__panel,
+        .login-news__header,
+        .login-news__list,
+        .login-news__item,
+        .login-news__date,
+        .login-news__content,
+        .login-news__title,
+        .login-news__more,
+        .login-news__headline,
+        .login-news__desc,
+        .login-news__link {
+            font-family: Arial, Helvetica, sans-serif !important;
+            letter-spacing: 0;
         }
         .login-news__header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 18px 22px;
-            background: rgba(2, 6, 23, 0.28);
+            background: rgba(2, 6, 23, 0.52);
             border-bottom: 1px solid rgba(255,255,255,0.16);
         }
         .login-news__title {
-            font-weight: 800;
-            letter-spacing: .02em;
-            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0;
+            text-transform: none;
             font-size: 16px;
             margin: 0;
             display: flex;
@@ -101,6 +121,7 @@
             font-weight: 700;
             color: #ffedd5;
             text-decoration: none;
+            text-transform: none;
         }
         .login-news__more:hover { text-decoration: underline; }
         .login-news__list {
@@ -128,7 +149,7 @@
             background: rgba(37, 99, 235, 0.88);
             color: #fff;
             font-size: 12.5px;
-            font-weight: 800;
+            font-weight: 700;
             text-align: center;
             padding: 6px 0;
             line-height: 1;
@@ -136,7 +157,7 @@
         .login-news__day {
             color: #fff;
             font-size: 32px;
-            font-weight: 800;
+            font-weight: 700;
             text-align: center;
             padding: 16px 0 14px;
             line-height: 1;
@@ -145,13 +166,14 @@
         .login-news__headline {
             margin: 0;
             font-size: 18px;
-            font-weight: 800;
+            font-weight: 700;
             color: #fff;
             line-height: 1.25;
         }
         .login-news__desc {
             margin: 4px 0 0;
             font-size: 14.5px;
+            font-weight: 400;
             color: rgba(255,255,255,0.82);
             line-height: 1.35;
         }
@@ -159,7 +181,7 @@
             display: inline-block;
             margin-top: 6px;
             font-size: 14px;
-            font-weight: 800;
+            font-weight: 700;
             color: #bfdbfe;
             text-decoration: none;
         }

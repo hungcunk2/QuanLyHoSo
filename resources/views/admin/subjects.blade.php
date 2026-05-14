@@ -59,6 +59,8 @@
                         <th>Mã môn học</th>
                         <th>Tên môn học</th>
                         <th>Số tín chỉ</th>
+                        <th>Số tiết lý thuyết</th>
+                        <th>Số tiết thực hành</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -90,6 +92,14 @@
                     <div class="mb-3">
                         <label for="create_so_tin_chi" class="form-label">Số tín chỉ <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" id="create_so_tin_chi" name="so_tin_chi" min="0" max="30" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create_so_tiet_ly_thuyet" class="form-label">Số tiết lý thuyết <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="create_so_tiet_ly_thuyet" name="so_tiet_ly_thuyet" min="0" max="500" value="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create_so_tiet_thuc_hanh" class="form-label">Số tiết thực hành <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="create_so_tiet_thuc_hanh" name="so_tiet_thuc_hanh" min="0" max="500" value="0" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -123,6 +133,14 @@
                     <div class="mb-3">
                         <label for="edit_so_tin_chi" class="form-label">Số tín chỉ <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" id="edit_so_tin_chi" name="so_tin_chi" min="0" max="30" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_so_tiet_ly_thuyet" class="form-label">Số tiết lý thuyết <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="edit_so_tiet_ly_thuyet" name="so_tiet_ly_thuyet" min="0" max="500" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_so_tiet_thuc_hanh" class="form-label">Số tiết thực hành <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="edit_so_tiet_thuc_hanh" name="so_tiet_thuc_hanh" min="0" max="500" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -163,10 +181,7 @@
             serverSide: true,
             ajax: {
                 url: '{{ route("admin.subjects.data") }}',
-                type: 'GET',
-                data: function(d) {
-                    d.search = $('.dt-search').val();
-                }
+                type: 'GET'
             },
             columns: [
                 {
@@ -187,6 +202,14 @@
                 {
                     data: 'so_tin_chi',
                     name: 'so_tin_chi'
+                },
+                {
+                    data: 'so_tiet_ly_thuyet',
+                    name: 'so_tiet_ly_thuyet'
+                },
+                {
+                    data: 'so_tiet_thuc_hanh',
+                    name: 'so_tiet_thuc_hanh'
                 },
                 {
                     data: 'action',
@@ -216,7 +239,7 @@
             dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">'
         });
         
-        $('.dt-search').on('keyup', function() {
+        $('.dt-search').on('input', function() {
             table.search(this.value).draw();
         });
 
@@ -254,7 +277,9 @@
                         for (var field in errors) {
                             var fieldName = field === 'ma_mon_hoc' ? 'Mã môn học' : 
                                           field === 'ten_mon_hoc' ? 'Tên môn học' :
-                                          field === 'so_tin_chi' ? 'Số tín chỉ' : field;
+                                          field === 'so_tin_chi' ? 'Số tín chỉ' :
+                                          field === 'so_tiet_ly_thuyet' ? 'Số tiết lý thuyết' :
+                                          field === 'so_tiet_thuc_hanh' ? 'Số tiết thực hành' : field;
                             errorMsg += '• ' + fieldName + ': ' + errors[field][0] + '\n';
                         }
                     }
@@ -275,6 +300,8 @@
                     $('#edit_ma_mon_hoc').val(response.ma_mon_hoc);
                     $('#edit_ten_mon_hoc').val(response.ten_mon_hoc);
                     $('#edit_so_tin_chi').val(response.so_tin_chi ?? 0);
+                    $('#edit_so_tiet_ly_thuyet').val(response.so_tiet_ly_thuyet ?? 0);
+                    $('#edit_so_tiet_thuc_hanh').val(response.so_tiet_thuc_hanh ?? 0);
                     
                     var editModal = new bootstrap.Modal(document.getElementById('editSubjectModal'));
                     editModal.show();

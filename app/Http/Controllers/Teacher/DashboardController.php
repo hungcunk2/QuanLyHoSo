@@ -16,6 +16,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\CourseOfferingGradesExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DashboardController extends Controller
 {
@@ -525,5 +526,71 @@ class DashboardController extends Controller
         $scheduleGrid = OfferingWeekCalendar::buildGrid($offerings, $currentDate->copy());
 
         return view('teacher.schedule', compact('user', 'teacher', 'currentDate', 'scheduleGrid'));
+    }
+
+    public function schedulePdf(Request $request)
+    {
+        $teacher = $this->currentTeacher();
+        if (! $teacher) {
+            abort(404);
+        }
+
+        $range = (string) $request->query('range', 'week');
+        if (! in_array($range, ['week', 'month'], true)) {
+            $range = 'week';
+        }
+
+        $dateParam = $request->query('date');
+        $baseDate = $dateParam ? Carbon::parse($dateParam) : Carbon::now();
+
+        $from = $range === 'month'
+            ? $baseDate->copy()->startOfMonth()->startOfDay()
+            : $baseDate->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+        $to = $range === 'month'
+            ? $baseDate->copy()->endOfMonth()->endOfDay()
+            : $baseDate->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+
+        $offerings = CourseOffering::query()
+            ->where('is_cancelled', false)
+            ->where(function ($q) use ($teacher) {
+                $q->where('teacher_id_ly_thuyet', $teacher->id)
+                    ->orWhere('teacher_id_thuc_hanh', $teacher->id)
+                    ->orWhereHas('schedules', fn ($sq) => $sq->where('teacher_id', $teacher->id));
+            })
+            ->whereDate('ngay_bat_dau_hoc', '<=', $to->toDateString())
+            ->whereDate('ngay_ket_thuc_hoc', '>=', $from->toDateString())
+            ->with(['subject', 'classRoom', 'schedules'])
+            ->get();
+
+        $weeks = [];
+        if ($range === 'month') {
+            $cursor = $from->copy()->startOfWeek(Carbon::MONDAY);
+            $endCursor = $to->copy()->endOfWeek(Carbon::SUNDAY);
+            while ($cursor->lte($endCursor)) {
+                $weeks[] = [
+                    'currentDate' => $cursor->copy(),
+                    'scheduleGrid' => OfferingWeekCalendar::buildGrid($offerings, $cursor->copy()),
+                ];
+                $cursor->addWeek();
+            }
+        } else {
+            $weeks[] = [
+                'currentDate' => $from->copy(),
+                'scheduleGrid' => OfferingWeekCalendar::buildGrid($offerings, $from->copy()),
+            ];
+        }
+
+        $fileName = $range === 'month'
+            ? ('Lich_day_thang_' . $baseDate->format('Y-m') . '.pdf')
+            : ('Lich_day_tuan_' . $from->format('Y-m-d') . '_' . $to->format('Y-m-d') . '.pdf');
+
+        return Pdf::loadView('teacher.schedule-pdf', [
+            'teacher' => $teacher,
+            'range' => $range,
+            'baseDate' => $baseDate,
+            'from' => $from,
+            'to' => $to,
+            'weeks' => $weeks,
+        ])->setPaper('a4', 'landscape')->download($fileName);
     }
 }

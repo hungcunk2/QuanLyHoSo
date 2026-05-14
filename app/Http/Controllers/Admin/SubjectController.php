@@ -16,7 +16,16 @@ class SubjectController extends Controller
 
     public function getData(Request $request)
     {
-        $query = Subject::select('id', 'ma_mon_hoc', 'ten_mon_hoc', 'so_tin_chi', 'created_at', 'updated_at');
+        $query = Subject::select(
+            'id',
+            'ma_mon_hoc',
+            'ten_mon_hoc',
+            'so_tin_chi',
+            'so_tiet_ly_thuyet',
+            'so_tiet_thuc_hanh',
+            'created_at',
+            'updated_at'
+        );
 
         return DataTables::of($query)
             ->addColumn('check', function ($subject) {
@@ -42,14 +51,24 @@ class SubjectController extends Controller
             'ma_mon_hoc' => 'required|string|max:50|unique:subjects,ma_mon_hoc',
             'ten_mon_hoc' => 'required|string|max:255',
             'so_tin_chi' => 'required|integer|min:0|max:30',
+            'so_tiet_ly_thuyet' => 'required|integer|min:0|max:500',
+            'so_tiet_thuc_hanh' => 'required|integer|min:0|max:500',
         ], [
             'ma_mon_hoc.required' => 'Vui lòng nhập mã môn học.',
             'ma_mon_hoc.unique' => 'Mã môn học đã tồn tại trong hệ thống.',
             'ten_mon_hoc.required' => 'Vui lòng nhập tên môn học.',
             'so_tin_chi.required' => 'Vui lòng nhập số tín chỉ.',
+            'so_tiet_ly_thuyet.required' => 'Vui lòng nhập số tiết lý thuyết.',
+            'so_tiet_thuc_hanh.required' => 'Vui lòng nhập số tiết thực hành.',
         ]);
 
-        $subject = Subject::create($request->only(['ma_mon_hoc', 'ten_mon_hoc', 'so_tin_chi']));
+        $subject = Subject::create($request->only([
+            'ma_mon_hoc',
+            'ten_mon_hoc',
+            'so_tin_chi',
+            'so_tiet_ly_thuyet',
+            'so_tiet_thuc_hanh',
+        ]));
 
         return response()->json([
             'success' => true,
@@ -70,10 +89,18 @@ class SubjectController extends Controller
             'ma_mon_hoc' => 'required|string|max:50|unique:subjects,ma_mon_hoc,' . $id,
             'ten_mon_hoc' => 'required|string|max:255',
             'so_tin_chi' => 'required|integer|min:0|max:30',
+            'so_tiet_ly_thuyet' => 'required|integer|min:0|max:500',
+            'so_tiet_thuc_hanh' => 'required|integer|min:0|max:500',
         ]);
 
         $subject = Subject::findOrFail($id);
-        $subject->update($request->only(['ma_mon_hoc', 'ten_mon_hoc', 'so_tin_chi']));
+        $subject->update($request->only([
+            'ma_mon_hoc',
+            'ten_mon_hoc',
+            'so_tin_chi',
+            'so_tiet_ly_thuyet',
+            'so_tiet_thuc_hanh',
+        ]));
 
         return response()->json([
             'success' => true,

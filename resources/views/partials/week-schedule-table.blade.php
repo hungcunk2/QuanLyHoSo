@@ -174,12 +174,14 @@
                 var monthLink = document.getElementById('btnPrintMonth');
 
                 var isTeacher = '{{ $scheduleRouteName }}' === 'teacher.schedule';
-                if (isTeacher) {
-                    if (weekLink) weekLink.onclick = function (e) { e.preventDefault(); window.print(); };
-                    if (monthLink) monthLink.onclick = function (e) { e.preventDefault(); window.print(); };
-                } else {
-                    if (weekLink) weekLink.href = '{{ route('student.schedule.pdf') }}' + '?range=week&date=' + encodeURIComponent(date);
-                    if (monthLink) monthLink.href = '{{ route('student.schedule.pdf') }}' + '?range=month&date=' + encodeURIComponent(date);
+                var pdfBaseUrl = isTeacher ? '{{ route('teacher.schedule.pdf') }}' : '{{ route('student.schedule.pdf') }}';
+                if (weekLink) {
+                    weekLink.onclick = null;
+                    weekLink.href = pdfBaseUrl + '?range=week&date=' + encodeURIComponent(date);
+                }
+                if (monthLink) {
+                    monthLink.onclick = null;
+                    monthLink.href = pdfBaseUrl + '?range=month&date=' + encodeURIComponent(date);
                 }
 
                 var modal = new bootstrap.Modal(document.getElementById('printScheduleModal'));

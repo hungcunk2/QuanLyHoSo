@@ -2,9 +2,13 @@
 
 namespace App\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Throwable;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\Request;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Session\TokenMismatchException;
+use Symfony\Component\HttpFoundation\Response;
+use Throwable;
+
 class Handler extends ExceptionHandler
 {
     /**
@@ -38,6 +42,27 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+    public function render($request, Throwable $e): Response
+    {
+        $isPageExpired = $e instanceof TokenMismatchException
+            || ($this->isHttpException($e) && $e->getStatusCode() === 419);
+
+        if ($isPageExpired) {
+            if ($request->expectsJson() || $request->is('api*')) {
+                return response()->json([
+                    'message' => 'Phiên làm việc đã hết hạn.',
+                    'redirect' => url('/'),
+                ], 419);
+            }
+
+            return redirect('/')
+                ->with('status', 'Phiên làm việc đã hết hạn. Vui lòng thử lại.');
+        }
+
+        return parent::render($request, $e);
+    }
+
     /**
      * Convert an authentication exception into an unauthenticated response.
      *

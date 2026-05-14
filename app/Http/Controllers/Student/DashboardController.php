@@ -661,6 +661,37 @@ class DashboardController extends Controller
             return back()->with('error', 'Lớp đã đủ sĩ số.');
         }
 
+        // Chặn đăng ký trùng cùng môn học trong cùng học kỳ/khóa học
+        if ($offering->subject_id) {
+            $sameTermSameSubjectReg = SubjectRegistration::query()
+                ->where('student_id', $student->id)
+                ->where('status', '!=', 'cancelled')
+                ->where('subject_id', $offering->subject_id)
+                ->where('course_offering_id', '!=', $offering->id)
+                ->whereHas('courseOffering', function ($q) use ($offering) {
+                    $q->where('is_cancelled', false)
+                        ->where('hoc_ky', $offering->hoc_ky)
+                        ->where('khoa_hoc', $offering->khoa_hoc);
+                })
+                ->with(['courseOffering.subject'])
+                ->orderByDesc('id')
+                ->first();
+
+            if ($sameTermSameSubjectReg) {
+                $other = $sameTermSameSubjectReg->courseOffering;
+                $mon = (string) ($other?->subject?->ten_mon_hoc ?? $offering->subject?->ten_mon_hoc ?? 'môn này');
+                $hp = (string) ($other?->ten_hoc_phan ?? 'học phần khác');
+                $hocKyLabel = $offering->hoc_ky ? ('học kỳ ' . $offering->hoc_ky) : 'kỳ hiện tại';
+                $khoaHocLabel = $offering->khoa_hoc ? (' năm học ' . $offering->khoa_hoc) : '';
+
+                return back()->with(
+                    'error',
+                    'Không thể đăng ký trùng môn "' . $mon . '" trong ' . $hocKyLabel . $khoaHocLabel
+                    . '. Bạn đã đăng ký học phần "' . $hp . '" của môn này rồi.'
+                );
+            }
+        }
+
         // Chặn đăng ký lại nếu sinh viên đang học (chưa kết thúc) cùng môn học này ở học phần khác
         if ($offering->subject_id) {
             $activeSameSubjectReg = SubjectRegistration::query()

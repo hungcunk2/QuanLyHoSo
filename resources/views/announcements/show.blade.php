@@ -2,7 +2,7 @@
     $layout = auth()->check()
         ? (auth()->user()->role === 'student' ? 'layouts.student' : (auth()->user()->role === 'teacher' ? 'layouts.teacher' : 'layouts.admin'))
         : null;
-    $pdfUrl = $item->attachment_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($item->attachment_path) : null;
+    $pdfUrl = $item->attachment_path ? '/storage/' . ltrim($item->attachment_path, '/') : null;
 @endphp
 
 @extends($layout ?? 'layouts.guest')

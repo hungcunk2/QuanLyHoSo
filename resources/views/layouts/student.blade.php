@@ -71,6 +71,12 @@
                                 <span>Đăng Ký Học Phần</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('student.curriculum') }}" class="nav-link">
+                                <i class="fas fa-sitemap"></i>
+                                <span>Chương Trình Khung</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 
