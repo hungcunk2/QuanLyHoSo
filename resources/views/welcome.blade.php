@@ -17,6 +17,7 @@
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
             background: #0b1220;
+            overflow-x: hidden;
         }
         .auth-bg {
             min-height: 100vh;
@@ -32,7 +33,7 @@
             --news-panel-h: 700px;
             --login-panel-h: 540px;
             --login-w: 520px;
-            --login-shift-x: 400px;
+            --login-shift-x: clamp(96px, 11vw, 180px);
         }
         .auth-shell {
             width: 100%;
@@ -47,11 +48,11 @@
             left: 100px;
             top: 50%;
             transform: translateY(-50%);
-            width: min(1280px, calc(100vw - 100px - 24px - var(--login-w) - 26px));
+            width: min(920px, calc(100vw - 100px - 24px - var(--login-w) - 26px));
             z-index: 2;
         }
         .login-news {
-            max-width: 1280px;
+            max-width: 920px;
             color: #fff;
             margin-left: 0;
             font-family: Arial, Helvetica, sans-serif;
@@ -64,6 +65,8 @@
             flex: 0 0 auto;
             display: flex;
             justify-content: flex-end;
+            width: min(100%, var(--login-w));
+            max-width: 100%;
             transform: translateX(var(--login-shift-x));
         }
         .login-news__panel {
