@@ -23,6 +23,8 @@ class SubjectController extends Controller
             'so_tin_chi',
             'so_tiet_ly_thuyet',
             'so_tiet_thuc_hanh',
+            'nhom_thuc_hanh',
+            'so_tc_bat_buoc_cua_nhom',
             'created_at',
             'updated_at'
         );
@@ -53,6 +55,8 @@ class SubjectController extends Controller
             'so_tin_chi' => 'required|integer|min:0|max:30',
             'so_tiet_ly_thuyet' => 'required|integer|min:0|max:500',
             'so_tiet_thuc_hanh' => 'required|integer|min:0|max:500',
+            'nhom_thuc_hanh' => 'required|integer|min:0|max:100',
+            'so_tc_bat_buoc_cua_nhom' => 'required|integer|min:0|max:100',
         ], [
             'ma_mon_hoc.required' => 'Vui lòng nhập mã môn học.',
             'ma_mon_hoc.unique' => 'Mã môn học đã tồn tại trong hệ thống.',
@@ -60,6 +64,8 @@ class SubjectController extends Controller
             'so_tin_chi.required' => 'Vui lòng nhập số tín chỉ.',
             'so_tiet_ly_thuyet.required' => 'Vui lòng nhập số tiết lý thuyết.',
             'so_tiet_thuc_hanh.required' => 'Vui lòng nhập số tiết thực hành.',
+            'nhom_thuc_hanh.required' => 'Vui lòng nhập nhóm thực hành.',
+            'so_tc_bat_buoc_cua_nhom.required' => 'Vui lòng nhập số TC bắt buộc của nhóm.',
         ]);
 
         $subject = Subject::create($request->only([
@@ -68,6 +74,8 @@ class SubjectController extends Controller
             'so_tin_chi',
             'so_tiet_ly_thuyet',
             'so_tiet_thuc_hanh',
+            'nhom_thuc_hanh',
+            'so_tc_bat_buoc_cua_nhom',
         ]));
 
         return response()->json([
@@ -91,6 +99,8 @@ class SubjectController extends Controller
             'so_tin_chi' => 'required|integer|min:0|max:30',
             'so_tiet_ly_thuyet' => 'required|integer|min:0|max:500',
             'so_tiet_thuc_hanh' => 'required|integer|min:0|max:500',
+            'nhom_thuc_hanh' => 'required|integer|min:0|max:100',
+            'so_tc_bat_buoc_cua_nhom' => 'required|integer|min:0|max:100',
         ]);
 
         $subject = Subject::findOrFail($id);
@@ -100,6 +110,8 @@ class SubjectController extends Controller
             'so_tin_chi',
             'so_tiet_ly_thuyet',
             'so_tiet_thuc_hanh',
+            'nhom_thuc_hanh',
+            'so_tc_bat_buoc_cua_nhom',
         ]));
 
         return response()->json([

@@ -23,6 +23,8 @@ class Subject extends Model
         'so_tin_chi',
         'so_tiet_ly_thuyet',
         'so_tiet_thuc_hanh',
+        'nhom_thuc_hanh',
+        'so_tc_bat_buoc_cua_nhom',
     ];
 
     public function curriculumTerms()
