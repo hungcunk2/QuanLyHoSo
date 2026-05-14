@@ -104,12 +104,12 @@
                         <input type="number" class="form-control" id="create_so_tiet_thuc_hanh" name="so_tiet_thuc_hanh" min="0" max="500" value="0" required>
                     </div>
                     <div class="mb-3">
-                        <label for="create_nhom_thuc_hanh" class="form-label">Nhóm thực hành <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="create_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100" value="0" required>
+                        <label for="create_nhom_thuc_hanh" class="form-label">Nhóm thực hành</label>
+                        <input type="number" class="form-control" id="create_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100">
                     </div>
                     <div class="mb-3">
-                        <label for="create_so_tc_bat_buoc_cua_nhom" class="form-label">Số TC bắt buộc của nhóm <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="create_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100" value="0" required>
+                        <label for="create_so_tc_bat_buoc_cua_nhom" class="form-label">Số TC bắt buộc của nhóm</label>
+                        <input type="number" class="form-control" id="create_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -153,12 +153,12 @@
                         <input type="number" class="form-control" id="edit_so_tiet_thuc_hanh" name="so_tiet_thuc_hanh" min="0" max="500" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit_nhom_thuc_hanh" class="form-label">Nhóm thực hành <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="edit_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100" required>
+                        <label for="edit_nhom_thuc_hanh" class="form-label">Nhóm thực hành</label>
+                        <input type="number" class="form-control" id="edit_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100">
                     </div>
                     <div class="mb-3">
-                        <label for="edit_so_tc_bat_buoc_cua_nhom" class="form-label">Số TC bắt buộc của nhóm <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="edit_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100" required>
+                        <label for="edit_so_tc_bat_buoc_cua_nhom" class="form-label">Số TC bắt buộc của nhóm</label>
+                        <input type="number" class="form-control" id="edit_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -330,8 +330,8 @@
                     $('#edit_so_tin_chi').val(response.so_tin_chi ?? 0);
                     $('#edit_so_tiet_ly_thuyet').val(response.so_tiet_ly_thuyet ?? 0);
                     $('#edit_so_tiet_thuc_hanh').val(response.so_tiet_thuc_hanh ?? 0);
-                    $('#edit_nhom_thuc_hanh').val(response.nhom_thuc_hanh ?? 0);
-                    $('#edit_so_tc_bat_buoc_cua_nhom').val(response.so_tc_bat_buoc_cua_nhom ?? 0);
+                    $('#edit_nhom_thuc_hanh').val((response.nhom_thuc_hanh ?? 0) > 0 ? response.nhom_thuc_hanh : '');
+                    $('#edit_so_tc_bat_buoc_cua_nhom').val((response.so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? response.so_tc_bat_buoc_cua_nhom : '');
                     
                     var editModal = new bootstrap.Modal(document.getElementById('editSubjectModal'));
                     editModal.show();

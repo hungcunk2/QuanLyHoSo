@@ -55,8 +55,8 @@ class SubjectController extends Controller
             'so_tin_chi' => 'required|integer|min:0|max:30',
             'so_tiet_ly_thuyet' => 'required|integer|min:0|max:500',
             'so_tiet_thuc_hanh' => 'required|integer|min:0|max:500',
-            'nhom_thuc_hanh' => 'required|integer|min:0|max:100',
-            'so_tc_bat_buoc_cua_nhom' => 'required|integer|min:0|max:100',
+            'nhom_thuc_hanh' => 'nullable|integer|min:0|max:100',
+            'so_tc_bat_buoc_cua_nhom' => 'nullable|integer|min:0|max:100',
         ], [
             'ma_mon_hoc.required' => 'Vui lòng nhập mã môn học.',
             'ma_mon_hoc.unique' => 'Mã môn học đã tồn tại trong hệ thống.',
@@ -64,11 +64,9 @@ class SubjectController extends Controller
             'so_tin_chi.required' => 'Vui lòng nhập số tín chỉ.',
             'so_tiet_ly_thuyet.required' => 'Vui lòng nhập số tiết lý thuyết.',
             'so_tiet_thuc_hanh.required' => 'Vui lòng nhập số tiết thực hành.',
-            'nhom_thuc_hanh.required' => 'Vui lòng nhập nhóm thực hành.',
-            'so_tc_bat_buoc_cua_nhom.required' => 'Vui lòng nhập số TC bắt buộc của nhóm.',
         ]);
 
-        $subject = Subject::create($request->only([
+        $payload = $request->only([
             'ma_mon_hoc',
             'ten_mon_hoc',
             'so_tin_chi',
@@ -76,7 +74,16 @@ class SubjectController extends Controller
             'so_tiet_thuc_hanh',
             'nhom_thuc_hanh',
             'so_tc_bat_buoc_cua_nhom',
-        ]));
+        ]);
+
+        $payload['nhom_thuc_hanh'] = filled($payload['nhom_thuc_hanh'] ?? null)
+            ? (int) $payload['nhom_thuc_hanh']
+            : 0;
+        $payload['so_tc_bat_buoc_cua_nhom'] = filled($payload['so_tc_bat_buoc_cua_nhom'] ?? null)
+            ? (int) $payload['so_tc_bat_buoc_cua_nhom']
+            : 0;
+
+        $subject = Subject::create($payload);
 
         return response()->json([
             'success' => true,
@@ -99,12 +106,12 @@ class SubjectController extends Controller
             'so_tin_chi' => 'required|integer|min:0|max:30',
             'so_tiet_ly_thuyet' => 'required|integer|min:0|max:500',
             'so_tiet_thuc_hanh' => 'required|integer|min:0|max:500',
-            'nhom_thuc_hanh' => 'required|integer|min:0|max:100',
-            'so_tc_bat_buoc_cua_nhom' => 'required|integer|min:0|max:100',
+            'nhom_thuc_hanh' => 'nullable|integer|min:0|max:100',
+            'so_tc_bat_buoc_cua_nhom' => 'nullable|integer|min:0|max:100',
         ]);
 
         $subject = Subject::findOrFail($id);
-        $subject->update($request->only([
+        $payload = $request->only([
             'ma_mon_hoc',
             'ten_mon_hoc',
             'so_tin_chi',
@@ -112,7 +119,16 @@ class SubjectController extends Controller
             'so_tiet_thuc_hanh',
             'nhom_thuc_hanh',
             'so_tc_bat_buoc_cua_nhom',
-        ]));
+        ]);
+
+        $payload['nhom_thuc_hanh'] = filled($payload['nhom_thuc_hanh'] ?? null)
+            ? (int) $payload['nhom_thuc_hanh']
+            : 0;
+        $payload['so_tc_bat_buoc_cua_nhom'] = filled($payload['so_tc_bat_buoc_cua_nhom'] ?? null)
+            ? (int) $payload['so_tc_bat_buoc_cua_nhom']
+            : 0;
+
+        $subject->update($payload);
 
         return response()->json([
             'success' => true,

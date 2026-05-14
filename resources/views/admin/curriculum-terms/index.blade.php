@@ -92,8 +92,8 @@
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                    <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) }}</td>
-                                    <td class="text-center">{{ (int) ($subject->pivot->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->pivot->so_tc_bat_buoc_cua_nhom : '-' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '-' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '-' }}</td>
                                     <td></td>
                                 </tr>
                             @endforeach
@@ -115,8 +115,8 @@
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                    <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) }}</td>
-                                    <td class="text-center">{{ (int) ($subject->pivot->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->pivot->so_tc_bat_buoc_cua_nhom : '-' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '-' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '-' }}</td>
                                     <td></td>
                                 </tr>
                             @endforeach
