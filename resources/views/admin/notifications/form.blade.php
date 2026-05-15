@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Thông Báo')
 @section('page-title', 'Thông Báo')
@@ -10,7 +10,7 @@
 @endphp
 
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between">
+    <div class="card-header admin-card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">{{ $isEdit ? 'Cập nhật thông báo' : 'Thêm thông báo' }}</h5>
         <a href="{{ route('admin.notifications.index') }}" class="btn btn-light btn-sm">Quay lại</a>
     </div>

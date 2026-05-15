@@ -172,6 +172,20 @@ body {
     margin: 0;
 }
 
+.header-left .page-title:empty {
+    display: none;
+}
+
+.mobile-menu-toggle {
+    display: none;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+}
+
 .header-right {
     display: flex;
     align-items: center;
@@ -295,7 +309,23 @@ body {
 /* Table Styles */
 .table-responsive {
     border-radius: 8px;
-    overflow: hidden;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.schedule-table-scroll {
+    position: relative;
+}
+
+.schedule-table {
+    min-width: 980px;
+}
+
+.schedule-scroll-hint {
+    display: none;
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 0.5rem 0.75rem 0;
 }
 
 .table {
@@ -593,19 +623,208 @@ body {
     background: #9ca3af;
 }
 
+/* Admin list pages — mobile */
+.admin-toolbar .filter-field {
+    min-width: 0;
+    width: 100%;
+}
+
+.admin-toolbar .quick-action-form {
+    flex-wrap: wrap;
+}
+
+.admin-toolbar .quick-action-form select {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.admin-table-wrap .col-primary {
+    font-weight: 500;
+}
+
+@media (max-width: 767.98px) {
+    .admin-page-header .btn-create,
+    .admin-page-header > .btn-primary:last-child,
+    .admin-card-header .btn-primary,
+    .admin-card-header .btn-create {
+        width: 100%;
+    }
+
+    .admin-toolbar .col-md-6,
+    .admin-toolbar .flex-grow-1,
+    .admin-toolbar [style*="min-width"] {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+    }
+
+    .admin-toolbar .d-flex.flex-wrap.align-items-end {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .admin-toolbar .d-flex.flex-wrap.align-items-end > div {
+        width: 100%;
+    }
+
+    .admin-toolbar .input-group-search,
+    .admin-toolbar .input-group {
+        width: 100%;
+    }
+
+    .admin-card-header {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem;
+    }
+
+    .admin-content .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-content .curriculum-table {
+        font-size: 12px;
+    }
+
+    .admin-content .curriculum-table th,
+    .admin-content .curriculum-table td {
+        padding: 8px 6px;
+    }
+
+    .admin-content .curriculum-table__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        justify-content: flex-end;
+    }
+
+    .dataTables_wrapper .data_table_widgets {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.75rem;
+    }
+
+    .dataTables_wrapper .data_table_widgets .col-md-6 {
+        width: 100%;
+        margin: 0 !important;
+        padding: 0 !important;
+        justify-content: center !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        justify-content: center;
+        margin-left: 0 !important;
+        flex-wrap: wrap;
+    }
+
+    table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        box-shadow: none;
+    }
+
+    table.dataTable > tbody > tr.child ul.dtr-details {
+        width: 100%;
+    }
+
+    table.dataTable > tbody > tr.child span.dtr-title {
+        min-width: 5.5rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .admin-table-wrap td.col-primary {
+        white-space: normal;
+        max-width: 9rem;
+    }
+
+    .admin-table-wrap .btn-sm {
+        padding: 0.35rem 0.5rem;
+    }
+
+}
+
+.admin-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 1040;
+    pointer-events: none;
+}
+
+.admin-sidebar-overlay.is-visible {
+    display: block;
+    pointer-events: auto;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .admin-sidebar {
         transform: translateX(-100%);
         transition: transform 0.3s;
+        z-index: 1050;
     }
     
     .admin-sidebar.active {
         transform: translateX(0);
     }
+
+    body.admin-sidebar-open {
+        overflow: hidden;
+    }
+
+    .admin-wrapper {
+        display: block;
+        min-height: auto;
+        height: auto;
+    }
     
     .admin-main {
         margin-left: 0;
+        flex: none;
+        width: 100%;
+        min-height: auto;
+        height: auto;
+    }
+
+    .admin-content {
+        padding: 12px;
+        flex: none;
+        min-height: 0;
+        overflow-y: visible;
+    }
+
+    .dataTables_wrapper {
+        min-height: 0 !important;
+    }
+
+    .dataTables_wrapper .row:empty {
+        display: none;
+    }
+
+    .admin-header {
+        padding: 0 12px;
+        min-height: 56px;
+        height: auto;
+    }
+
+    .mobile-menu-toggle {
+        display: inline-flex;
+    }
+
+    .header-left .page-title {
+        font-size: 1.125rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .table thead th,
+    .table tbody td {
+        padding: 10px 8px;
+        font-size: 13px;
     }
     
     .action-bar {
@@ -621,6 +840,138 @@ body {
     .search-box {
         width: 100%;
     }
+
+    .header-right {
+        gap: 0.35rem;
+        flex-wrap: nowrap;
+    }
+
+    .header-right .user-name {
+        max-width: 7.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .header-right .user-profile.dropdown .user-name {
+        max-width: 5.5rem;
+    }
+
+    .schedule-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 0.75rem !important;
+    }
+
+    .schedule-toolbar__filters,
+    .schedule-toolbar__actions {
+        flex-wrap: wrap !important;
+        width: 100%;
+    }
+
+    .schedule-toolbar__filters .form-check-inline {
+        margin-right: 0.5rem;
+    }
+
+    .schedule-toolbar__actions {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .schedule-toolbar__actions .btn,
+    .schedule-toolbar__actions a.btn {
+        width: 100%;
+        min-width: 0 !important;
+    }
+
+    .schedule-scroll-hint {
+        display: block;
+    }
+
+    .schedule-table {
+        min-width: 860px;
+    }
+
+    .schedule-table .schedule-week-row {
+        min-height: 120px !important;
+        height: auto !important;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        font-size: 12px;
+        padding: 6px 4px;
+    }
+
+    .schedule-table th:first-child,
+    .schedule-table td:first-child {
+        min-width: 52px;
+        width: 52px;
+    }
+
+    .schedule-slot {
+        min-height: 3.5rem !important;
+        padding: 0.5rem 0.6rem !important;
+        font-size: 0.8rem;
+    }
+
+    .student-info-grid > [class*="col-6"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .box-menu .col-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .profile-userpic img,
+    .profile-userpic > div {
+        width: 96px !important;
+        height: 96px !important;
+    }
+
+    .page-actions-toolbar {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .page-actions-toolbar .btn,
+    .page-actions-toolbar a.btn {
+        width: 100%;
+    }
+
+    .registration-toolbar select {
+        width: 100% !important;
+    }
+
+    .registration-toolbar form {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+    .grades-table-wrap {
+        max-height: none;
+    }
+
+    #gradesTable th,
+    #gradesTable td {
+        font-size: 12px;
+        padding: 6px 4px;
+    }
+}
+
+.modal.fade:not(.show) {
+    display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
 }
 
 /* Dark Mode Support */

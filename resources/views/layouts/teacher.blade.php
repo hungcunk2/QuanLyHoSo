@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
     <link rel="stylesheet" href="{{ asset('css/ai-chatbox.css') }}">
@@ -111,8 +112,11 @@
         <div class="admin-main">
             <!-- Header -->
             <header class="admin-header">
-                <div class="header-left">
-                    <h1 class="page-title">@yield('page-title', 'Dashboard')</h1>
+                <div class="header-left d-flex align-items-center gap-2 flex-wrap">
+                    <button type="button" class="mobile-menu-toggle btn btn-sm btn-outline-secondary" id="mobileMenuToggle" aria-label="Mở menu" aria-expanded="false">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="page-title mb-0">@yield('page-title', 'Dashboard')</h1>
                 </div>
                 <div class="header-right">
                     <button class="header-icon-btn theme-toggle" id="themeToggle">
@@ -181,7 +185,7 @@
                             {{ $authDisplayName ?? (Auth::user()->email ?? 'GIÁO VIÊN') }}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Thông tin cá nhân</a></li>
+                            <li><a class="dropdown-item" href="{{ route('teacher.profile') }}"><i class="fas fa-user me-2"></i>Thông tin cá nhân</a></li>
                             <li><a class="dropdown-item" href="{{ route('account.password.edit') }}"><i class="fas fa-key me-2"></i>Đổi mật khẩu</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
@@ -205,6 +209,8 @@
     </div>
     @include('partials.ai-chatbox')
 
+    @stack('modals')
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Bootstrap JS -->
@@ -212,6 +218,8 @@
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <!-- Custom JS -->
     <script src="{{ asset('js/admin.js') }}"></script>
     <script src="{{ asset('js/ai-chatbox.js') }}"></script>

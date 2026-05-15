@@ -51,11 +51,6 @@
     data-welcome-message="{{ $welcomeMessage }}"
     data-suggested-prompts='@json($suggestedPrompts)'
 >
-    <button type="button" class="ai-chatbox__toggle" aria-expanded="false" aria-controls="aiChatboxPanel">
-        <span class="ai-chatbox__toggle-icon"><i class="fas fa-robot"></i></span>
-        <span class="ai-chatbox__toggle-text">AI Chat</span>
-    </button>
-
     <section id="aiChatboxPanel" class="ai-chatbox__panel" hidden>
         <header class="ai-chatbox__header">
             <div>
@@ -87,4 +82,9 @@
             </div>
         </form>
     </section>
+
+    <button type="button" class="ai-chatbox__toggle" aria-expanded="false" aria-controls="aiChatboxPanel">
+        <span class="ai-chatbox__toggle-icon"><i class="fas fa-robot"></i></span>
+        <span class="ai-chatbox__toggle-text">AI Chat</span>
+    </button>
 </div>

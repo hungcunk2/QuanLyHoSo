@@ -32,7 +32,7 @@
             @if(($offeringsRegister ?? collect())->isEmpty())
                 <p class="text-muted mb-0">Không có lớp nào đang trong thời gian đăng ký.</p>
             @else
-                <div class="table-responsive">
+                <div class="table-responsive admin-table-wrap">
                     <table class="table table-striped table-hover border align-middle mb-0">
                         <thead>
                             <tr>
@@ -86,7 +86,7 @@
             @if(($offeringsStudy ?? collect())->isEmpty())
                 <p class="text-muted mb-0">Chưa có lớp nào đang học.</p>
             @else
-                <div class="table-responsive">
+                <div class="table-responsive admin-table-wrap">
                     <table class="table table-striped table-hover border align-middle mb-0">
                         <thead>
                             <tr>

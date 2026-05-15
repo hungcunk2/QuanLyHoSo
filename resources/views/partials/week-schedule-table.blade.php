@@ -7,11 +7,11 @@
 @endphp
 
 <div class="card">
-    <div class="card-header bg-light">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div class="d-flex align-items-center gap-3 flex-nowrap">
-                <h5 class="mb-0 me-3">{{ $headingText }}</h5>
-                <div class="d-flex align-items-center gap-3 flex-nowrap">
+    <div class="card-header bg-light schedule-toolbar">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 schedule-toolbar__row">
+            <div class="d-flex align-items-center gap-3 flex-wrap schedule-toolbar__filters">
+                <h5 class="mb-0 me-md-3">{{ $headingText }}</h5>
+                <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
                     <div class="form-check form-check-inline mb-0">
                         <input class="form-check-input" type="radio" name="scheduleFilter" id="filterAll" checked>
                         <label class="form-check-label" for="filterAll">Tất cả</label>
@@ -36,7 +36,7 @@
                     </form>
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-3 flex-nowrap">
+            <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap schedule-toolbar__actions">
                 <a href="{{ route($scheduleRouteName) }}" class="btn btn-primary btn-sm px-3" style="min-width: 90px; white-space: nowrap;">Hiện tại</a>
                 <button type="button"
                         class="btn btn-outline-secondary btn-sm px-3 btn-print-schedule"
@@ -50,7 +50,10 @@
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <p class="schedule-scroll-hint mb-0 d-md-none px-3 pt-2">
+            <i class="fas fa-arrows-left-right me-1"></i> Vuốt ngang để xem đủ 7 ngày trong tuần (Thứ 2 – Chủ nhật).
+        </p>
+        <div class="table-responsive schedule-table-scroll">
             <table class="table table-bordered mb-0 text-center align-middle schedule-table">
                 <thead>
                     <tr style="background-color: #F3F7F9;">
@@ -120,6 +123,7 @@
     </div>
 </div>
 
+@push('modals')
 <!-- Modal in lịch -->
 <div class="modal fade" id="printScheduleModal" tabindex="-1" aria-labelledby="printScheduleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -138,6 +142,7 @@
         </div>
     </div>
 </div>
+@endpush
 
 @push('scripts')
 <script>

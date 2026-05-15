@@ -244,18 +244,34 @@
         .muted-note { font-size: 12px; color: #64748b; }
 
         @media (max-width: 991.98px) {
-            .auth-grid { flex-direction: column; align-items: stretch; }
-            .login-news-wrap {
-                position: static;
-                width: auto;
-                transform: none;
-                margin-bottom: 14px;
+            .auth-bg {
+                --login-shift-x: 0px;
+                --login-w: 100%;
+                --login-panel-h: auto;
+                align-items: center;
+                justify-content: center;
             }
-            .login-news { max-width: none; margin-left: 0; margin-right: 0; }
-            .auth-card { width: 100%; max-width: none; margin-left: 0; }
-            .login-news__list { max-height: 340px; }
-            .auth-shell { padding: 18px 12px; }
-            .auth-bg { --login-shift-x: 0px; }
+            .login-news-wrap { display: none !important; }
+            .auth-shell {
+                padding: 16px;
+                max-width: 420px;
+                margin: 0 auto;
+            }
+            .auth-grid {
+                justify-content: center;
+            }
+            .auth-card-wrap {
+                width: 100%;
+                max-width: 100%;
+                transform: none;
+            }
+            .auth-card {
+                width: 100%;
+                max-width: 100%;
+                margin-left: 0;
+                height: auto;
+                min-height: 0;
+            }
         }
     </style>
 </head>

@@ -44,6 +44,7 @@
                 { data: 'ten_lop', name: 'ten_lop' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ],
+            columnDefs: AdminDT.columnDefs(4),
             order: [[1, 'asc']],
             pageLength: 10,
             language: {

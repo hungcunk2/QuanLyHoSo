@@ -34,7 +34,7 @@
                     <div class="alert alert-info mb-0">Chưa có học phần nào để hiển thị điểm.</div>
                 </div>
             @else
-                <div class="table-responsive">
+                <div class="table-responsive admin-table-wrap">
                     <table class="table table-bordered mb-0 align-middle text-center">
                         <thead class="table-light">
                             <tr>

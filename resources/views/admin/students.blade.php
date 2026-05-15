@@ -9,9 +9,9 @@
         <div class="col-lg-12">
             <div class="card card-block card-stretch">
                 <div class="card-body p-0">
-                    <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
-                        <h5 class="fw-bold">Quản lý học sinh</h5>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStudentModal">
+                    <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3 admin-page-header">
+                        <h5 class="fw-bold mb-0">Quản lý học sinh</h5>
+                        <button type="button" class="btn btn-primary btn-create" data-bs-toggle="modal" data-bs-target="#createStudentModal">
                             <i class="fas fa-plus"></i> Tạo học sinh mới
                         </button>
                     </div>
@@ -23,22 +23,20 @@
 
 <div class="card">
     <div class="card-body">
-        <div class="row justify-content-between gy-3">
-            <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="col-md-12">
-                    <form id="quick-action-form" class="form-disabled d-flex gap-3 align-items-center">
-                        @csrf
-                        <select name="action_type" class="form-select" id="quick-action-type" style="width:150px">
-                            <option value="">No Action</option>
-                            <option value="delete">Xóa đã chọn</option>
-                        </select>
-                        <button id="quick-action-apply" class="btn btn-primary" disabled>Áp dụng</button>
-                    </form>
-                </div>
+        <div class="row gy-3 admin-toolbar">
+            <div class="col-12 col-lg-4">
+                <form id="quick-action-form" class="form-disabled d-flex gap-2 align-items-center quick-action-form">
+                    @csrf
+                    <select name="action_type" class="form-select form-select-sm" id="quick-action-type">
+                        <option value="">No Action</option>
+                        <option value="delete">Xóa đã chọn</option>
+                    </select>
+                    <button id="quick-action-apply" class="btn btn-primary btn-sm" disabled>Áp dụng</button>
+                </form>
             </div>
-            <div class="col-md-6 col-lg-8 col-xl-9">
-                <div class="d-flex flex-wrap align-items-end gap-2 justify-content-md-end">
-                    <div class="flex-grow-1" style="min-width: 200px; max-width: 280px;">
+            <div class="col-12 col-lg-8">
+                <div class="row g-2">
+                    <div class="col-12 col-sm-6 filter-field">
                         <label for="filter-ho-ten" class="form-label small mb-1 text-muted">Tìm theo tên</label>
                         <div class="input-group input-group-sm">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
@@ -46,7 +44,7 @@
                                 aria-controls="studentsTable" autocomplete="off">
                         </div>
                     </div>
-                    <div style="min-width: 220px; max-width: 320px;">
+                    <div class="col-12 col-sm-6 filter-field">
                         <label for="filter-lop" class="form-label small mb-1 text-muted">Lớp</label>
                         <select class="form-select form-select-sm" id="filter-lop" aria-controls="studentsTable">
                             <option value="">Tất cả lớp</option>
@@ -59,8 +57,8 @@
             </div>
         </div>
 
-        <div class="table-responsive mt-3">
-            <table id="studentsTable" class="table table-striped border">
+        <div class="table-responsive mt-3 admin-table-wrap">
+            <table id="studentsTable" class="table table-striped border nowrap w-100">
                 <thead>
                     <tr>
                         <th width="50">
@@ -495,11 +493,13 @@
                 },
                 {
                     data: 'mssv',
-                    name: 'mssv'
+                    name: 'mssv',
+                    className: 'col-mssv'
                 },
                 {
                     data: 'ho_ten',
-                    name: 'ho_ten'
+                    name: 'ho_ten',
+                    className: 'col-primary'
                 },
                 {
                     data: 'email',
@@ -521,9 +521,11 @@
                     data: 'action',
                     name: 'action',
                     orderable: false,
-                    searchable: false
+                    searchable: false,
+                    className: 'col-actions text-nowrap'
                 }
             ],
+            columnDefs: AdminDT.columnDefs(8),
             order: [[6, 'desc']],
             pageLength: 10,
             language: {

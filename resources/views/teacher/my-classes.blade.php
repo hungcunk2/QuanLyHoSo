@@ -27,7 +27,7 @@
             @if($offerings->isEmpty())
                 <p class="text-muted mb-0">Chưa có học phần nào được phân công. Liên hệ quản trị để thêm bạn làm giáo viên phụ trách trong <strong>Quản lý đăng ký học phần</strong>.</p>
             @else
-                <div class="table-responsive">
+                <div class="table-responsive admin-table-wrap">
                     <table class="table table-striped table-hover border align-middle mb-0">
                         <thead>
                             <tr>

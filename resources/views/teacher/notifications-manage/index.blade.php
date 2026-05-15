@@ -16,7 +16,7 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <div class="table-responsive">
+        <div class="table-responsive admin-table-wrap">
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>

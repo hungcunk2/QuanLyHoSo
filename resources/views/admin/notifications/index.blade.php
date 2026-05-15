@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between">
+    <div class="card-header admin-card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">Quản lý Thông Báo</h5>
         <a href="{{ route('admin.notifications.create') }}" class="btn btn-primary btn-sm">
             <i class="fas fa-plus me-1"></i> Thêm mới
@@ -16,7 +16,7 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <div class="table-responsive">
+        <div class="table-responsive admin-table-wrap">
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>

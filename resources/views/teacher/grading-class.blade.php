@@ -30,7 +30,7 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 flex-wrap page-actions-toolbar">
                             <a href="{{ $backUrl }}" class="btn btn-outline-secondary btn-sm text-nowrap">
                                 <i class="fas fa-arrow-left me-1"></i> Quay lại
                             </a>
@@ -62,7 +62,7 @@
 
     <div class="card">
         <div class="card-body p-0">
-            <div class="table-responsive">
+            <div class="table-responsive grades-table-wrap admin-table-wrap">
                 <table class="table table-bordered mb-0 align-middle text-center" id="gradesTable">
                     <thead class="table-light">
                         <tr>

@@ -1,11 +1,11 @@
 <div class="card">
     <div class="card-body">
-        <div class="row justify-content-between gy-3">
+        <div class="row gy-3 admin-toolbar">
             <div class="col-md-6 col-lg-4 col-xl-3">
                 <div class="col-md-12">
-                    <form id="lop-quick-action-form" class="form-disabled d-flex gap-3 align-items-center">
+                    <form id="lop-quick-action-form" class="form-disabled d-flex gap-2 align-items-center quick-action-form">
                         @csrf
-                        <select name="action_type" class="form-select" id="lop-quick-action-type" style="width:150px">
+                        <select name="action_type" class="form-select form-select-sm" id="lop-quick-action-type">
                             <option value="">No Action</option>
                             <option value="delete">Xóa đã chọn</option>
                         </select>
@@ -26,8 +26,8 @@
             </div>
         </div>
 
-        <div class="table-responsive mt-3">
-            <table id="lopsTable" class="table table-striped border">
+        <div class="table-responsive mt-3 admin-table-wrap">
+            <table id="lopsTable" class="table table-striped border nowrap w-100">
                 <thead>
                     <tr>
                         <th width="50">

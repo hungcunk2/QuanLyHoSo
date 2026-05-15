@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+    <div class="d-flex flex-wrap gap-2 align-items-end mb-3 admin-toolbar">
         <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
             <div>
                 <label class="form-label mb-1">Khóa học</label>
@@ -110,7 +110,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="fw-semibold">Hồ sơ thiếu dữ liệu</div>
                     </div>
-                    <div class="table-responsive">
+                    <div class="table-responsive admin-table-wrap">
                         <table class="table align-middle">
                             <thead>
                             <tr>
@@ -167,7 +167,7 @@
                                         <div class="d-flex justify-content-end mb-2">
                                             <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.reports.duplicates.csv', ['field' => $field]) }}">Tải CSV</a>
                                         </div>
-                                        <div class="table-responsive">
+                                        <div class="table-responsive admin-table-wrap">
                                             <table class="table table-sm align-middle">
                                                 <thead>
                                                 <tr>
@@ -202,7 +202,7 @@
             <div class="card h-100">
                 <div class="card-body">
                     <div class="fw-semibold mb-2">Lớp học phần theo học kỳ (gần đây)</div>
-                    <div class="table-responsive">
+                    <div class="table-responsive admin-table-wrap">
                         <table class="table align-middle">
                             <thead>
                             <tr>
@@ -232,7 +232,7 @@
             <div class="card h-100">
                 <div class="card-body">
                     <div class="fw-semibold mb-2">Tiến độ chốt điểm theo học kỳ (gần đây)</div>
-                    <div class="table-responsive">
+                    <div class="table-responsive admin-table-wrap">
                         <table class="table align-middle">
                             <thead>
                             <tr>

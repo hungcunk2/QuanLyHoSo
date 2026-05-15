@@ -9,8 +9,8 @@
         <div class="col-lg-12">
             <div class="card card-block card-stretch">
                 <div class="card-body p-0">
-                    <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
-                        <h5 class="fw-bold">Đánh giá người dùng</h5>
+                    <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3 admin-page-header">
+                        <h5 class="fw-bold mb-0">Đánh giá người dùng</h5>
                     </div>
                 </div>
             </div>
@@ -20,7 +20,7 @@
 
 <div class="card">
     <div class="card-body">
-        <div class="row justify-content-between gy-3">
+        <div class="row gy-3 admin-toolbar">
             <div class="col-md-6 col-lg-4 col-xl-3">
                 <div class="col-md-12">
                     <form id="quick-action-form" class="form-disabled d-flex gap-3 align-items-center">
@@ -29,7 +29,7 @@
                             <option value="">No Action</option>
                             <option value="delete">Xóa đánh giá</option>
                         </select>
-                        <button id="quick-action-apply" class="btn btn-primary" disabled>Áp dụng</button>
+                        <button id="quick-action-apply" class="btn btn-primary btn-create" disabled>Áp dụng</button>
                     </form>
                 </div>
             </div>
@@ -46,8 +46,8 @@
             </div>
         </div>
 
-        <div class="table-responsive mt-3">
-            <table id="reviewsTable" class="table table-striped border">
+        <div class="table-responsive mt-3 admin-table-wrap">
+            <table id="reviewsTable" class="table table-striped border nowrap w-100">
                 <thead>
                     <tr>
                         <th width="50">
@@ -297,6 +297,7 @@
             ordering: true,
             info: true,
             pageLength: 10,
+            columnDefs: AdminDT.columnDefs(5, { primary: [1] }),
             language: {
                 paginate: {
                     next: 'Next',

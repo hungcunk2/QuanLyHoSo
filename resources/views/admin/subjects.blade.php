@@ -9,9 +9,9 @@
         <div class="col-lg-12">
             <div class="card card-block card-stretch">
                 <div class="card-body p-0">
-                    <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
-                        <h5 class="fw-bold">Quản lý môn học</h5>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createSubjectModal">
+                    <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3 admin-page-header">
+                        <h5 class="fw-bold mb-0">Quản lý môn học</h5>
+                        <button type="button" class="btn btn-primary btn-create" data-bs-toggle="modal" data-bs-target="#createSubjectModal">
                             <i class="fas fa-plus"></i> Tạo môn học mới
                         </button>
                     </div>
@@ -23,7 +23,7 @@
 
 <div class="card">
     <div class="card-body">
-        <div class="row justify-content-between gy-3">
+        <div class="row gy-3 admin-toolbar">
             <div class="col-md-6 col-lg-4 col-xl-3">
                 <div class="col-md-12">
                     <form id="quick-action-form" class="form-disabled d-flex gap-3 align-items-center">
@@ -49,8 +49,8 @@
             </div>
         </div>
 
-        <div class="table-responsive mt-3">
-            <table id="subjectsTable" class="table table-striped border">
+        <div class="table-responsive mt-3 admin-table-wrap">
+            <table id="subjectsTable" class="table table-striped border nowrap w-100">
                 <thead>
                     <tr>
                         <th width="50">
@@ -246,6 +246,7 @@
                     searchable: false
                 }
             ],
+            columnDefs: AdminDT.columnDefs(9),
             order: [[1, 'asc']],
             pageLength: 10,
             language: {

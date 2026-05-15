@@ -26,10 +26,10 @@
 
     <div class="card">
         <div class="card-body">
-            <div class="d-flex justify-content-end mb-3">
-                <form method="GET" class="d-flex align-items-center gap-2">
+            <div class="d-flex justify-content-end mb-3 registration-toolbar">
+                <form method="GET" class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="text-muted small">Năm học: <strong>{{ $currentKhoaHoc ?? '' }}</strong></div>
-                    <select name="hoc_ky" class="form-select form-select-sm" style="width: 220px;" onchange="this.form.submit()">
+                    <select name="hoc_ky" class="form-select form-select-sm" style="width: 220px; max-width: 100%;" onchange="this.form.submit()">
                         @foreach(($hocKyOptions ?? []) as $opt)
                             <option value="{{ $opt['value'] }}" {{ ($selectedHocKy ?? '') === (string)$opt['value'] ? 'selected' : '' }}>
                                 {{ $opt['label'] }}

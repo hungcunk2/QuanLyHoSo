@@ -1,22 +1,20 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Quản lý đăng ký học phần')
 @section('page-title', 'Quản lý đăng ký học phần')
 
 @push('styles')
 <style>
-    #createCourseOfferingModal .modal-dialog {
+    #createCourseOfferingModal.show .modal-dialog {
         max-height: calc(100vh - 2rem);
         margin: 1rem auto;
-        height: auto;
     }
-    #createCourseOfferingModal .modal-content {
+    #createCourseOfferingModal.show .modal-content {
         max-height: calc(100vh - 2rem);
         display: flex;
         flex-direction: column;
-        height: 100%;
     }
-    #createCourseOfferingModal .modal-body {
+    #createCourseOfferingModal.show .modal-body {
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
@@ -24,54 +22,75 @@
         max-height: min(65vh, 600px);
         -webkit-overflow-scrolling: touch;
     }
-    #createCourseOfferingModal.modal-edit .modal-dialog {
+    #createCourseOfferingModal.show.modal-edit .modal-dialog {
         max-width: 95vw;
         width: 95vw;
     }
-    #createCourseOfferingModal.modal-edit .modal-body {
+    #createCourseOfferingModal.show.modal-edit .modal-body {
         max-height: 80vh;
     }
 
-    /* Reschedule modal: make schedule grid bigger/easier to click */
-    #rescheduleModal .modal-dialog {
+    #rescheduleModal.show .modal-dialog {
         max-width: 98vw;
         width: 98vw;
         margin: 0.75rem auto;
+        max-height: calc(100vh - 1rem);
     }
-    #rescheduleModal .modal-body {
+    #rescheduleModal.show .modal-content {
+        max-height: calc(100vh - 1rem);
+    }
+    #rescheduleModal.show .modal-body {
         padding: 1rem 1.25rem;
+        overflow-y: auto;
     }
-    #rescheduleModal .modal-content {
-        min-height: calc(100vh - 1.5rem);
-    }
-    #rescheduleModal #rsGridTable th,
-    #rescheduleModal #rsGridTable td {
+    #rescheduleModal.show #rsGridTable th,
+    #rescheduleModal.show #rsGridTable td {
         min-width: 140px;
     }
-    #rescheduleModal #rsGridTable th:first-child,
-    #rescheduleModal #rsGridTable td:first-child {
+    #rescheduleModal.show #rsGridTable th:first-child,
+    #rescheduleModal.show #rsGridTable td:first-child {
         min-width: 90px;
         width: 90px;
     }
-    #rescheduleModal #rsGridTable tbody tr {
-        height: 260px; /* bigger cells */
+    #rescheduleModal.show #rsGridTable tbody tr {
+        height: 260px;
     }
-    #rescheduleModal .rs-slot {
+    #rescheduleModal.show .rs-slot {
         min-height: 9rem !important;
         padding: 1.1rem 1.1rem !important;
         border-radius: .65rem !important;
     }
-    #rescheduleModal .rs-slot .fw-semibold {
+    #rescheduleModal.show .rs-slot .fw-semibold {
         font-size: 1.15rem;
         line-height: 1.25;
     }
-    #rescheduleModal .rs-slot .opacity-90 {
+    #rescheduleModal.show .rs-slot .opacity-90 {
         font-size: 1.02rem !important;
         line-height: 1.3;
         margin-top: .35rem !important;
     }
-    #rescheduleModal .rs-slot.border-warning {
+    #rescheduleModal.show .rs-slot.border-warning {
         box-shadow: 0 0 0 .15rem rgba(255, 193, 7, .35);
+    }
+
+    @media (max-width: 767.98px) {
+        #rescheduleModal.show #rsGridTable tbody tr {
+            height: 120px;
+        }
+        #rescheduleModal.show .rs-slot {
+            min-height: 5rem !important;
+            padding: 0.65rem !important;
+        }
+
+        #registrationsTable_wrapper {
+            min-height: 0 !important;
+            height: auto !important;
+        }
+
+        #registrationsTable_wrapper .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
     }
 </style>
 @endpush
@@ -80,11 +99,11 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-lg-12">
-            <div class="card card-block card-stretch">
+            <div class="card card-block">
                 <div class="card-body p-0">
-                    <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3">
-                        <h5 class="fw-bold">Danh sách đăng ký học phần</h5>
-                        <button type="button" class="btn btn-primary" id="btnOpenCreateOffering" data-bs-toggle="modal" data-bs-target="#createCourseOfferingModal">
+                    <div class="d-flex justify-content-between align-items-center p-3 flex-wrap gap-3 admin-page-header">
+                        <h5 class="fw-bold mb-0">Danh sách đăng ký học phần</h5>
+                        <button type="button" class="btn btn-primary btn-create" id="btnOpenCreateOffering" data-bs-toggle="modal" data-bs-target="#createCourseOfferingModal">
                             <i class="fas fa-plus"></i> Tạo học phần mới
                         </button>
                     </div>
@@ -96,22 +115,18 @@
 
 <div class="card">
     <div class="card-body">
-        <div class="row justify-content-between gy-3">
-            <div class="col-md-6 col-lg-4 col-xl-3">
-            </div>
-            <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="d-flex align-items-center gap-3 justify-content-end">
-                    <div class="input-group input-group-search ms-2">
-                        <span class="input-group-text" id="addon-wrapping"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control dt-search" placeholder="Tìm kiếm..."
-                            aria-label="Search" aria-describedby="addon-wrapping" aria-controls="registrationsTable">
-                    </div>
+        <div class="row gy-3 admin-toolbar">
+            <div class="col-12">
+                <div class="input-group input-group-search">
+                    <span class="input-group-text" id="addon-wrapping"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control dt-search" placeholder="Tìm kiếm..."
+                        aria-label="Search" aria-describedby="addon-wrapping" aria-controls="registrationsTable">
                 </div>
             </div>
         </div>
 
-        <div class="table-responsive mt-3">
-            <table id="registrationsTable" class="table table-striped border">
+        <div class="table-responsive mt-3 admin-table-wrap">
+            <table id="registrationsTable" class="table table-striped border nowrap w-100">
                 <thead>
                     <tr>
                         <th>Thời gian tạo</th>
@@ -132,6 +147,9 @@
     </div>
 </div>
 
+@endsection
+
+@push('modals')
 <!-- Modal Tạo học phần mới -->
 <div class="modal fade" id="createCourseOfferingModal" tabindex="-1" aria-labelledby="createCourseOfferingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" id="createCourseOfferingModalDialog">
@@ -585,7 +603,7 @@
     </div>
 </div>
 
-@endsection
+@endpush
 
 @push('scripts')
 <script>
@@ -656,6 +674,10 @@
                     searchable: false
                 }
             ],
+            responsive: window.matchMedia('(max-width: 767.98px)').matches ? false : true,
+            scrollX: true,
+            autoWidth: false,
+            columnDefs: window.matchMedia('(max-width: 767.98px)').matches ? [] : AdminDT.columnDefs(9, { primary: [1, 2] }),
             order: [[0, 'desc']],
             pageLength: 10,
             language: {
@@ -674,7 +696,7 @@
                 emptyTable: "Chưa có học phần nào. Bấm \"Tạo học phần mới\" để thêm.",
                 zeroRecords: "Không tìm thấy kết quả"
             },
-            dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">'
+            dom: '<"d-flex flex-wrap align-items-center gap-2 mb-2" l><"table-responsive mb-2" rt><"data_table_widgets d-flex flex-column flex-sm-row align-items-sm-center justify-content-sm-between gap-2 mt-2" i p>'
         });
 
         $('.dt-search').on('keyup', function() {

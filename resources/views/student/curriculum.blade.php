@@ -22,7 +22,7 @@
         @if($items->isEmpty())
             <div class="p-3 text-muted">Chưa có dữ liệu chương trình khung.</div>
         @else
-            <div class="table-responsive">
+            <div class="table-responsive admin-table-wrap">
                 <table class="table table-bordered align-middle mb-0 curriculum-table">
                     <thead>
                         <tr>

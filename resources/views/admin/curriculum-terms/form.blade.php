@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @php
     $isEdit = (bool) $item->exists;
@@ -25,7 +25,7 @@
 
 @section('content')
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between">
+    <div class="card-header admin-card-header d-flex align-items-center justify-content-between">
         <h5 class="mb-0">{{ $isEdit ? 'Sửa kỳ chương trình khung' : 'Tạo kỳ chương trình khung' }}</h5>
         <a href="{{ route('admin.curriculum-terms.index') }}" class="btn btn-light btn-sm">Quay lại</a>
     </div>

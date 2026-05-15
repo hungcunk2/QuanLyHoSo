@@ -38,7 +38,7 @@
             @if($registrations->isEmpty())
                 <p class="text-muted p-3 mb-0">Chưa có sinh viên nào đăng ký học phần này.</p>
             @else
-                <div class="table-responsive">
+                <div class="table-responsive admin-table-wrap">
                     <table class="table table-striped border mb-0 align-middle">
                         <thead>
                             <tr>

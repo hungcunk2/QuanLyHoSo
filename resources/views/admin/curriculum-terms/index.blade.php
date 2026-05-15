@@ -11,7 +11,7 @@
     $totalElectiveCreditsAll = (int) $items->sum(fn ($term) => $term->sumElectiveCreditsCountOncePerGroup());
 @endphp
 <div class="card">
-    <div class="card-header d-flex align-items-center justify-content-between">
+    <div class="card-header admin-card-header d-flex align-items-center justify-content-between">
         <div>
             <h5 class="mb-0">Quản lý chương trình khung</h5>
             <div class="text-muted mt-1" style="font-size: 13px;">Mặc định chỉ hiện tổng từng học kỳ, bấm vào học kỳ để xem chi tiết môn học.</div>
@@ -25,7 +25,7 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <div class="table-responsive">
+        <div class="table-responsive admin-table-wrap">
             <table class="table table-bordered align-middle mb-0 curriculum-table">
                 <thead>
                     <tr>
