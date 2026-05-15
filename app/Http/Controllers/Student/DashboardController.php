@@ -927,12 +927,23 @@ class DashboardController extends Controller
             return back()->with('error', 'Không tìm thấy hồ sơ học sinh.');
         }
 
+        $offering = CourseOffering::find($courseOfferingId);
+        if (! $offering) {
+            return back()->with('error', 'Không tìm thấy học phần.');
+        }
+
         $reg = SubjectRegistration::where('student_id', $student->id)
             ->where('course_offering_id', $courseOfferingId)
             ->first();
 
         if (!$reg || $reg->status === 'cancelled') {
             return back()->with('success', 'Bạn chưa đăng ký học phần này.');
+        }
+
+        $today = Carbon::today();
+        $blockReason = $offering->studentCancelRegistrationReason($today);
+        if ($blockReason) {
+            return back()->with('error', $blockReason);
         }
 
         $reg->update(['status' => 'cancelled']);

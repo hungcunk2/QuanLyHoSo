@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -112,6 +113,37 @@ class CourseOffering extends Model
     }
 
     /** Tiết 1-16 theo lịch (sáng 1-6, chiều 7-12, tối 13-16) */
+    public function isInSession(?Carbon $today = null): bool
+    {
+        $today = $today ?? Carbon::today();
+
+        return $this->ngay_bat_dau_hoc && $this->ngay_bat_dau_hoc->lte($today);
+    }
+
+    public function studentCanCancelRegistration(?Carbon $today = null): bool
+    {
+        if ($this->is_cancelled || $this->grades_finalized_at) {
+            return false;
+        }
+
+        return ! $this->isInSession($today);
+    }
+
+    public function studentCancelRegistrationReason(?Carbon $today = null): ?string
+    {
+        if ($this->is_cancelled) {
+            return 'Học phần đã bị hủy.';
+        }
+        if ($this->grades_finalized_at) {
+            return 'Không thể hủy đăng ký khi điểm đã được chốt.';
+        }
+        if ($this->isInSession($today)) {
+            return 'Không thể hủy đăng ký khi lớp đã bắt đầu học.';
+        }
+
+        return null;
+    }
+
     public static function periodLabels(): array
     {
         return [

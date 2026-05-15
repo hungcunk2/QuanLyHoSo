@@ -91,7 +91,9 @@
                                                         $siSo = (int) ($o->si_so_lop ?? 0);
                                                         $conLai = $siSo - $count;
 
-                                                        $dangHoc = $o->ngay_bat_dau_hoc && $o->ngay_bat_dau_hoc->lte($todayX);
+                                                        $dangHoc = $o->isInSession($todayX);
+                                                        $coTheHuyDangKy = $daDangKy && $o->studentCanCancelRegistration($todayX);
+                                                        $lyDoKhongHuy = $daDangKy ? $o->studentCancelRegistrationReason($todayX) : null;
                                                         $dangMoDangKy = $o->ngay_mo_dang_ky && $o->ngay_ket_thuc_dang_ky
                                                             && $o->ngay_mo_dang_ky->lte($todayX) && $o->ngay_ket_thuc_dang_ky->gte($todayX);
 
@@ -213,11 +215,13 @@
                                                                 Xem lịch học
                                                             </button>
 
-                                                            @if($daDangKy)
+                                                            @if($coTheHuyDangKy)
                                                                 <form method="POST" action="{{ route('student.registration.cancel', $o->id) }}">
                                                                     @csrf
                                                                     <button type="submit" class="btn btn-outline-danger btn-sm w-100">Hủy đăng ký</button>
                                                                 </form>
+                                                            @elseif($daDangKy && $lyDoKhongHuy)
+                                                                <div class="small text-muted">{{ $lyDoKhongHuy }}</div>
                                                             @else
                                                                 @if($student)
                                                                     @php
@@ -310,6 +314,7 @@
                                 <th style="min-width: 180px;">Lớp / Phòng</th>
                                 <th style="min-width: 220px;">Giáo viên</th>
                                 <th style="min-width: 120px;">Trạng thái</th>
+                                <th style="min-width: 160px;">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -323,6 +328,9 @@
                                     $teacherLabel = $lt && $th && $lt !== $th ? ('LT: '.$lt.' / TH: '.$th) : ($lt ?: ($th ?: '—'));
                                     $reg = ($myRegs ?? collect())->get($o->id);
                                     $status = $reg->status ?? null;
+                                    $daDangKyHp = $status && $status !== 'cancelled';
+                                    $coTheHuyHp = $daDangKyHp && $o->studentCanCancelRegistration($todayX);
+                                    $lyDoKhongHuyHp = $daDangKyHp ? $o->studentCancelRegistrationReason($todayX) : null;
                                 @endphp
                                 <tr>
                                     <td>
@@ -336,10 +344,25 @@
                                     <td>
                                         @if($status === 'approved')
                                             <span class="badge bg-success">Đã đăng ký</span>
+                                            @if($o->isInSession($todayX))
+                                                <span class="badge bg-success ms-1">Đang học</span>
+                                            @endif
                                         @elseif($status === 'cancelled')
                                             <span class="badge bg-secondary">Đã hủy</span>
                                         @else
                                             <span class="badge bg-light text-dark">—</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($coTheHuyHp)
+                                            <form method="POST" action="{{ route('student.registration.cancel', $o->id) }}">
+                                                @csrf
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">Hủy đăng ký</button>
+                                            </form>
+                                        @elseif($daDangKyHp && $lyDoKhongHuyHp)
+                                            <span class="small text-muted">{{ $lyDoKhongHuyHp }}</span>
+                                        @else
+                                            <span class="text-muted">—</span>
                                         @endif
                                     </td>
                                 </tr>
