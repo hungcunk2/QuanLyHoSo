@@ -126,7 +126,7 @@
         </div>
 
         <div class="table-responsive mt-3 admin-table-wrap">
-            <table id="registrationsTable" class="table table-striped border nowrap w-100">
+            <table id="registrationsTable" class="table table-striped border w-100 mb-0">
                 <thead>
                     <tr>
                         <th>Thời gian tạo</th>
@@ -674,10 +674,9 @@
                     searchable: false
                 }
             ],
-            responsive: window.matchMedia('(max-width: 767.98px)').matches ? false : true,
-            scrollX: true,
+            responsive: false,
+            scrollX: false,
             autoWidth: false,
-            columnDefs: window.matchMedia('(max-width: 767.98px)').matches ? [] : AdminDT.columnDefs(9, { primary: [1, 2] }),
             order: [[0, 'desc']],
             pageLength: 10,
             language: {
@@ -696,7 +695,7 @@
                 emptyTable: "Chưa có học phần nào. Bấm \"Tạo học phần mới\" để thêm.",
                 zeroRecords: "Không tìm thấy kết quả"
             },
-            dom: '<"d-flex flex-wrap align-items-center gap-2 mb-2" l><"table-responsive mb-2" rt><"data_table_widgets d-flex flex-column flex-sm-row align-items-sm-center justify-content-sm-between gap-2 mt-2" i p>'
+            dom: AdminDT.dom
         });
 
         $('.dt-search').on('keyup', function() {

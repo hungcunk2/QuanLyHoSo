@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Quản lý học sinh')
 @section('page-title', '')
@@ -58,7 +58,7 @@
         </div>
 
         <div class="table-responsive mt-3 admin-table-wrap">
-            <table id="studentsTable" class="table table-striped border nowrap w-100">
+            <table id="studentsTable" class="table table-striped border w-100 mb-0">
                 <thead>
                     <tr>
                         <th width="50">
@@ -525,7 +525,8 @@
                     className: 'col-actions text-nowrap'
                 }
             ],
-            columnDefs: AdminDT.columnDefs(8),
+            responsive: false,
+            scrollX: false,
             order: [[6, 'desc']],
             pageLength: 10,
             language: {
@@ -544,7 +545,7 @@
                 emptyTable: "Không có dữ liệu",
                 zeroRecords: "Không tìm thấy kết quả"
             },
-            dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">'
+            dom: AdminDT.dom
         });
         
         var filterHoTenTimer = null;

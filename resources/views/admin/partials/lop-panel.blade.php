@@ -1,4 +1,4 @@
-<div class="card">
+﻿<div class="card">
     <div class="card-body">
         <div class="row gy-3 admin-toolbar">
             <div class="col-md-6 col-lg-4 col-xl-3">
@@ -27,7 +27,7 @@
         </div>
 
         <div class="table-responsive mt-3 admin-table-wrap">
-            <table id="lopsTable" class="table table-striped border nowrap w-100">
+            <table id="lopsTable" class="table table-striped border w-100 mb-0">
                 <thead>
                     <tr>
                         <th width="50">

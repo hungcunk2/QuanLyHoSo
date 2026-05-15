@@ -313,6 +313,56 @@ body {
     -webkit-overflow-scrolling: touch;
 }
 
+.admin-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+}
+
+.admin-table-wrap .dataTables_wrapper {
+    overflow: visible;
+}
+
+.admin-dt-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.admin-table-wrap table.dataTable,
+.admin-dt-table-wrap table.dataTable {
+    width: 100% !important;
+    margin: 0;
+}
+
+.admin-table-wrap table.dataTable thead th,
+.admin-table-wrap table.dataTable tbody td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.admin-table-wrap table.dataTable tbody td:nth-child(3),
+.admin-table-wrap table.dataTable tbody td:nth-child(4) {
+    max-width: 11rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-table-wrap table.dataTable tbody td:last-child {
+    white-space: nowrap;
+    width: 1%;
+}
+
+/* Tắt hàng con Responsive (tránh ô kéo dài / nhảy layout) */
+table.dataTable > tbody > tr.child {
+    display: none !important;
+}
+
+table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before,
+table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
+    display: none !important;
+}
+
 .schedule-table-scroll {
     position: relative;
 }
@@ -717,25 +767,13 @@ body {
         flex-wrap: wrap;
     }
 
-    table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-        box-shadow: none;
+    .admin-table-wrap table.dataTable {
+        min-width: 860px;
     }
 
-    table.dataTable > tbody > tr.child ul.dtr-details {
-        width: 100%;
-    }
-
-    table.dataTable > tbody > tr.child span.dtr-title {
-        min-width: 5.5rem;
-        font-weight: 600;
-        color: var(--text-secondary);
-    }
-
-    .admin-table-wrap td.col-primary {
-        white-space: normal;
-        max-width: 9rem;
+    .admin-dt-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .admin-table-wrap .btn-sm {

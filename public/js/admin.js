@@ -17,7 +17,17 @@ window.AdminDT = {
         emptyTable: 'Không có dữ liệu',
         zeroRecords: 'Không tìm thấy kết quả',
     },
-    dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">',
+    dom: '<"row align-items-center"><"admin-dt-table-wrap my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">',
+    isMobileTable: function () {
+        return window.matchMedia('(max-width: 991.98px)').matches;
+    },
+    tableDefaults: function () {
+        return {
+            responsive: false,
+            autoWidth: false,
+            scrollX: false,
+        };
+    },
     columnDefs: function (colCount, options) {
         options = options || {};
         var actionIndex = options.actionIndex !== undefined ? options.actionIndex : colCount - 1;
@@ -41,10 +51,7 @@ window.AdminDT = {
 };
 
 if (typeof jQuery !== 'undefined' && jQuery.fn.dataTable) {
-    jQuery.extend(true, jQuery.fn.dataTable.defaults, {
-        responsive: true,
-        autoWidth: false,
-    });
+    jQuery.extend(true, jQuery.fn.dataTable.defaults, AdminDT.tableDefaults());
 }
 
 document.addEventListener('DOMContentLoaded', function() {

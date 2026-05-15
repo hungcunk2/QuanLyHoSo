@@ -44,7 +44,8 @@
                 { data: 'ten_lop', name: 'ten_lop' },
                 { data: 'action', name: 'action', orderable: false, searchable: false }
             ],
-            columnDefs: AdminDT.columnDefs(4),
+            responsive: false,
+            scrollX: false,
             order: [[1, 'asc']],
             pageLength: 10,
             language: {
@@ -63,7 +64,7 @@
                 emptyTable: "Không có dữ liệu",
                 zeroRecords: "Không tìm thấy kết quả"
             },
-            dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">'
+            dom: AdminDT.dom
         });
 
         $('.dt-search-lop').on('keyup', function() {
