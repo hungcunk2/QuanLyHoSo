@@ -82,7 +82,24 @@
                                         <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                         <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                         <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                        <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) > 0 ? (int) $subject->pivot->nhom_tu_chon : '-' }}</td>
+                                        <td class="text-center">@if((int) ($subject->nhom_thuc_hanh ?? 0) > 0){{ (int) $subject->nhom_thuc_hanh }}@endif</td>
+                                        <td class="text-center">@if((int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0){{ (int) $subject->so_tc_bat_buoc_cua_nhom }}@endif</td>
+                                        <td class="text-center">
+                                            @if($subjectStatus === 'passed')
+                                                <span class="curriculum-status curriculum-status--passed">
+                                                    <i class="fas fa-check"></i>
+                                                </span>
+                                            @elseif($subjectStatus === 'failed')
+                                                <span class="curriculum-status curriculum-status--failed">
+                                                    <i class="fas fa-check"></i>
+                                                </span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            @if($electiveSubjects->isNotEmpty())
                                 <tr class="curriculum-table__section-row curriculum-detail-row" data-term-row="{{ $termRowKey }}" style="display: none;">
                                     <td colspan="4" class="fw-bold">Học phần tự chọn</td>
                                     <td class="fw-bold text-center">{{ $electiveCredits }}</td>
@@ -101,8 +118,8 @@
                                         <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                         <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                         <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                        <td class="text-center">{{ ($k = $subject->electiveCreditPoolKey($subject->pivot)) > 0 ? $k : '-' }}</td>
-                                        <td class="text-center">{{ (int) ($subject->pivot->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->pivot->so_tc_bat_buoc_cua_nhom : '-' }}</td>
+                                        <td class="text-center">@if((int) ($subject->nhom_thuc_hanh ?? 0) > 0){{ (int) $subject->nhom_thuc_hanh }}@endif</td>
+                                        <td class="text-center">@if((int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0){{ (int) $subject->so_tc_bat_buoc_cua_nhom }}@endif</td>
                                         <td class="text-center">
                                             @if($subjectStatus === 'passed')
                                                 <span class="curriculum-status curriculum-status--passed">

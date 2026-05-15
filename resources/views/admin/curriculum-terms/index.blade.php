@@ -90,8 +90,8 @@
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '—' }}</td>
-                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '—' }}</td>
+                                    <td class="text-center">@if((int) ($subject->nhom_thuc_hanh ?? 0) > 0){{ (int) $subject->nhom_thuc_hanh }}@endif</td>
+                                    <td class="text-center">@if((int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0){{ (int) $subject->so_tc_bat_buoc_cua_nhom }}@endif</td>
                                     <td></td>
                                 </tr>
                             @endforeach
@@ -112,8 +112,8 @@
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '—' }}</td>
-                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '—' }}</td>
+                                    <td class="text-center">@if((int) ($subject->nhom_thuc_hanh ?? 0) > 0){{ (int) $subject->nhom_thuc_hanh }}@endif</td>
+                                    <td class="text-center">@if((int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0){{ (int) $subject->so_tc_bat_buoc_cua_nhom }}@endif</td>
                                     <td></td>
                                 </tr>
                             @endforeach
