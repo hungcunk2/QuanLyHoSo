@@ -61,7 +61,7 @@
                         <th>Số tín chỉ</th>
                         <th>Số tiết lý thuyết</th>
                         <th>Số tiết thực hành</th>
-                        <th>Nhóm thực hành</th>
+                        <th>Nhóm tự chọn</th>
                         <th>Số TC bắt buộc của nhóm</th>
                         <th>Hành động</th>
                     </tr>
@@ -104,12 +104,13 @@
                         <input type="number" class="form-control" id="create_so_tiet_thuc_hanh" name="so_tiet_thuc_hanh" min="0" max="500" value="0" required>
                     </div>
                     <div class="mb-3">
-                        <label for="create_nhom_thuc_hanh" class="form-label">Nhóm thực hành</label>
-                        <input type="number" class="form-control" id="create_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100">
+                        <label for="create_nhom_thuc_hanh" class="form-label">Nhóm tự chọn</label>
+                        <input type="number" class="form-control" id="create_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100" placeholder="Để trống nếu không dùng nhóm">
+                        <div class="form-text">Chỉ các môn có cùng số nhóm (&gt;0) mới gộp tính một lần TC khi là học phần tự chọn trong chương trình khung.</div>
                     </div>
                     <div class="mb-3">
                         <label for="create_so_tc_bat_buoc_cua_nhom" class="form-label">Số TC bắt buộc của nhóm</label>
-                        <input type="number" class="form-control" id="create_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100">
+                        <input type="number" class="form-control" id="create_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100" placeholder="Để trống nếu không áp dụng">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -153,12 +154,13 @@
                         <input type="number" class="form-control" id="edit_so_tiet_thuc_hanh" name="so_tiet_thuc_hanh" min="0" max="500" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit_nhom_thuc_hanh" class="form-label">Nhóm thực hành</label>
-                        <input type="number" class="form-control" id="edit_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100">
+                        <label for="edit_nhom_thuc_hanh" class="form-label">Nhóm tự chọn</label>
+                        <input type="number" class="form-control" id="edit_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100" placeholder="Để trống nếu không dùng nhóm">
+                        <div class="form-text">Chỉ các môn có cùng số nhóm (&gt;0) mới gộp tính một lần TC khi là học phần tự chọn trong chương trình khung.</div>
                     </div>
                     <div class="mb-3">
                         <label for="edit_so_tc_bat_buoc_cua_nhom" class="form-label">Số TC bắt buộc của nhóm</label>
-                        <input type="number" class="form-control" id="edit_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100">
+                        <input type="number" class="form-control" id="edit_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100" placeholder="Để trống nếu không áp dụng">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -306,7 +308,7 @@
                                           field === 'so_tin_chi' ? 'Số tín chỉ' :
                                           field === 'so_tiet_ly_thuyet' ? 'Số tiết lý thuyết' :
                                           field === 'so_tiet_thuc_hanh' ? 'Số tiết thực hành' :
-                                          field === 'nhom_thuc_hanh' ? 'Nhóm thực hành' :
+                                          field === 'nhom_thuc_hanh' ? 'Nhóm tự chọn' :
                                           field === 'so_tc_bat_buoc_cua_nhom' ? 'Số TC bắt buộc của nhóm' : field;
                             errorMsg += '• ' + fieldName + ': ' + errors[field][0] + '\n';
                         }

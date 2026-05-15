@@ -6,9 +6,9 @@
 @section('content')
 @php
     $rowNumber = 1;
-    $totalCreditsAll = (int) $items->sum(fn ($term) => $term->subjects->sum('so_tin_chi'));
-    $totalRequiredCreditsAll = (int) $items->sum(fn ($term) => $term->subjects->filter(fn ($subject) => ($subject->pivot->loai_hoc_phan ?? 'bat_buoc') === 'bat_buoc')->sum('so_tin_chi'));
-    $totalElectiveCreditsAll = (int) $items->sum(fn ($term) => $term->subjects->filter(fn ($subject) => ($subject->pivot->loai_hoc_phan ?? 'bat_buoc') === 'tu_chon')->sum('so_tin_chi'));
+    $totalCreditsAll = (int) $items->sum(fn ($term) => $term->sumCreditsForCurriculumTotal());
+    $totalRequiredCreditsAll = (int) $items->sum(fn ($term) => $term->sumRequiredCredits());
+    $totalElectiveCreditsAll = (int) $items->sum(fn ($term) => $term->sumElectiveCreditsCountOncePerGroup());
 @endphp
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
@@ -44,15 +44,15 @@
                     @forelse($items as $it)
                         @php
                             $termRowKey = 'admin-term-' . $it->id;
-                            $totalCredits = (int) $it->subjects->sum('so_tin_chi');
+                            $totalCredits = (int) $it->sumCreditsForCurriculumTotal();
                             $requiredSubjects = $it->subjects
                                 ->filter(fn ($subject) => ($subject->pivot->loai_hoc_phan ?? 'bat_buoc') === 'bat_buoc')
                                 ->values();
                             $electiveSubjects = $it->subjects
                                 ->filter(fn ($subject) => ($subject->pivot->loai_hoc_phan ?? 'bat_buoc') === 'tu_chon')
                                 ->values();
-                            $requiredCredits = (int) $requiredSubjects->sum('so_tin_chi');
-                            $electiveCredits = (int) $electiveSubjects->sum('so_tin_chi');
+                            $requiredCredits = (int) $it->sumRequiredCredits();
+                            $electiveCredits = (int) $it->sumElectiveCreditsCountOncePerGroup();
                         @endphp
                         <tr class="curriculum-table__term-row curriculum-term-toggle" data-term-target="{{ $termRowKey }}" aria-expanded="false">
                             <td colspan="3" class="fw-bold text-center">
@@ -90,8 +90,8 @@
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '-' }}</td>
-                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '-' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '—' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '—' }}</td>
                                     <td></td>
                                 </tr>
                             @endforeach
@@ -112,8 +112,8 @@
                                     <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                     <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '-' }}</td>
-                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '-' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (int) $subject->nhom_thuc_hanh : '—' }}</td>
+                                    <td class="text-center">{{ (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->so_tc_bat_buoc_cua_nhom : '—' }}</td>
                                     <td></td>
                                 </tr>
                             @endforeach

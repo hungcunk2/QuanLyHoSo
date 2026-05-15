@@ -7,9 +7,9 @@
 @php
     $subjectStatuses = collect($subjectStatuses ?? [])->mapWithKeys(fn ($status, $id) => [(int) $id => $status])->all();
     $rowNumber = 1;
-    $totalCreditsAll = (int) $items->sum(fn ($term) => $term->subjects->sum('so_tin_chi'));
-    $totalRequiredCreditsAll = (int) $items->sum(fn ($term) => $term->subjects->filter(fn ($subject) => ($subject->pivot->loai_hoc_phan ?? 'bat_buoc') === 'bat_buoc')->sum('so_tin_chi'));
-    $totalElectiveCreditsAll = (int) $items->sum(fn ($term) => $term->subjects->filter(fn ($subject) => ($subject->pivot->loai_hoc_phan ?? 'bat_buoc') === 'tu_chon')->sum('so_tin_chi'));
+    $totalCreditsAll = (int) $items->sum(fn ($term) => $term->sumCreditsForCurriculumTotal());
+    $totalRequiredCreditsAll = (int) $items->sum(fn ($term) => $term->sumRequiredCredits());
+    $totalElectiveCreditsAll = (int) $items->sum(fn ($term) => $term->sumElectiveCreditsCountOncePerGroup());
 @endphp
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
@@ -44,9 +44,9 @@
                                 $termRowKey = 'student-term-' . $item->id;
                                 $requiredSubjects = $item->subjects->filter(fn ($subject) => ($subject->pivot->loai_hoc_phan ?? 'bat_buoc') === 'bat_buoc')->values();
                                 $electiveSubjects = $item->subjects->filter(fn ($subject) => ($subject->pivot->loai_hoc_phan ?? 'bat_buoc') === 'tu_chon')->values();
-                                $totalCredits = (int) $item->subjects->sum('so_tin_chi');
-                                $requiredCredits = (int) $requiredSubjects->sum('so_tin_chi');
-                                $electiveCredits = (int) $electiveSubjects->sum('so_tin_chi');
+                                $totalCredits = (int) $item->sumCreditsForCurriculumTotal();
+                                $requiredCredits = (int) $item->sumRequiredCredits();
+                                $electiveCredits = (int) $item->sumElectiveCreditsCountOncePerGroup();
                             @endphp
 
                             <tr class="curriculum-table__term-row curriculum-term-toggle" data-term-target="{{ $termRowKey }}" aria-expanded="false">
@@ -82,24 +82,7 @@
                                         <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                         <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                         <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                        <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) }}</td>
-                                        <td class="text-center">{{ (int) ($subject->pivot->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->pivot->so_tc_bat_buoc_cua_nhom : '-' }}</td>
-                                        <td class="text-center">
-                                            @if($subjectStatus === 'passed')
-                                                <span class="curriculum-status curriculum-status--passed">
-                                                    <i class="fas fa-check"></i>
-                                                </span>
-                                            @elseif($subjectStatus === 'failed')
-                                                <span class="curriculum-status curriculum-status--failed">
-                                                    <i class="fas fa-check"></i>
-                                                </span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            @endif
-
-                            @if($electiveSubjects->isNotEmpty())
+                                        <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) > 0 ? (int) $subject->pivot->nhom_tu_chon : '-' }}</td>
                                 <tr class="curriculum-table__section-row curriculum-detail-row" data-term-row="{{ $termRowKey }}" style="display: none;">
                                     <td colspan="4" class="fw-bold">Học phần tự chọn</td>
                                     <td class="fw-bold text-center">{{ $electiveCredits }}</td>
@@ -118,7 +101,7 @@
                                         <td class="text-center">{{ $subject->so_tin_chi }}</td>
                                         <td class="text-center">{{ $subject->so_tiet_ly_thuyet ?? 0 }}</td>
                                         <td class="text-center">{{ $subject->so_tiet_thuc_hanh ?? 0 }}</td>
-                                        <td class="text-center">{{ (int) ($subject->pivot->nhom_tu_chon ?? 0) }}</td>
+                                        <td class="text-center">{{ ($k = $subject->electiveCreditPoolKey($subject->pivot)) > 0 ? $k : '-' }}</td>
                                         <td class="text-center">{{ (int) ($subject->pivot->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (int) $subject->pivot->so_tc_bat_buoc_cua_nhom : '-' }}</td>
                                         <td class="text-center">
                                             @if($subjectStatus === 'passed')

@@ -44,9 +44,7 @@ class CurriculumTermController extends Controller
         $this->syncSubjects(
             $item,
             $data['required_subject_ids'] ?? [],
-            $data['elective_subject_ids'] ?? [],
-            $data['elective_group_numbers'] ?? [],
-            $data['elective_required_credits'] ?? []
+            $data['elective_subject_ids'] ?? []
         );
 
         return redirect()
@@ -77,9 +75,7 @@ class CurriculumTermController extends Controller
         $this->syncSubjects(
             $curriculumTerm,
             $data['required_subject_ids'] ?? [],
-            $data['elective_subject_ids'] ?? [],
-            $data['elective_group_numbers'] ?? [],
-            $data['elective_required_credits'] ?? []
+            $data['elective_subject_ids'] ?? []
         );
 
         return redirect()
@@ -117,10 +113,6 @@ class CurriculumTermController extends Controller
             'required_subject_ids.*' => ['integer', 'distinct', 'exists:subjects,id'],
             'elective_subject_ids' => ['nullable', 'array'],
             'elective_subject_ids.*' => ['integer', 'distinct', 'exists:subjects,id'],
-            'elective_group_numbers' => ['nullable', 'array'],
-            'elective_group_numbers.*' => ['nullable', 'integer', 'min:0', 'max:100'],
-            'elective_required_credits' => ['nullable', 'array'],
-            'elective_required_credits.*' => ['nullable', 'integer', 'min:0', 'max:100'],
         ], [
             'ten_ky.required' => 'Vui lòng nhập tên kỳ.',
             'ten_ky.unique' => 'Tên kỳ đã tồn tại.',
@@ -128,8 +120,6 @@ class CurriculumTermController extends Controller
             'thu_tu.unique' => 'Thứ tự kỳ đã tồn tại.',
             'required_subject_ids.*.exists' => 'Có học phần bắt buộc không tồn tại trong hệ thống.',
             'elective_subject_ids.*.exists' => 'Có học phần tự chọn không tồn tại trong hệ thống.',
-            'elective_group_numbers.*.integer' => 'Nhóm tự chọn phải là số nguyên.',
-            'elective_required_credits.*.integer' => 'Số TC bắt buộc của nhóm phải là số nguyên.',
         ])->after(function ($validator) use ($request) {
             $requiredIds = collect($request->input('required_subject_ids', []))
                 ->map(fn ($id) => (int) $id)
@@ -146,31 +136,13 @@ class CurriculumTermController extends Controller
                     'Một môn học chỉ được nằm trong một nhóm: bắt buộc hoặc tự chọn.'
                 );
             }
-
-            $electiveGroupNumbers = collect($request->input('elective_group_numbers', []));
-            $electiveRequiredCredits = collect($request->input('elective_required_credits', []));
-
-            foreach ($electiveIds as $subjectId) {
-                $groupNumber = (int) ($electiveGroupNumbers->get((string) $subjectId, 0) ?: 0);
-                $requiredCredits = (int) ($electiveRequiredCredits->get((string) $subjectId, 0) ?: 0);
-
-                if ($groupNumber < 0) {
-                    $validator->errors()->add('elective_group_numbers', 'Nhóm tự chọn không hợp lệ.');
-                }
-
-                if ($requiredCredits < 0) {
-                    $validator->errors()->add('elective_required_credits', 'Số TC bắt buộc của nhóm không hợp lệ.');
-                }
-            }
         })->validate();
     }
 
     protected function syncSubjects(
         CurriculumTerm $item,
         array $requiredSubjectIds,
-        array $electiveSubjectIds,
-        array $electiveGroupNumbers,
-        array $electiveRequiredCredits
+        array $electiveSubjectIds
     ): void
     {
         $syncData = [];
@@ -188,8 +160,8 @@ class CurriculumTermController extends Controller
             $subjectId = (int) $subjectId;
             $syncData[(int) $subjectId] = [
                 'loai_hoc_phan' => 'tu_chon',
-                'nhom_tu_chon' => (int) ($electiveGroupNumbers[$subjectId] ?? 0),
-                'so_tc_bat_buoc_cua_nhom' => (int) ($electiveRequiredCredits[$subjectId] ?? 0),
+                'nhom_tu_chon' => 0,
+                'so_tc_bat_buoc_cua_nhom' => 0,
                 'sort_order' => $index + 1,
             ];
         }

@@ -33,4 +33,20 @@ class Subject extends Model
             ->withPivot('sort_order', 'loai_hoc_phan', 'nhom_tu_chon', 'so_tc_bat_buoc_cua_nhom')
             ->withTimestamps();
     }
+
+    /**
+     * Khóa gộp TC học phần tự chọn: ưu tiên pivot kỳ (nhom_tu_chon), không có thì dùng nhóm trên môn (nhom_thuc_hanh).
+     */
+    public function electiveCreditPoolKey($pivot = null): int
+    {
+        $pivot = $pivot ?? $this->pivot;
+        if ($pivot) {
+            $fromPivot = (int) ($pivot->nhom_tu_chon ?? 0);
+            if ($fromPivot > 0) {
+                return $fromPivot;
+            }
+        }
+
+        return (int) ($this->nhom_thuc_hanh ?? 0);
+    }
 }

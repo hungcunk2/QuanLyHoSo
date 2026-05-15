@@ -18,24 +18,6 @@
     ))
         ->map(fn ($id) => (int) $id)
         ->all();
-    $electiveGroupNumbers = collect(old(
-        'elective_group_numbers',
-        $isEdit
-            ? $item->subjects
-                ->where('pivot.loai_hoc_phan', 'tu_chon')
-                ->mapWithKeys(fn ($subject) => [(int) $subject->id => (int) ($subject->pivot->nhom_tu_chon ?? 0)])
-                ->all()
-            : []
-    ))->all();
-    $electiveRequiredCredits = collect(old(
-        'elective_required_credits',
-        $isEdit
-            ? $item->subjects
-                ->where('pivot.loai_hoc_phan', 'tu_chon')
-                ->mapWithKeys(fn ($subject) => [(int) $subject->id => (int) ($subject->pivot->so_tc_bat_buoc_cua_nhom ?? 0)])
-                ->all()
-            : []
-    ))->all();
 @endphp
 
 @section('title', $isEdit ? 'Sửa kỳ chương trình khung' : 'Tạo kỳ chương trình khung')
@@ -124,47 +106,21 @@
                                 <div class="row g-2" id="elective-subject-list">
                                     @forelse($subjects as $subject)
                                         <div class="col-12 curriculum-subject-item">
-                                            <div class="border rounded p-2 h-100 w-100">
-                                                <label class="d-flex align-items-start gap-2 mb-2 w-100">
-                                                    <input
-                                                        class="form-check-input mt-1 curriculum-elective-checkbox"
-                                                        type="checkbox"
-                                                        name="elective_subject_ids[]"
-                                                        value="{{ $subject->id }}"
-                                                        {{ in_array((int) $subject->id, $selectedElectiveIds, true) ? 'checked' : '' }}
-                                                    >
-                                                    <span>
-                                                        <span class="fw-bold d-block">{{ $subject->ten_mon_hoc }}</span>
-                                                        <span class="text-muted" style="font-size: 13px;">
-                                                            {{ $subject->ma_mon_hoc }} • {{ $subject->so_tin_chi }} tín chỉ
-                                                        </span>
+                                            <label class="border rounded d-flex align-items-start gap-2 p-2 h-100 w-100">
+                                                <input
+                                                    class="form-check-input mt-1"
+                                                    type="checkbox"
+                                                    name="elective_subject_ids[]"
+                                                    value="{{ $subject->id }}"
+                                                    {{ in_array((int) $subject->id, $selectedElectiveIds, true) ? 'checked' : '' }}
+                                                >
+                                                <span>
+                                                    <span class="fw-bold d-block">{{ $subject->ten_mon_hoc }}</span>
+                                                    <span class="text-muted" style="font-size: 13px;">
+                                                        {{ $subject->ma_mon_hoc }} • {{ $subject->so_tin_chi }} tín chỉ
                                                     </span>
-                                                </label>
-                                                <div class="row g-2">
-                                                    <div class="col-6">
-                                                        <label class="form-label mb-1" style="font-size: 12px;">Nhóm tự chọn</label>
-                                                        <input
-                                                            type="number"
-                                                            class="form-control form-control-sm"
-                                                            name="elective_group_numbers[{{ $subject->id }}]"
-                                                            min="0"
-                                                            max="100"
-                                                            value="{{ $electiveGroupNumbers[$subject->id] ?? 0 }}"
-                                                        >
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <label class="form-label mb-1" style="font-size: 12px;">Số TC bắt buộc của nhóm</label>
-                                                        <input
-                                                            type="number"
-                                                            class="form-control form-control-sm"
-                                                            name="elective_required_credits[{{ $subject->id }}]"
-                                                            min="0"
-                                                            max="100"
-                                                            value="{{ $electiveRequiredCredits[$subject->id] ?? 0 }}"
-                                                        >
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                </span>
+                                            </label>
                                         </div>
                                     @empty
                                         <div class="col-12 text-muted">Chưa có môn học nào để chọn.</div>
