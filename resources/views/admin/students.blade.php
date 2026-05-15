@@ -58,7 +58,17 @@
         </div>
 
         <div class="table-responsive mt-3 admin-table-wrap">
-            <table id="studentsTable" class="table table-striped border w-100 mb-0">
+            <table id="studentsTable" class="table table-striped border mb-0 admin-dt-table">
+                <colgroup>
+                    <col style="width: 3%">
+                    <col style="width: 9%">
+                    <col style="width: 16%">
+                    <col style="width: 20%">
+                    <col style="width: 12%">
+                    <col style="width: 12%">
+                    <col style="width: 10%">
+                    <col style="width: 14%">
+                </colgroup>
                 <thead>
                     <tr>
                         <th width="50">

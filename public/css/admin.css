@@ -333,24 +333,27 @@ body {
 .admin-dt-table-wrap table.dataTable {
     width: 100% !important;
     margin: 0;
+    table-layout: fixed;
 }
 
 .admin-table-wrap table.dataTable thead th,
 .admin-table-wrap table.dataTable tbody td {
     white-space: nowrap;
     vertical-align: middle;
-}
-
-.admin-table-wrap table.dataTable tbody td:nth-child(3),
-.admin-table-wrap table.dataTable tbody td:nth-child(4) {
-    max-width: 11rem;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding: 10px 12px;
 }
 
+.admin-table-wrap table.dataTable thead th:last-child,
 .admin-table-wrap table.dataTable tbody td:last-child {
+    overflow: visible;
+    text-overflow: clip;
     white-space: nowrap;
-    width: 1%;
+}
+
+.admin-table-wrap table.dataTable tbody td .btn {
+    flex-shrink: 0;
 }
 
 /* Tắt hàng con Responsive (tránh ô kéo dài / nhảy layout) */

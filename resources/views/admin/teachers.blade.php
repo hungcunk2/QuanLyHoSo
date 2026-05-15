@@ -58,7 +58,17 @@
         </div>
 
         <div class="table-responsive mt-3 admin-table-wrap">
-            <table id="teachersTable" class="table table-striped border w-100 mb-0">
+            <table id="teachersTable" class="table table-striped border mb-0 admin-dt-table">
+                <colgroup>
+                    <col style="width: 3%">
+                    <col style="width: 9%">
+                    <col style="width: 16%">
+                    <col style="width: 14%">
+                    <col style="width: 22%">
+                    <col style="width: 12%">
+                    <col style="width: 10%">
+                    <col style="width: 14%">
+                </colgroup>
                 <thead>
                     <tr>
                         <th width="50">
@@ -280,43 +290,14 @@
                 }
             },
             columns: [
-                {
-                    data: 'check',
-                    name: 'check',
-                    orderable: false,
-                    searchable: false,
-                    width: '50px'
-                },
-                {
-                    data: 'msgv',
-                    name: 'msgv'
-                },
-                {
-                    data: 'ho_ten',
-                    name: 'ho_ten'
-                },
-                {
-                    data: 'chuyen_mon',
-                    name: 'chuyen_mon'
-                },
-                {
-                    data: 'email',
-                    name: 'email'
-                },
-                {
-                    data: 'sdt',
-                    name: 'sdt'
-                },
-                {
-                    data: 'ngay_sinh',
-                    name: 'ngay_sinh'
-                },
-                {
-                    data: 'action',
-                    name: 'action',
-                    orderable: false,
-                    searchable: false
-                }
+                { data: 'check', name: 'check', orderable: false, searchable: false, width: '48px' },
+                { data: 'msgv', name: 'msgv', width: '90px' },
+                { data: 'ho_ten', name: 'ho_ten', width: '16%' },
+                { data: 'chuyen_mon', name: 'chuyen_mon', width: '14%' },
+                { data: 'email', name: 'email', width: '22%' },
+                { data: 'sdt', name: 'sdt', width: '12%' },
+                { data: 'ngay_sinh', name: 'ngay_sinh', width: '10%' },
+                { data: 'action', name: 'action', orderable: false, searchable: false, width: '120px' }
             ],
             responsive: false,
             scrollX: false,
@@ -342,7 +323,7 @@
             dom: AdminDT.dom
         });
 
-        $(window).on('resize.adminTeachersTable', function () {
+        table.on('draw.dt', function () {
             table.columns.adjust();
         });
         
