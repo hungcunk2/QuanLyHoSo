@@ -48,12 +48,6 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.classes') }}" class="nav-link">
-                                <i class="fas fa-school"></i>
-                                <span>Quản Lý Phòng Học</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a href="{{ route('admin.lops') }}" class="nav-link">
                                 <i class="fas fa-users"></i>
                                 <span>Quản Lý Lớp</span>
