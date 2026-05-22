@@ -65,6 +65,15 @@ class CourseOfferingController extends Controller
             ? array_merge([$offering->ngay_thi_thuc_hanh_buoi_thu], $schedulesTh->pluck('thi_buoi_thu')->all())
             : $schedulesTh->pluck('thi_buoi_thu')->all();
 
+        $data['si_so_thuc_hanh'] = array_values(array_filter([
+            $offering->si_so_thuc_hanh_nhom_1,
+            $offering->si_so_thuc_hanh_nhom_2,
+        ], fn ($v) => $v !== null && $v !== ''));
+
+        $hasTh = ($offering->thu_thuc_hanh && $offering->tiet_thuc_hanh)
+            || $schedulesTh->contains(fn ($s) => $s->thu && ($s->tiet ?? '') !== '');
+        $data['si_so_ly_thuyet'] = $hasTh ? null : $offering->si_so_lop;
+
         return response()->json($data);
     }
 
@@ -77,7 +86,8 @@ class CourseOfferingController extends Controller
             'class_room_id_thuc_hanh' => 'nullable|array',
             'class_room_id_thuc_hanh.*' => 'nullable|exists:classes,id',
             'subject_id' => 'required|exists:subjects,id',
-            'si_so_lop' => 'required|integer|min:1',
+            'si_so_lop' => 'nullable|integer|min:1',
+            'si_so_ly_thuyet' => 'nullable|integer|min:1',
             'si_so_thuc_hanh_nhom_1' => 'nullable|integer|min:1',
             'si_so_thuc_hanh_nhom_2' => 'nullable|integer|min:1',
             'ngay_mo_dang_ky' => 'required|date',
@@ -103,8 +113,7 @@ class CourseOfferingController extends Controller
         ], [
             'class_room_id.required' => 'Vui lòng chọn phòng học.',
             'subject_id.required' => 'Vui lòng chọn môn học.',
-            'si_so_lop.required' => 'Vui lòng nhập sĩ số lớp.',
-            'si_so_lop.min' => 'Sĩ số lớp phải lớn hơn 0.',
+            'si_so_ly_thuyet.min' => 'Sĩ số lớp (lý thuyết) phải lớn hơn 0.',
             'ngay_mo_dang_ky.required' => 'Vui lòng chọn ngày mở đăng ký.',
             'ngay_ket_thuc_dang_ky.required' => 'Vui lòng chọn ngày kết thúc đăng ký.',
             'ngay_ket_thuc_dang_ky.after_or_equal' => 'Ngày kết thúc đăng ký phải bằng hoặc sau ngày mở đăng ký.',
@@ -176,11 +185,14 @@ class CourseOfferingController extends Controller
             throw ValidationException::withMessages(['schedule' => [$conflict]]);
         }
 
+        $siSoLop = $this->resolveSiSoLopFromRequest($request);
+
         $data = $request->only([
-            'hoc_ky', 'khoa_hoc', 'class_room_id', 'class_room_id_thuc_hanh', 'subject_id', 'si_so_lop',
+            'hoc_ky', 'khoa_hoc', 'class_room_id', 'class_room_id_thuc_hanh', 'subject_id',
             'si_so_thuc_hanh_nhom_1', 'si_so_thuc_hanh_nhom_2',
             'ngay_mo_dang_ky', 'ngay_ket_thuc_dang_ky', 'ngay_bat_dau_hoc', 'ngay_ket_thuc_hoc',
         ]);
+        $data['si_so_lop'] = $siSoLop;
         // Map first 2 group sizes to existing columns
         $data['si_so_thuc_hanh_nhom_1'] = isset($sizeTh[0]) && $sizeTh[0] !== '' ? (int) $sizeTh[0] : null;
         $data['si_so_thuc_hanh_nhom_2'] = isset($sizeTh[1]) && $sizeTh[1] !== '' ? (int) $sizeTh[1] : null;
@@ -245,7 +257,8 @@ class CourseOfferingController extends Controller
             'class_room_id_thuc_hanh' => 'nullable|array',
             'class_room_id_thuc_hanh.*' => 'nullable|exists:classes,id',
             'subject_id' => 'required|exists:subjects,id',
-            'si_so_lop' => 'required|integer|min:1',
+            'si_so_lop' => 'nullable|integer|min:1',
+            'si_so_ly_thuyet' => 'nullable|integer|min:1',
             'si_so_thuc_hanh_nhom_1' => 'nullable|integer|min:1',
             'si_so_thuc_hanh_nhom_2' => 'nullable|integer|min:1',
             'ngay_mo_dang_ky' => 'required|date',
@@ -271,7 +284,7 @@ class CourseOfferingController extends Controller
         ], [
             'class_room_id.required' => 'Vui lòng chọn phòng học.',
             'subject_id.required' => 'Vui lòng chọn môn học.',
-            'si_so_lop.required' => 'Vui lòng nhập sĩ số lớp.',
+            'si_so_ly_thuyet.min' => 'Sĩ số lớp (lý thuyết) phải lớn hơn 0.',
             'ngay_mo_dang_ky.required' => 'Vui lòng chọn ngày mở đăng ký.',
             'ngay_ket_thuc_dang_ky.required' => 'Vui lòng chọn ngày kết thúc đăng ký.',
             'ngay_ket_thuc_dang_ky.after_or_equal' => 'Ngày kết thúc đăng ký phải bằng hoặc sau ngày mở đăng ký.',
@@ -343,11 +356,14 @@ class CourseOfferingController extends Controller
             throw ValidationException::withMessages(['schedule' => [$conflict]]);
         }
 
+        $siSoLop = $this->resolveSiSoLopFromRequest($request);
+
         $data = $request->only([
-            'hoc_ky', 'khoa_hoc', 'class_room_id', 'subject_id', 'si_so_lop',
+            'hoc_ky', 'khoa_hoc', 'class_room_id', 'subject_id',
             'si_so_thuc_hanh_nhom_1', 'si_so_thuc_hanh_nhom_2',
             'ngay_mo_dang_ky', 'ngay_ket_thuc_dang_ky', 'ngay_bat_dau_hoc', 'ngay_ket_thuc_hoc',
         ]);
+        $data['si_so_lop'] = $siSoLop;
         // Map first 2 group sizes to existing columns
         $data['si_so_thuc_hanh_nhom_1'] = isset($sizeTh[0]) && $sizeTh[0] !== '' ? (int) $sizeTh[0] : null;
         $data['si_so_thuc_hanh_nhom_2'] = isset($sizeTh[1]) && $sizeTh[1] !== '' ? (int) $sizeTh[1] : null;
@@ -412,5 +428,52 @@ class CourseOfferingController extends Controller
             'success' => true,
             'message' => 'Đã xóa học phần.',
         ]);
+    }
+
+    private function offeringHasThGroups(array $thuTh, array $tietTh): bool
+    {
+        for ($i = 0; $i < count($thuTh); $i++) {
+            if (($thuTh[$i] ?? '') !== '' && ($tietTh[$i] ?? '') !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function resolveSiSoLopFromRequest(Request $request): int
+    {
+        $thuTh = $request->input('thu_thuc_hanh', []);
+        $tietTh = $request->input('tiet_thuc_hanh', []);
+        $sizeTh = $request->input('si_so_thuc_hanh', []);
+
+        if ($this->offeringHasThGroups($thuTh, $tietTh)) {
+            $total = 0;
+            for ($i = 0; $i < count($thuTh); $i++) {
+                if (($thuTh[$i] ?? '') === '' || ($tietTh[$i] ?? '') === '') {
+                    continue;
+                }
+                $total += max(0, (int) ($sizeTh[$i] ?? 0));
+            }
+            if ($total < 1) {
+                throw ValidationException::withMessages([
+                    'si_so_thuc_hanh' => ['Vui lòng nhập sĩ số cho từng nhóm thực hành.'],
+                ]);
+            }
+
+            return $total;
+        }
+
+        $lt = (int) $request->input('si_so_ly_thuyet', 0);
+        if ($lt < 1) {
+            $lt = (int) $request->input('si_so_lop', 0);
+        }
+        if ($lt < 1) {
+            throw ValidationException::withMessages([
+                'si_so_ly_thuyet' => ['Vui lòng nhập sĩ số lớp (lý thuyết).'],
+            ]);
+        }
+
+        return $lt;
     }
 }

@@ -273,6 +273,13 @@
                         </div>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline-primary" id="btn-them-buoi-ly-thuyet"><i class="fas fa-plus me-1"></i> Thêm buổi lý thuyết</button>
+                    <div class="row mt-3" id="wrap-si-so-ly-thuyet">
+                        <div class="col-md-4">
+                            <label for="si_so_ly_thuyet" class="form-label">Sĩ số lớp (lý thuyết) <span class="text-danger si-so-lt-required">*</span></label>
+                            <input type="number" class="form-control" id="si_so_ly_thuyet" name="si_so_ly_thuyet" min="1" placeholder="VD: 60">
+                            <div class="form-text">Bắt buộc khi học phần không có nhóm thực hành.</div>
+                        </div>
+                    </div>
 
                     <!-- Template clone cho buổi lý thuyết (ẩn) -->
                     <template id="tpl-buoi-ly-thuyet">
@@ -323,10 +330,10 @@
 
                     <hr class="my-4">
                     <h6 class="text-primary mb-2"><i class="fas fa-flask me-1"></i> Nhóm học thực hành</h6>
-                    <input type="hidden" id="si_so_lop" name="si_so_lop" value="1">
+                    <input type="hidden" id="si_so_lop" name="si_so_lop" value="">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                         <button type="button" class="btn btn-sm btn-outline-primary" id="btn-them-buoi-thuc-hanh"><i class="fas fa-plus me-1"></i> Thêm nhóm thực hành</button>
-                        <span class="small text-muted">Môn không có thực hành có thể bỏ trống.</span>
+                        <span class="small text-muted">Có nhóm TH: sĩ số = tổng các nhóm. Không có TH: nhập sĩ số ở mục lý thuyết.</span>
                     </div>
                     <div id="blockThucHanh">
                         <div id="buoi-thuc-hanh-list">
@@ -775,7 +782,50 @@
                 $(this).find('.tiet-th-hidden').val(arr.sort(function(a,b){return a-b}).join(','));
             });
         }
-        $(document).on('change', '.tiet-thuc-hanh', syncAllTietThucHanh);
+        $(document).on('change', '.tiet-thuc-hanh', function () {
+            syncAllTietThucHanh();
+            syncSiSoCapacityUi();
+        });
+
+        function countActiveThGroups() {
+            var n = 0;
+            $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').each(function () {
+                var thu = $(this).find('select[name="thu_thuc_hanh[]"]').val();
+                var tiet = $(this).find('.tiet-th-hidden').val();
+                if (thu && tiet) n++;
+            });
+            return n;
+        }
+
+        function computeSiSoLop() {
+            var totalTh = 0;
+            $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').each(function () {
+                var thu = $(this).find('select[name="thu_thuc_hanh[]"]').val();
+                var tiet = $(this).find('.tiet-th-hidden').val();
+                if (!thu || !tiet) return;
+                var n = parseInt($(this).find('input[name="si_so_thuc_hanh[]"]').val() || '0', 10);
+                if (!isNaN(n)) totalTh += n;
+            });
+            if (totalTh > 0) return totalTh;
+            var lt = parseInt($('#si_so_ly_thuyet').val() || '0', 10);
+            return (!isNaN(lt) && lt > 0) ? lt : 0;
+        }
+
+        function syncSiSoCapacityUi() {
+            var hasTh = countActiveThGroups() > 0;
+            var $wrap = $('#wrap-si-so-ly-thuyet');
+            var $lt = $('#si_so_ly_thuyet');
+            if (hasTh) {
+                $wrap.hide();
+                $lt.prop('required', false);
+            } else {
+                $wrap.show();
+                $lt.prop('required', true);
+            }
+        }
+
+        $(document).on('change', '#buoi-thuc-hanh-list select[name="thu_thuc_hanh[]"]', syncSiSoCapacityUi);
+        syncSiSoCapacityUi();
 
         // Chọn nhanh 3 tiết - chỉ trong cùng 1 buổi (delegate)
         $(document).on('click', '.quick-lt', function() {
@@ -795,6 +845,7 @@
                 row.find('.tiet-thuc-hanh[value="' + i + '"]').prop('checked', true);
             }
             syncAllTietThucHanh();
+            syncSiSoCapacityUi();
         });
 
         // Thêm buổi lý thuyết
@@ -843,6 +894,7 @@
                 $(this).find('.buoi-th-label').first().text('Nhóm TH ' + (i + 1));
             });
             $('#buoi-thuc-hanh-list .remove-buoi-th').removeClass('d-none');
+            syncSiSoCapacityUi();
         });
         $(document).on('click', '.remove-buoi-th', function() {
             if ($('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').length <= 1) return;
@@ -853,6 +905,7 @@
             if ($('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').length === 1) {
                 $('#buoi-thuc-hanh-list .remove-buoi-th').addClass('d-none');
             }
+            syncSiSoCapacityUi();
         });
 
         $('#btnOpenCreateOffering').on('click', function() {
@@ -862,6 +915,9 @@
             $('#submitCourseOfferingBtn').text('Tạo học phần');
             $('#hoc_ky').val('1');
             $('#khoa_hoc').val('{{ now()->year }}-{{ now()->year + 1 }}');
+            $('#si_so_ly_thuyet').val('');
+            $('#si_so_lop').val('');
+            syncSiSoCapacityUi();
         });
 
         // Chỉnh sửa học phần
@@ -881,7 +937,8 @@
                     var thRooms = res.class_room_id_thuc_hanh || [];
                     $('#subject_id').val(res.subject_id);
                     var thSizes = res.si_so_thuc_hanh || [];
-                    $('#si_so_lop').val(res.si_so_lop || 1);
+                    $('#si_so_lop').val(res.si_so_lop || '');
+                    $('#si_so_ly_thuyet').val('');
                     $('#ngay_mo_dang_ky').val(res.ngay_mo_dang_ky);
                     $('#ngay_ket_thuc_dang_ky').val(res.ngay_ket_thuc_dang_ky);
                     $('#ngay_bat_dau_hoc').val(res.ngay_bat_dau_hoc);
@@ -944,6 +1001,10 @@
                     if (thuTh.length > 1) $('#buoi-thuc-hanh-list .remove-buoi-th').removeClass('d-none');
                     syncAllTietLyThuyet();
                     syncAllTietThucHanh();
+                    syncSiSoCapacityUi();
+                    if (countActiveThGroups() === 0) {
+                        $('#si_so_ly_thuyet').val(res.si_so_ly_thuyet != null ? res.si_so_ly_thuyet : (res.si_so_lop || ''));
+                    }
 
                     var modal = new bootstrap.Modal(document.getElementById('createCourseOfferingModal'));
                     modal.show();
@@ -986,16 +1047,17 @@
             e.preventDefault();
             syncAllTietLyThuyet();
             syncAllTietThucHanh();
-            // si_so_lop = tổng sĩ số các nhóm TH (nếu có), fallback 1 để pass validate
-            var total = 0;
-            $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').each(function() {
-                var thu = $(this).find('select[name="thu_thuc_hanh[]"]').val();
-                var tiet = $(this).find('.tiet-th-hidden').val();
-                if (!thu || !tiet) return;
-                var n = parseInt($(this).find('input[name="si_so_thuc_hanh[]"]').val() || '0', 10);
-                if (!isNaN(n)) total += n;
-            });
-            $('#si_so_lop').val(total > 0 ? total : 1);
+            syncSiSoCapacityUi();
+            var siSoLop = computeSiSoLop();
+            if (siSoLop < 1) {
+                if (countActiveThGroups() > 0) {
+                    alert('Vui lòng nhập sĩ số cho từng nhóm thực hành.');
+                } else {
+                    alert('Vui lòng nhập sĩ số lớp (lý thuyết).');
+                }
+                return;
+            }
+            $('#si_so_lop').val(siSoLop);
             var invalidLt = false;
             $('#buoi-ly-thuyet-list .buoi-ly-thuyet-row').each(function(i) {
                 if (!$(this).find('.tiet-lt-hidden').val()) {
@@ -1040,6 +1102,9 @@
                     $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row .tiet-thuc-hanh').prop('checked', false);
                     $('#buoi-thuc-hanh-list .tiet-th-hidden').val('');
                     $('#buoi-thuc-hanh-list .remove-buoi-th').addClass('d-none');
+                    $('#si_so_ly_thuyet').val('');
+                    $('#si_so_lop').val('');
+                    syncSiSoCapacityUi();
                     table.ajax.reload(null, false);
                     alert(res.message || 'Lưu thành công!');
                 },
