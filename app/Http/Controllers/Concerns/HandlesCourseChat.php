@@ -7,10 +7,10 @@ use App\Models\ChatMessage;
 use App\Models\CourseOffering;
 use App\Models\Student;
 use App\Models\Teacher;
+use App\Services\ChatAttachmentStorage;
 use App\Services\CourseOfferingChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\File;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -215,15 +215,7 @@ trait HandlesCourseChat
         $attachmentData = [];
 
         if ($file) {
-            Storage::disk('public')->makeDirectory('chat/'.$conversation->id);
-            $path = $file->store('chat/'.$conversation->id, 'public');
-            $mime = $file->getMimeType() ?: 'application/octet-stream';
-            $attachmentData = [
-                'attachment_path' => $path,
-                'attachment_original_name' => $file->getClientOriginalName(),
-                'attachment_mime' => $mime,
-                'attachment_type' => str_starts_with($mime, 'image/') ? 'image' : 'file',
-            ];
+            $attachmentData = ChatAttachmentStorage::store($file, (int) $conversation->id);
         }
 
         $message = $conversation->messages()->create(array_merge([
@@ -244,21 +236,18 @@ trait HandlesCourseChat
         $message->load('conversation');
         $this->authorizeConversation($message->conversation);
 
-        if (! $message->hasAttachment() || ! Storage::disk('public')->exists($message->attachment_path)) {
+        if (! $message->hasAttachment() || ! ChatAttachmentStorage::exists($message->attachment_path)) {
             abort(404);
         }
 
         $filename = $message->attachment_original_name ?: basename($message->attachment_path);
         $forceDownload = $request->boolean('download') || ! $message->isImageAttachment();
-        $disposition = $forceDownload ? 'attachment' : 'inline';
 
-        return Storage::disk('public')->response(
+        return ChatAttachmentStorage::response(
             $message->attachment_path,
             $filename,
-            [
-                'Content-Type' => $message->attachment_mime ?: 'application/octet-stream',
-                'Content-Disposition' => $disposition.'; filename="'.$filename.'"',
-            ]
+            $message->attachment_mime,
+            $forceDownload
         );
     }
 
