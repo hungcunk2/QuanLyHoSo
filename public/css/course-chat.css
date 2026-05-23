@@ -1,0 +1,314 @@
+.course-chat {
+    width: 100%;
+}
+
+.course-chat__shell.card {
+    margin-bottom: 0;
+}
+
+.course-chat__layout {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    min-height: calc(100vh - var(--header-height) - 4.5rem);
+    max-height: calc(100vh - var(--header-height) - 4.5rem);
+    overflow: hidden;
+}
+
+.course-chat__sidebar {
+    flex: 0 0 340px;
+    width: 340px;
+    max-width: 38%;
+    min-width: 280px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    min-height: 0;
+}
+
+.course-chat__sidebar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.course-chat__list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.course-chat__list-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid var(--border-color);
+    background: #fff;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.course-chat__list-item:hover,
+.course-chat__list-item.is-active {
+    background: #f5f3ff;
+}
+
+.course-chat__list-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.course-chat__peer {
+    font-size: 0.95rem;
+}
+
+.course-chat__preview {
+    margin-top: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.course-chat__main {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    background: #fafafa;
+    min-width: 0;
+    min-height: 0;
+}
+
+.course-chat__placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    min-height: 320px;
+}
+
+.course-chat__active {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.course-chat__header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.course-chat__messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+}
+
+.course-chat__bubble {
+    max-width: 75%;
+    padding: 0.65rem 0.9rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    word-break: break-word;
+}
+
+.course-chat__bubble--mine {
+    align-self: flex-end;
+    background: var(--primary-color);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.course-chat__bubble--theirs {
+    align-self: flex-start;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-bottom-left-radius: 4px;
+}
+
+.course-chat__bubble time {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    opacity: 0.75;
+}
+
+.course-chat__composer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--border-color);
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.course-chat__composer-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: stretch;
+}
+
+.course-chat__attach {
+    flex: 0 0 56px;
+    width: 56px;
+    min-width: 56px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    border-radius: 0.5rem;
+}
+
+.course-chat__composer textarea {
+    flex: 1;
+    resize: none;
+    min-height: 56px;
+    line-height: 1.45;
+}
+
+.course-chat__composer #chatSendBtn {
+    flex: 0 0 56px;
+    width: 56px;
+    min-width: 56px;
+    height: auto;
+    align-self: stretch;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    border-radius: 0.5rem;
+}
+
+.course-chat__attachment-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    padding-left: calc(56px + 0.75rem);
+}
+
+.course-chat__bubble-media {
+    margin-bottom: 0.35rem;
+}
+
+.course-chat__bubble-img {
+    display: block;
+    max-width: min(280px, 100%);
+    max-height: 240px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.course-chat__bubble-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.06);
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.9rem;
+    word-break: break-all;
+}
+
+.course-chat__bubble--mine .course-chat__bubble-file {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.course-chat__bubble-text {
+    white-space: pre-wrap;
+}
+
+.course-chat__picker {
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: #fff;
+}
+
+.course-chat__picker-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid var(--border-color);
+    background: #fff;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.course-chat__picker-item:last-child {
+    border-bottom: 0;
+}
+
+.course-chat__picker-item:hover {
+    background: #f9fafb;
+}
+
+.course-chat__picker-item.is-selected {
+    background: #f5f3ff;
+    box-shadow: inset 3px 0 0 var(--primary-color);
+}
+
+.course-chat__picker-item[hidden] {
+    display: none !important;
+}
+
+.course-chat__picker-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.course-chat__picker-meta {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-top: 0.15rem;
+}
+
+/* Chỉ xếp dọc trên màn hình rất nhỏ */
+@media (max-width: 576px) {
+    .course-chat__layout {
+        flex-direction: column;
+        max-height: none;
+        min-height: 70vh;
+    }
+
+    .course-chat__sidebar {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        max-height: 220px;
+        border-right: 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+}

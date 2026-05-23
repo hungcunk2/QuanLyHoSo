@@ -16,6 +16,8 @@ use App\Http\Controllers\Student\CurriculumController as StudentCurriculumContro
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
 use App\Http\Controllers\Teacher\DashboardController as TeacherDashboardController;
 use App\Http\Controllers\Teacher\AnnouncementManageController as TeacherAnnouncementManageController;
+use App\Http\Controllers\Student\ChatController as StudentChatController;
+use App\Http\Controllers\Teacher\ChatController as TeacherChatController;
 
 require __DIR__ . '/auth.php';
 
@@ -157,6 +159,11 @@ Route::prefix('student')->name('student.')->middleware('auth')->group(function (
     Route::post('/registration/{courseOfferingId}/register', [StudentDashboardController::class, 'registerOffering'])->name('registration.register');
     Route::post('/registration/{courseOfferingId}/cancel', [StudentDashboardController::class, 'cancelOffering'])->name('registration.cancel');
     Route::get('/notifications', [StudentDashboardController::class, 'notifications'])->name('notifications');
+    Route::get('/chat', [StudentChatController::class, 'index'])->name('chat');
+    Route::post('/chat/start', [StudentChatController::class, 'startConversation'])->name('chat.start');
+    Route::get('/chat/conversations/{conversation}/messages', [StudentChatController::class, 'fetchMessages'])->name('chat.messages');
+    Route::post('/chat/conversations/{conversation}/messages', [StudentChatController::class, 'sendMessage'])->name('chat.send');
+    Route::get('/chat/messages/{message}/attachment', [StudentChatController::class, 'showAttachment'])->name('chat.attachment');
 });
 
 Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function () {
@@ -182,4 +189,10 @@ Route::prefix('teacher')->name('teacher.')->middleware('auth')->group(function (
     Route::get('/notifications/manage/{announcement}/edit', [TeacherAnnouncementManageController::class, 'edit'])->name('notifications.manage.edit');
     Route::put('/notifications/manage/{announcement}', [TeacherAnnouncementManageController::class, 'update'])->name('notifications.manage.update');
     Route::delete('/notifications/manage/{announcement}', [TeacherAnnouncementManageController::class, 'destroy'])->name('notifications.manage.destroy');
+
+    Route::get('/chat', [TeacherChatController::class, 'index'])->name('chat');
+    Route::post('/chat/start', [TeacherChatController::class, 'startConversation'])->name('chat.start');
+    Route::get('/chat/conversations/{conversation}/messages', [TeacherChatController::class, 'fetchMessages'])->name('chat.messages');
+    Route::post('/chat/conversations/{conversation}/messages', [TeacherChatController::class, 'sendMessage'])->name('chat.send');
+    Route::get('/chat/messages/{message}/attachment', [TeacherChatController::class, 'showAttachment'])->name('chat.attachment');
 });

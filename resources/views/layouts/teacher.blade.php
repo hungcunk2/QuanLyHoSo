@@ -77,6 +77,12 @@
                                 <span>Thông Báo</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a href="{{ route('teacher.chat') }}" class="nav-link">
+                                <i class="fas fa-comments"></i>
+                                <span>Tin nhắn</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 
