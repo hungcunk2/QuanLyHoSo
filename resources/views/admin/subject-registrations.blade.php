@@ -518,6 +518,7 @@
                                 <button type="button" class="btn btn-outline-danger mt-2" id="btnForceReschedule">
                                     Dời lịch bắt buộc
                                 </button>
+                                <div class="small text-muted mt-1">Chỉ bỏ qua quy tắc 50% học sinh; vẫn chặn nếu giáo viên trùng lịch.</div>
                                 <button type="button" class="btn btn-danger mt-2" id="btnPauseSession">
                                     Tạm ngưng buổi này
                                 </button>

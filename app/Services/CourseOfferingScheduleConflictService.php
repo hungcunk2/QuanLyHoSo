@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\CourseOffering;
+use App\Models\CourseOfferingSchedule;
+use App\Support\OfferingWeekCalendar;
 use Carbon\Carbon;
 
 class CourseOfferingScheduleConflictService
@@ -202,6 +204,153 @@ class CourseOfferingScheduleConflictService
                             .'('.$thuLabel.', tiết '.$tietStr.') trong khoảng thời gian học giao nhau.';
                     }
                 }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * GV của buổi học (theo dòng lịch sessionsForDate).
+     *
+     * @param  array{loai?: string, schedule_id?: int|null}  $sess
+     * @return int[]
+     */
+    public static function teacherIdsFromSessionRow(CourseOffering $o, array $sess): array
+    {
+        $ids = [];
+        $scheduleId = $sess['schedule_id'] ?? null;
+        if ($scheduleId) {
+            $sc = $o->schedules->firstWhere('id', (int) $scheduleId);
+            if ($sc && $sc->teacher_id) {
+                $ids[] = (int) $sc->teacher_id;
+            }
+        }
+        $loai = (string) ($sess['loai'] ?? '');
+        if ($loai === 'ly_thuyet' && $o->teacher_id_ly_thuyet) {
+            $ids[] = (int) $o->teacher_id_ly_thuyet;
+        }
+        if ($loai === 'thuc_hanh' && $o->teacher_id_thuc_hanh) {
+            $ids[] = (int) $o->teacher_id_thuc_hanh;
+        }
+        if ($o->teacher_id) {
+            $ids[] = (int) $o->teacher_id;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * GV của buổi admin chọn dời (base_lt / base_th / sc_*).
+     *
+     * @return int[]
+     */
+    public static function teacherIdsForRescheduleSession(
+        CourseOffering $o,
+        string $sessionKey,
+        ?CourseOfferingSchedule $schedule = null
+    ): array {
+        if ($sessionKey === 'base_lt') {
+            $ids = [];
+            if ($o->teacher_id_ly_thuyet) {
+                $ids[] = (int) $o->teacher_id_ly_thuyet;
+            }
+            if ($o->teacher_id) {
+                $ids[] = (int) $o->teacher_id;
+            }
+
+            return array_values(array_unique($ids));
+        }
+        if ($sessionKey === 'base_th') {
+            $ids = [];
+            if ($o->teacher_id_thuc_hanh) {
+                $ids[] = (int) $o->teacher_id_thuc_hanh;
+            }
+            if ($o->teacher_id) {
+                $ids[] = (int) $o->teacher_id;
+            }
+
+            return array_values(array_unique($ids));
+        }
+        if (str_starts_with($sessionKey, 'sc_') && $schedule) {
+            if ($schedule->teacher_id) {
+                return [(int) $schedule->teacher_id];
+            }
+            if ($schedule->loai === 'ly_thuyet' && $o->teacher_id_ly_thuyet) {
+                return [(int) $o->teacher_id_ly_thuyet];
+            }
+            if ($schedule->loai === 'thuc_hanh' && $o->teacher_id_thuc_hanh) {
+                return [(int) $o->teacher_id_thuc_hanh];
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Trùng lịch GV đúng một ngày (lặp tuần + buổi dời có ngay_ap_dung).
+     *
+     * @param  array{thu: int, periods: int[]}  $newSlot
+     * @param  int[]  $teacherIds
+     */
+    public static function findTeacherConflictOnDate(
+        Carbon $date,
+        array $newSlot,
+        array $teacherIds,
+        ?int $ignoreOfferingId = null
+    ): ?string {
+        if ($newSlot['periods'] === []) {
+            return null;
+        }
+        $teacherIds = array_values(array_unique(array_filter(array_map('intval', $teacherIds))));
+        if ($teacherIds === []) {
+            return null;
+        }
+
+        $dateStr = $date->toDateString();
+        $query = CourseOffering::query()
+            ->with('schedules')
+            ->where(function ($q) use ($teacherIds) {
+                $q->whereIn('teacher_id', $teacherIds)
+                    ->orWhereIn('teacher_id_ly_thuyet', $teacherIds)
+                    ->orWhereIn('teacher_id_thuc_hanh', $teacherIds)
+                    ->orWhereHas('schedules', function ($sq) use ($teacherIds) {
+                        $sq->whereIn('teacher_id', $teacherIds);
+                    });
+            })
+            ->whereDate('ngay_bat_dau_hoc', '<=', $dateStr)
+            ->whereDate('ngay_ket_thuc_hoc', '>=', $dateStr);
+
+        if ($ignoreOfferingId !== null) {
+            $query->where('id', '!=', $ignoreOfferingId);
+        }
+
+        $weekdays = CourseOffering::weekdays();
+        $dateLabel = $date->format('d/m/Y');
+
+        foreach ($query->get() as $other) {
+            foreach (OfferingWeekCalendar::sessionsForDate($other, $date) as $sess) {
+                if (($sess['loai'] ?? '') === 'tam_ngung') {
+                    continue;
+                }
+                $osPeriods = self::parsePeriods($sess['tiet'] ?? '');
+                if ($osPeriods === [] || (int) $sess['thu'] !== (int) $newSlot['thu']) {
+                    continue;
+                }
+                $intersect = array_values(array_intersect($osPeriods, $newSlot['periods']));
+                if ($intersect === []) {
+                    continue;
+                }
+                $otherTeacherIds = self::teacherIdsFromSessionRow($other, $sess);
+                if (array_intersect($teacherIds, $otherTeacherIds) === []) {
+                    continue;
+                }
+                sort($intersect);
+                $tietStr = implode(', ', $intersect);
+                $thuLabel = $weekdays[$newSlot['thu']] ?? ('Thứ '.$newSlot['thu']);
+
+                return 'Giáo viên bị trùng lịch ngày '.$dateLabel.': đã có học phần "'.$other->ten_hoc_phan.'" '
+                    .'('.$thuLabel.', tiết '.$tietStr.').';
             }
         }
 

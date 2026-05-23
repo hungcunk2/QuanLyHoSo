@@ -228,13 +228,40 @@ class SubjectRegistrationController extends Controller
             return response()->json(['message' => 'Ngày dời phải sau ngày hiện tại.'], 422);
         }
 
+        $newSlot = ['thu' => $thu, 'periods' => CourseOfferingScheduleConflictService::parsePeriods($tiet)];
+        if ($newSlot['periods'] === []) {
+            return response()->json(['message' => 'Tiết không hợp lệ.'], 422);
+        }
+
+        $sourceSchedule = null;
+        if (str_starts_with($sessionKey, 'sc_')) {
+            $sourceSchedule = CourseOfferingSchedule::query()
+                ->where('course_offering_id', $offering->id)
+                ->where('id', (int) substr($sessionKey, 3))
+                ->first();
+            if (! $sourceSchedule) {
+                return response()->json(['message' => 'Buổi cần dời không tồn tại.'], 422);
+            }
+        }
+
+        // Trùng lịch GV (luôn chặn, kể cả dời bắt buộc; không kiểm tra phòng)
+        $teacherIds = CourseOfferingScheduleConflictService::teacherIdsForRescheduleSession(
+            $offering,
+            $sessionKey,
+            $sourceSchedule
+        );
+        $teacherConflict = CourseOfferingScheduleConflictService::findTeacherConflictOnDate(
+            Carbon::parse($dateNew),
+            $newSlot,
+            $teacherIds,
+            $offering->id
+        );
+        if ($teacherConflict !== null) {
+            return response()->json(['message' => $teacherConflict], 422);
+        }
+
         // ====== Rule 50% học sinh không trùng (chỉ áp dụng khi không dời lịch bắt buộc) ======
         if (! $force) {
-            $newSlot = ['thu' => $thu, 'periods' => CourseOfferingScheduleConflictService::parsePeriods($tiet)];
-            if ($newSlot['periods'] === []) {
-                return response()->json(['message' => 'Tiết không hợp lệ.'], 422);
-            }
-
             $regs = SubjectRegistration::query()
                 ->where('course_offering_id', $offering->id)
                 ->where('status', '!=', 'cancelled')
@@ -342,7 +369,8 @@ class SubjectRegistrationController extends Controller
                 $nonConflict = $total - $conflictCount;
                 if ($nonConflict / max(1, $total) < 0.5) {
                     return response()->json([
-                        'message' => 'Không thể dời lịch: chỉ có '.$nonConflict.'/'.$total.' học sinh không bị trùng (cần ≥ 50%). Nếu vẫn muốn, bấm "Dời lịch bắt buộc".',
+                        'message' => 'Không thể dời lịch: chỉ có '.$nonConflict.'/'.$total.' học sinh không bị trùng (cần ≥ 50%). '
+                            .'Bấm "Dời lịch bắt buộc" chỉ bỏ qua quy tắc này (vẫn chặn nếu giáo viên trùng lịch).',
                     ], 422);
                 }
             }
