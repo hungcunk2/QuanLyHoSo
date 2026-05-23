@@ -35,7 +35,44 @@ class SubjectRegistrationController extends Controller
 
         $weekdays = CourseOffering::weekdays();
 
+        $like = fn (string $keyword): string => '%' . str_replace(['%', '_'], ['\%', '\_'], $keyword) . '%';
+
         return DataTables::of($query)
+            ->filterColumn('subject_info', function ($query, $keyword) use ($like) {
+                if ($keyword === '') {
+                    return;
+                }
+                $pattern = $like($keyword);
+                $query->whereHas('subject', function ($q) use ($pattern) {
+                    $q->where('ma_mon_hoc', 'like', $pattern)
+                        ->orWhere('ten_mon_hoc', 'like', $pattern);
+                });
+            })
+            ->filterColumn('class_info', function ($query, $keyword) use ($like) {
+                if ($keyword === '') {
+                    return;
+                }
+                $pattern = $like($keyword);
+                $query->whereHas('classRoom', function ($q) use ($pattern) {
+                    $q->where('ma_lop', 'like', $pattern)
+                        ->orWhere('ten_lop', 'like', $pattern);
+                });
+            })
+            ->filterColumn('teacher_info', function ($query, $keyword) use ($like) {
+                if ($keyword === '') {
+                    return;
+                }
+                $pattern = $like($keyword);
+                $query->where(function ($q) use ($pattern) {
+                    $q->whereHas('teacherLyThuyet', function ($t) use ($pattern) {
+                        $t->where('ho_ten', 'like', $pattern)
+                            ->orWhere('msgv', 'like', $pattern);
+                    })->orWhereHas('teacherThucHanh', function ($t) use ($pattern) {
+                        $t->where('ho_ten', 'like', $pattern)
+                            ->orWhere('msgv', 'like', $pattern);
+                    });
+                });
+            })
             ->orderColumn('created_at_formatted', 'created_at $1')
             ->addColumn('created_at_formatted', function ($row) {
                 return $row->created_at ? $row->created_at->format('d/m/Y H:i') : '—';
@@ -117,152 +154,21 @@ class SubjectRegistrationController extends Controller
         $dateParam = request()->query('date');
         $currentDate = $dateParam ? Carbon::parse($dateParam) : Carbon::today();
         $weekStart = $currentDate->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
-        $weekEnd = $currentDate->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+        $weekEnd = $weekStart->copy()->addDays(6);
 
-        $weekdays = CourseOffering::weekdays();
+        $scheduleGrid = OfferingWeekCalendar::buildGrid(
+            collect([$offering]),
+            $currentDate->copy(),
+            [],
+            true
+        );
 
-        $sessions = [];
-
-        $pausedSet = $offering->schedules
-            ->where('loai', 'tam_ngung')
-            ->filter(function ($sc) use ($weekStart, $weekEnd) {
-                if (! $sc->ngay_ap_dung) {
-                    return false;
-                }
-                $d = Carbon::parse($sc->ngay_ap_dung);
-                return $d->betweenIncluded($weekStart, $weekEnd);
-            })
-            ->map(fn ($sc) => (string) ($sc->paused_session_key ?? ''))
-            ->filter(fn ($k) => $k !== '')
-            ->values()
-            ->all();
-        $pausedSet = array_fill_keys($pausedSet, true);
-
-        // Helper: get date in this week for a VN weekday
-        $dateOfThu = function (int $thuVn) use ($weekStart): Carbon {
-            $offset = $thuVn === 8 ? 6 : max(0, min(6, $thuVn - 2));
-            return $weekStart->copy()->addDays($offset);
-        };
-
-        if ($offering->thu_ly_thuyet && ($offering->tiet_ly_thuyet ?? '') !== '') {
-            $sessionKey = 'base_lt';
-            if (! isset($pausedSet[$sessionKey])) {
-                $d = $dateOfThu((int) $offering->thu_ly_thuyet);
-            $sessions[] = [
-                'key' => $sessionKey,
-                'loai' => 'ly_thuyet',
-                'label' => 'Lý thuyết',
-                'date' => $d->toDateString(),
-                'thu' => (int) $offering->thu_ly_thuyet,
-                'tiet' => (string) $offering->tiet_ly_thuyet,
-                'teacher' => $offering->teacherLyThuyet?->ho_ten ?? '',
-                'room' => $offering->classRoom?->ma_lop ? ($offering->classRoom->ma_lop.' - '.$offering->classRoom->ten_lop) : '',
-                'moved_from' => $offering->lt_moved_from ?: null,
-            ];
-            }
-        }
-
-        $ltExtra = $offering->schedules->where('loai', 'ly_thuyet')->sortBy('id')->values();
-        foreach ($ltExtra as $idx => $sc) {
-            if (! $sc->thu || ($sc->tiet ?? '') === '') {
-                continue;
-            }
-            if ($sc->ngay_ap_dung) {
-                // one-off moved/additional session handled below
-                continue;
-            }
-            $sessionKey = 'sc_'.$sc->id;
-            if (isset($pausedSet[$sessionKey])) {
-                continue;
-            }
-            $d = $dateOfThu((int) $sc->thu);
-            $sessions[] = [
-                'key' => $sessionKey,
-                'loai' => 'ly_thuyet',
-                'label' => 'Lý thuyết (Buổi '.($idx + 2).')',
-                'date' => $d->toDateString(),
-                'thu' => (int) $sc->thu,
-                'tiet' => (string) $sc->tiet,
-                'teacher' => $sc->teacher?->ho_ten ?? '',
-                'room' => $offering->classRoom?->ma_lop ? ($offering->classRoom->ma_lop.' - '.$offering->classRoom->ten_lop) : '',
-                'moved_from' => $sc->moved_from ?: null,
-            ];
-        }
-
-        if ($offering->thu_thuc_hanh && ($offering->tiet_thuc_hanh ?? '') !== '') {
-            $sessionKey = 'base_th';
-            if (! isset($pausedSet[$sessionKey])) {
-                $d = $dateOfThu((int) $offering->thu_thuc_hanh);
-            $sessions[] = [
-                'key' => $sessionKey,
-                'loai' => 'thuc_hanh',
-                'label' => 'Thực hành (Nhóm 1)',
-                'date' => $d->toDateString(),
-                'thu' => (int) $offering->thu_thuc_hanh,
-                'tiet' => (string) $offering->tiet_thuc_hanh,
-                'teacher' => $offering->teacherThucHanh?->ho_ten ?? '',
-                'room' => $offering->classRoomThucHanh?->ma_lop ? ($offering->classRoomThucHanh->ma_lop.' - '.$offering->classRoomThucHanh->ten_lop) : '',
-                'moved_from' => $offering->th_moved_from ?: null,
-            ];
-            }
-        }
-
-        $thExtra = $offering->schedules->where('loai', 'thuc_hanh')->sortBy('id')->values();
-        foreach ($thExtra as $idx => $sc) {
-            if (! $sc->thu || ($sc->tiet ?? '') === '') {
-                continue;
-            }
-            if ($sc->ngay_ap_dung) {
-                continue;
-            }
-            $sessionKey = 'sc_'.$sc->id;
-            if (isset($pausedSet[$sessionKey])) {
-                continue;
-            }
-            $d = $dateOfThu((int) $sc->thu);
-            $sessions[] = [
-                'key' => $sessionKey,
-                'loai' => 'thuc_hanh',
-                'label' => 'Thực hành (Nhóm '.($idx + 2).')',
-                'date' => $d->toDateString(),
-                'thu' => (int) $sc->thu,
-                'tiet' => (string) $sc->tiet,
-                'teacher' => $sc->teacher?->ho_ten ?? '',
-                'room' => $sc->classRoom?->ma_lop ? ($sc->classRoom->ma_lop.' - '.$sc->classRoom->ten_lop) : '',
-                'moved_from' => $sc->moved_from ?: null,
-            ];
-        }
-
-        // One-off: buổi dời/tạo thêm (có ngay_ap_dung) + buổi tạm ngưng theo ngày
-        $oneOff = $offering->schedules
-            ->filter(function ($sc) use ($weekStart, $weekEnd) {
-                if (! $sc->ngay_ap_dung) {
-                    return false;
-                }
-                $d = Carbon::parse($sc->ngay_ap_dung);
-                return $d->betweenIncluded($weekStart, $weekEnd);
-            })
-            ->sortBy('id')
-            ->values();
-        foreach ($oneOff as $sc) {
-            if (! $sc->thu || ($sc->tiet ?? '') === '') {
-                continue;
-            }
-            $d = Carbon::parse($sc->ngay_ap_dung);
-            $sessions[] = [
-                'key' => ($sc->loai === 'tam_ngung') ? ('pause_'.$sc->id) : ('one_'.$sc->id),
-                'loai' => (string) $sc->loai,
-                'label' => $sc->loai === 'tam_ngung' ? 'Tạm ngưng' : (($sc->loai === 'ly_thuyet') ? 'Lý thuyết (Dời)' : 'Thực hành (Dời)'),
-                'date' => $d->toDateString(),
-                'thu' => (int) $sc->thu,
-                'tiet' => (string) $sc->tiet,
-                'teacher' => $sc->teacher?->ho_ten ?? '',
-                'room' => $sc->classRoom?->ma_lop ? ($sc->classRoom->ma_lop.' - '.$sc->classRoom->ten_lop) : '',
-                'moved_from' => $sc->moved_from ?: null,
-                'origin_key' => $sc->origin_session_key ?: null,
-                'paused_key' => $sc->paused_session_key ?: null,
-            ];
-        }
+        $gridHtml = view('partials.week-schedule-grid', [
+            'currentDate' => $currentDate,
+            'scheduleGrid' => $scheduleGrid,
+            'rescheduleMode' => true,
+            'compact' => true,
+        ])->render();
 
         return response()->json([
             'offering' => [
@@ -274,9 +180,10 @@ class SubjectRegistrationController extends Controller
                 'start_date' => optional($offering->ngay_bat_dau_hoc)->toDateString(),
                 'end_date' => optional($offering->ngay_ket_thuc_hoc)->toDateString(),
             ],
-            'weekdays' => $weekdays,
-            'sessions' => $sessions,
             'week_start' => $weekStart->toDateString(),
+            'week_label' => $weekStart->format('d/m/Y').' → '.$weekEnd->format('d/m/Y'),
+            'grid_html' => $gridHtml,
+            'sessions' => OfferingWeekCalendar::adminWeekSessions($offering, $currentDate),
         ]);
     }
 
@@ -284,6 +191,11 @@ class SubjectRegistrationController extends Controller
     {
         $offering = CourseOffering::query()->with('schedules')->findOrFail($id);
         $hasEffectiveDateCols = Schema::hasColumn('course_offering_schedules', 'ngay_ap_dung');
+        if (! $hasEffectiveDateCols) {
+            return response()->json([
+                'message' => 'Cần chạy migration (ngay_ap_dung) để dời lịch từng buổi. Chạy: php artisan migrate',
+            ], 422);
+        }
 
         $data = $request->validate([
             'session_key' => ['required', 'string', 'max:50'],
@@ -316,7 +228,7 @@ class SubjectRegistrationController extends Controller
             return response()->json(['message' => 'Ngày dời phải sau ngày hiện tại.'], 422);
         }
 
-        // ====== Rule 50% học sinh không trùng (chỉ áp dụng khi không ép lịch) ======
+        // ====== Rule 50% học sinh không trùng (chỉ áp dụng khi không dời lịch bắt buộc) ======
         if (! $force) {
             $newSlot = ['thu' => $thu, 'periods' => CourseOfferingScheduleConflictService::parsePeriods($tiet)];
             if ($newSlot['periods'] === []) {
@@ -430,7 +342,7 @@ class SubjectRegistrationController extends Controller
                 $nonConflict = $total - $conflictCount;
                 if ($nonConflict / max(1, $total) < 0.5) {
                     return response()->json([
-                        'message' => 'Không thể dời lịch: chỉ có '.$nonConflict.'/'.$total.' học sinh không bị trùng (cần ≥ 50%). Nếu vẫn muốn, bấm "Ép lịch".',
+                        'message' => 'Không thể dời lịch: chỉ có '.$nonConflict.'/'.$total.' học sinh không bị trùng (cần ≥ 50%). Nếu vẫn muốn, bấm "Dời lịch bắt buộc".',
                     ], 422);
                 }
             }
@@ -577,6 +489,11 @@ class SubjectRegistrationController extends Controller
     {
         $offering = CourseOffering::query()->with('schedules')->findOrFail($id);
         $hasEffectiveDateCols = Schema::hasColumn('course_offering_schedules', 'ngay_ap_dung');
+        if (! $hasEffectiveDateCols) {
+            return response()->json([
+                'message' => 'Cần chạy migration (ngay_ap_dung) để tạm ngưng từng buổi. Chạy: php artisan migrate',
+            ], 422);
+        }
 
         $data = $request->validate([
             'session_key' => ['required', 'string', 'max:50'],

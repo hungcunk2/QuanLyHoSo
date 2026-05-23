@@ -43,43 +43,17 @@
         padding: 1rem 1.25rem;
         overflow-y: auto;
     }
-    #rescheduleModal.show #rsGridTable th,
-    #rescheduleModal.show #rsGridTable td {
-        min-width: 140px;
+    #rescheduleModal.show .schedule-table th,
+    #rescheduleModal.show .schedule-table td {
+        min-width: 120px;
     }
-    #rescheduleModal.show #rsGridTable th:first-child,
-    #rescheduleModal.show #rsGridTable td:first-child {
-        min-width: 90px;
-        width: 90px;
-    }
-    #rescheduleModal.show #rsGridTable tbody tr {
-        height: 260px;
-    }
-    #rescheduleModal.show .rs-slot {
-        min-height: 9rem !important;
-        padding: 1.1rem 1.1rem !important;
-        border-radius: .65rem !important;
-    }
-    #rescheduleModal.show .rs-slot .fw-semibold {
-        font-size: 1.15rem;
-        line-height: 1.25;
-    }
-    #rescheduleModal.show .rs-slot .opacity-90 {
-        font-size: 1.02rem !important;
-        line-height: 1.3;
-        margin-top: .35rem !important;
-    }
-    #rescheduleModal.show .rs-slot.border-warning {
-        box-shadow: 0 0 0 .15rem rgba(255, 193, 7, .35);
+    #rescheduleModal.show .schedule-slot--selected {
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.55) !important;
     }
 
     @media (max-width: 767.98px) {
-        #rescheduleModal.show #rsGridTable tbody tr {
-            height: 120px;
-        }
-        #rescheduleModal.show .rs-slot {
-            min-height: 5rem !important;
-            padding: 0.65rem !important;
+        #rescheduleModal.show .schedule-week-row {
+            min-height: 120px !important;
         }
 
         #registrationsTable_wrapper {
@@ -495,39 +469,8 @@
                                     <button type="button" class="btn btn-outline-secondary btn-sm" id="rsNextWeek">Tuần sau &gt;</button>
                                 </div>
                             </div>
-                            <div class="table-responsive">
-                                <table class="table table-bordered mb-0 text-center align-middle" id="rsGridTable">
-                                    <thead>
-                                        <tr style="background-color:#F3F7F9;">
-                                            <th style="width:80px;">Ca</th>
-                                            <th class="rs-day-head" data-d="0">Thứ 2</th>
-                                            <th class="rs-day-head" data-d="1">Thứ 3</th>
-                                            <th class="rs-day-head" data-d="2">Thứ 4</th>
-                                            <th class="rs-day-head" data-d="3">Thứ 5</th>
-                                            <th class="rs-day-head" data-d="4">Thứ 6</th>
-                                            <th class="rs-day-head" data-d="5">Thứ 7</th>
-                                            <th class="rs-day-head" data-d="6">CN</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr data-session="morning">
-                                            <th class="text-start ps-3 align-top pt-3" style="background-color: rgb(255,255,206);">Sáng</th>
-                                            @for($i=0;$i<7;$i++) <td class="align-top p-2 rs-cell" data-d="{{ $i }}"></td> @endfor
-                                        </tr>
-                                        <tr data-session="afternoon">
-                                            <th class="text-start ps-3 align-top pt-3" style="background-color: rgb(255,255,206);">Chiều</th>
-                                            @for($i=0;$i<7;$i++) <td class="align-top p-2 rs-cell" data-d="{{ $i }}"></td> @endfor
-                                        </tr>
-                                        <tr data-session="evening">
-                                            <th class="text-start ps-3 align-top pt-3" style="background-color: rgb(255,255,206);">Tối</th>
-                                            @for($i=0;$i<7;$i++) <td class="align-top p-2 rs-cell" data-d="{{ $i }}"></td> @endfor
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="px-3 py-2 border-top bg-white small">
-                                <span class="badge" style="background-color:#3498db;color:#fff;">&nbsp;</span> LT
-                                <span class="badge ms-3" style="background-color:#27ae60;color:#fff;">&nbsp;</span> TH
+                            <div id="rsScheduleGridHost" class="rs-schedule-host">
+                                <p class="text-muted small p-3 mb-0">Đang tải lịch…</p>
                             </div>
                         </div>
                     </div>
@@ -547,9 +490,9 @@
 
                             <div class="row g-2">
                                 <div class="col-md-6">
-                                    <label class="form-label small mb-1">Ngày dời (cố định)</label>
+                                    <label class="form-label small mb-1">Ngày học bù (chỉ buổi đó)</label>
                                     <input type="date" class="form-control form-control-sm" id="rsDateNew">
-                                    <div class="small text-muted mt-1" id="rsDateNewHint"></div>
+                                    <div class="small text-muted mt-1" id="rsDateNewHint">Buổi gốc tạm ngưng; các tuần sau vẫn học đúng lịch cố định.</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small mb-1">Tiết mới</label>
@@ -573,7 +516,7 @@
                                     Lưu dời lịch
                                 </button>
                                 <button type="button" class="btn btn-outline-danger mt-2" id="btnForceReschedule">
-                                    Ép lịch
+                                    Dời lịch bắt buộc
                                 </button>
                                 <button type="button" class="btn btn-danger mt-2" id="btnPauseSession">
                                     Tạm ngưng buổi này
@@ -620,10 +563,7 @@
             serverSide: true,
             ajax: {
                 url: '{{ route("admin.subject-registrations.data") }}',
-                type: 'GET',
-                data: function(d) {
-                    d.search = $('.dt-search').val();
-                }
+                type: 'GET'
             },
             columns: [
                 {
@@ -648,7 +588,7 @@
                     data: 'class_info',
                     name: 'class_info',
                     orderable: false,
-                    searchable: false
+                    searchable: true
                 },
                 {
                     data: 'teacher_info',
@@ -705,8 +645,13 @@
             dom: AdminDT.dom
         });
 
-        $('.dt-search').on('keyup', function() {
-            table.search(this.value).draw();
+        var searchTimer;
+        $('.dt-search').on('input', function() {
+            var value = this.value;
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function() {
+                table.search(value).draw();
+            }, 300);
         });
 
         // Xem trước các ngày học: thứ (2-8 VN) → getDay() (0=CN, 1=T2, ..., 6=T7)
@@ -1120,6 +1065,13 @@
         });
 
         // ===== Dời lịch =====
+        /** YYYY-MM-DD theo giờ local (tránh lệch 1 ngày khi dùng toISOString ở UTC+7). */
+        function toLocalDateIso(d) {
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+        }
         function fmtDate(iso) {
             if (!iso) return '';
             var p = String(iso).split('-');
@@ -1156,35 +1108,20 @@
             if (thu === 8) return 6;
             return Math.max(0, Math.min(6, (thu - 2)));
         }
-        function renderRescheduleGrid(sessions) {
-            $('#rsGridTable .rs-cell').empty();
-            (sessions || []).forEach(function(s){
-                var p = minPeriodFromTiet(s.tiet);
-                var bucket = sessionKeyFromMinPeriod(p);
-                var d = dIndexFromThuVn(parseInt(s.thu, 10));
-                var cell = $('#rsGridTable tbody tr[data-session="'+bucket+'"]').find('.rs-cell[data-d="'+d+'"]');
-                var color = s.loai === 'ly_thuyet' ? '#3498db' : (s.loai === 'tam_ngung' ? '#e74c3c' : '#27ae60');
-                var html = $('<div/>', {
-                    class: 'rs-slot mb-2 px-3 py-3 rounded-2 text-white text-start shadow-sm',
-                    css: { backgroundColor: color, minHeight: '4.75rem', cursor: 'pointer' },
-                    'data-session-key': s.key,
-                    'data-date': s.date || '',
-                    'data-thu': s.thu,
-                    'data-tiet': s.tiet,
-                    'data-label': s.label,
-                });
-                html.append($('<div/>', { class: 'fw-semibold', text: s.label }));
-                var meta = (s.room ? (s.room + ' · ') : '') + 'Tiết ' + (s.tiet || '') + (s.teacher ? (' · ' + s.teacher) : '');
-                if (s.moved_from) {
-                    meta += ' · dời từ ' + s.moved_from;
-                }
-                html.append($('<div/>', { class: 'opacity-90 mt-1', css: { fontSize: '0.875rem' }, text: meta }));
-                cell.append(html);
-            });
+        var rsWeekStartIso = null;
+        function dIndexFromIsoDate(iso, weekStartIso) {
+            if (!iso || !weekStartIso) {
+                return dIndexFromThuVn(thuVnFromIsoDate(iso) || 2);
+            }
+            var ws = new Date(String(weekStartIso) + 'T00:00:00');
+            var d = new Date(String(iso) + 'T00:00:00');
+            var diff = Math.round((d.getTime() - ws.getTime()) / 86400000);
+            if (diff >= 0 && diff <= 6) {
+                return diff;
+            }
+            return dIndexFromThuVn(thuVnFromIsoDate(iso));
         }
-
         var rescheduleModal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
-        var currentSessions = [];
         var offeringStart = null;
         var offeringEnd = null;
         var rsCurrentDate = null; // ISO date inside the week being displayed
@@ -1192,58 +1129,47 @@
         function addDaysIso(iso, days) {
             var d = new Date(String(iso) + 'T00:00:00');
             d.setDate(d.getDate() + days);
-            return d.toISOString().slice(0,10);
+            return toLocalDateIso(d);
         }
         function startOfWeekIso(iso) {
-            var d = new Date(String(iso) + 'T00:00:00'); // local-ish
+            var d = new Date(String(iso) + 'T00:00:00');
             var dow = d.getDay(); // 0..6 (Sun..Sat)
             var diff = (dow === 0 ? -6 : (1 - dow)); // Monday start
             d.setDate(d.getDate() + diff);
-            return d.toISOString().slice(0,10);
+            return toLocalDateIso(d);
         }
-        function renderWeekHeader(weekStartIso) {
-            var ws = new Date(String(weekStartIso) + 'T00:00:00');
-            var days = [];
-            for (var i=0;i<7;i++){
-                var d = new Date(ws);
-                d.setDate(ws.getDate() + i);
-                days.push(d.toISOString().slice(0,10));
-            }
-            $('#rsGridTable thead .rs-day-head').each(function(){
-                var idx = parseInt($(this).data('d'), 10);
-                var iso = days[idx];
-                var label = idx === 6 ? 'CN' : ('Thứ ' + (idx + 2));
-                $(this).html('<div class="fw-bold text-primary">'+label+'</div><div class="fw-bold text-primary">'+fmtDate(iso)+'</div>');
-            });
-            var we = days[6];
-            $('#rsWeekLabel').text(fmtDate(days[0]) + ' → ' + fmtDate(we));
-        }
-
         function loadRescheduleWeek(offeringId, dateIso) {
             var sessionsUrl = '{{ route("admin.subject-registrations.offering-sessions", ["id" => "__ID__"]) }}'
                 .replace('__ID__', String(offeringId))
                 + '?date=' + encodeURIComponent(dateIso);
             return $.get(sessionsUrl, function(resp){
                 var offering = resp.offering || {};
-                currentSessions = resp.sessions || [];
                 $('#rsOfferingName').text(offering.ten_hoc_phan || '—');
                 var meta = [offering.subject, offering.class, ('Học: ' + (offering.date_range || '—'))].filter(Boolean).join(' · ');
                 $('#rsOfferingMeta').text(meta);
                 offeringStart = offering.start_date || null;
                 offeringEnd = offering.end_date || null;
 
-                // date constraints for date_new
                 var today = new Date();
                 today.setDate(today.getDate() + 1);
-                var minIso = today.toISOString().slice(0,10);
+                var minIso = toLocalDateIso(today);
                 if (offeringStart && offeringStart > minIso) minIso = offeringStart;
                 $('#rsDateNew').attr('min', minIso);
                 if (offeringEnd) $('#rsDateNew').attr('max', offeringEnd);
-                $('#rsDateNewHint').text(offeringEnd ? ('Chỉ chọn từ ' + fmtDate(minIso) + ' đến ' + fmtDate(offeringEnd)) : ('Chỉ chọn từ ' + fmtDate(minIso)));
+                $('#rsDateNewHint').text('Buổi gốc tạm ngưng; các tuần sau vẫn học đúng lịch cố định.');
 
                 var weekStartIso = resp.week_start || startOfWeekIso(dateIso);
-                renderWeekHeader(weekStartIso);
-                renderRescheduleGrid(currentSessions);
+                rsCurrentDate = weekStartIso;
+                rsWeekStartIso = weekStartIso;
+                $('#rsWeekLabel').text(resp.week_label || '');
+
+                if (resp.grid_html) {
+                    $('#rsScheduleGridHost').html(resp.grid_html);
+                } else {
+                    $('#rsScheduleGridHost').html('<p class="text-muted small p-3 mb-0">Không có buổi học trong tuần này.</p>');
+                }
+            }).fail(function() {
+                $('#rsScheduleGridHost').html('<p class="text-danger small p-3 mb-0">Không tải được lịch học phần.</p>');
             });
         }
 
@@ -1260,7 +1186,7 @@
             $('#btnForceReschedule').prop('disabled', false);
             $('#btnPauseSession').prop('disabled', false);
 
-            rsCurrentDate = new Date().toISOString().slice(0,10);
+            rsCurrentDate = toLocalDateIso(new Date());
             $('#rsDateNew').val('');
             loadRescheduleWeek(id, rsCurrentDate).done(function(){
                 rescheduleModal.show();
@@ -1272,7 +1198,7 @@
         $('#rsPrevWeek').on('click', function () {
             var offeringId = $('#rsOfferingId').val();
             if (!offeringId) return;
-            rsCurrentDate = addDaysIso(rsCurrentDate || new Date().toISOString().slice(0,10), -7);
+            rsCurrentDate = addDaysIso(rsCurrentDate || toLocalDateIso(new Date()), -7);
             $('#rsSessionKey').val('');
             $('#rsDateOld').val('');
             $('#rsSelectedLabel').text('—');
@@ -1282,7 +1208,7 @@
         $('#rsNextWeek').on('click', function () {
             var offeringId = $('#rsOfferingId').val();
             if (!offeringId) return;
-            rsCurrentDate = addDaysIso(rsCurrentDate || new Date().toISOString().slice(0,10), 7);
+            rsCurrentDate = addDaysIso(rsCurrentDate || toLocalDateIso(new Date()), 7);
             $('#rsSessionKey').val('');
             $('#rsDateOld').val('');
             $('#rsSelectedLabel').text('—');
@@ -1290,22 +1216,25 @@
             loadRescheduleWeek(offeringId, rsCurrentDate);
         });
 
-        $(document).on('click', '.rs-slot', function() {
+        $(document).on('click', '#rsScheduleGridHost .schedule-slot', function() {
             var key = String($(this).data('session-key') || '');
-            $('.rs-slot').removeClass('border border-3 border-warning');
-            $(this).addClass('border border-3 border-warning');
+            var isPause = key.startsWith('pause_') || $(this).data('kind') === 'pause';
+            var selectable = String($(this).data('selectable')) === '1';
+            if (!selectable && !isPause) {
+                return;
+            }
+            $('#rsScheduleGridHost .schedule-slot').removeClass('schedule-slot--selected');
+            $(this).addClass('schedule-slot--selected');
             var dateOld = $(this).data('date') || '';
             $('#rsDateOld').val(String(dateOld || ''));
             var thu = parseInt($(this).data('thu'), 10);
             var tiet = $(this).data('tiet');
-            var label = $(this).data('label');
+            var label = $(this).data('pick-label') || $(this).find('.fw-semibold').first().text();
             $('#rsSessionKey').val(key);
             var thuLabel = weekdayLabelFromThuVn(thu);
             $('#rsSelectedLabel').text(label + (dateOld ? (' (' + thuLabel + ' · ' + fmtDate(dateOld) + ', tiết ' + tiet + ')') : (' (' + thuLabel + ', tiết ' + tiet + ')')));
             $('#rsTiet').val(String(tiet || ''));
             $('#rsError').addClass('d-none').text('');
-
-            var isPause = key.startsWith('pause_');
             $('#btnUnpauseSession').toggleClass('d-none', !isPause);
             $('#btnSaveReschedule').prop('disabled', isPause);
             $('#btnForceReschedule').prop('disabled', isPause);

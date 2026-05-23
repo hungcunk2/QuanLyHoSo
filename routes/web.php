@@ -74,7 +74,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     })->name('dashboard');
 
     Route::get('/reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index'])->name('reports.index');
-    Route::get('/reports/duplicates/{field}.csv', [\App\Http\Controllers\Admin\ReportsController::class, 'exportDuplicates'])->name('reports.duplicates.csv');
     Route::get('/notifications', [AdminAnnouncementController::class, 'index'])->name('notifications.index');
     Route::get('/curriculum-terms', [CurriculumTermController::class, 'index'])->name('curriculum-terms.index');
     Route::get('/curriculum-terms/create', [CurriculumTermController::class, 'create'])->name('curriculum-terms.create');

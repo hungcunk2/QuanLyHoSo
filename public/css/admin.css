@@ -676,19 +676,85 @@ table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
     background: #9ca3af;
 }
 
-/* Admin list pages — mobile */
-.admin-toolbar .filter-field {
+/* Admin list pages — toolbar: action + search + filter on one row */
+.admin-toolbar--one-row {
+    display: grid;
+    grid-template-columns: minmax(220px, auto) minmax(180px, 1fr) 200px;
+    align-items: end;
+    gap: 0.75rem 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.admin-toolbar__cell {
     min-width: 0;
+}
+
+.admin-toolbar__cell--action .form-label,
+.admin-toolbar__cell--search .form-label,
+.admin-toolbar__cell--select .form-label {
+    display: block;
+    white-space: nowrap;
+}
+
+.admin-toolbar__action-controls {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-toolbar__cell--action .form-select {
+    flex: 1 1 auto;
+    min-width: 120px;
+}
+
+.admin-toolbar__cell--action .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.admin-toolbar__cell--search .input-group,
+.admin-toolbar__cell--select .form-select {
     width: 100%;
 }
 
-.admin-toolbar .quick-action-form {
+/* Toolbar: thao tác + tìm kiếm (lớp, phòng học, …) */
+.admin-toolbar-list {
+    display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    margin-bottom: 0.25rem;
 }
 
-.admin-toolbar .quick-action-form select {
-    flex: 1 1 auto;
-    min-width: 0;
+.admin-toolbar-list__actions {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.admin-toolbar-list__actions .form-select {
+    width: auto;
+    min-width: 140px;
+    flex: 0 1 auto;
+}
+
+.admin-toolbar-list__actions .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.admin-toolbar-list__search {
+    flex: 1 1 220px;
+    max-width: 360px;
+    margin-left: auto;
+}
+
+.admin-toolbar-list__search .input-group {
+    width: 100%;
 }
 
 .admin-table-wrap .col-primary {
@@ -723,6 +789,24 @@ table.dataTable.dtr-inline.collapsed > tbody > tr > th.dtr-control:before {
     .admin-toolbar .input-group-search,
     .admin-toolbar .input-group {
         width: 100%;
+    }
+
+    .admin-toolbar--one-row {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-toolbar__action-controls {
+        width: 100%;
+    }
+
+    .admin-toolbar-list {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-toolbar-list__search {
+        max-width: none;
+        margin-left: 0;
     }
 
     .admin-card-header {

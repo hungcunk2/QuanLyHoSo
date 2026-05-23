@@ -23,37 +23,34 @@
 
 <div class="card">
     <div class="card-body">
-        <div class="row gy-3 admin-toolbar">
-            <div class="col-12 col-lg-4">
-                <form id="quick-action-form" class="form-disabled d-flex gap-2 align-items-center quick-action-form">
-                    @csrf
+        <div class="admin-toolbar admin-toolbar--one-row">
+            <form id="quick-action-form" class="form-disabled quick-action-form admin-toolbar__cell admin-toolbar__cell--action">
+                @csrf
+                <label for="quick-action-type" class="form-label small mb-1 text-muted">Thao tác</label>
+                <div class="admin-toolbar__action-controls">
                     <select name="action_type" class="form-select form-select-sm" id="quick-action-type">
-                            <option value="">No Action</option>
-                            <option value="delete">Xóa đã chọn</option>
-                        </select>
-                    <button id="quick-action-apply" class="btn btn-primary btn-sm" disabled>Áp dụng</button>
-                </form>
-            </div>
-            <div class="col-12 col-lg-8">
-                <div class="row g-2">
-                    <div class="col-12 col-sm-6 filter-field">
-                        <label for="filter-ho-ten" class="form-label small mb-1 text-muted">Tìm theo tên</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <input type="text" class="form-control" id="filter-ho-ten" placeholder="Nhập họ và tên..."
-                                aria-controls="teachersTable" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="col-12 col-sm-6 filter-field">
-                        <label for="filter-chuyen-mon" class="form-label small mb-1 text-muted">Chuyên môn</label>
-                        <select class="form-select form-select-sm" id="filter-chuyen-mon" aria-controls="teachersTable">
-                            <option value="">Tất cả chuyên môn</option>
-                            @foreach (\App\Models\Teacher::chuyenMonOptions() as $chuyenMon)
-                                <option value="{{ $chuyenMon }}">{{ $chuyenMon }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                        <option value="">No Action</option>
+                        <option value="delete">Xóa đã chọn</option>
+                    </select>
+                    <button type="button" id="quick-action-apply" class="btn btn-primary btn-sm" disabled>Áp dụng</button>
                 </div>
+            </form>
+            <div class="admin-toolbar__cell admin-toolbar__cell--search">
+                <label for="filter-ho-ten" class="form-label small mb-1 text-muted">Tìm theo tên</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="text" class="form-control" id="filter-ho-ten" placeholder="Nhập họ và tên..."
+                        aria-controls="teachersTable" autocomplete="off">
+                </div>
+            </div>
+            <div class="admin-toolbar__cell admin-toolbar__cell--select">
+                <label for="filter-chuyen-mon" class="form-label small mb-1 text-muted">Chuyên môn</label>
+                <select class="form-select form-select-sm" id="filter-chuyen-mon" aria-controls="teachersTable">
+                    <option value="">Tất cả chuyên môn</option>
+                    @foreach (\App\Models\Teacher::chuyenMonOptions() as $chuyenMon)
+                        <option value="{{ $chuyenMon }}">{{ $chuyenMon }}</option>
+                    @endforeach
+                </select>
             </div>
         </div>
 

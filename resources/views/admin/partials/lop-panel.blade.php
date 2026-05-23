@@ -1,27 +1,19 @@
 ﻿<div class="card">
     <div class="card-body">
-        <div class="row gy-3 admin-toolbar">
-            <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="col-md-12">
-                    <form id="lop-quick-action-form" class="form-disabled d-flex gap-2 align-items-center quick-action-form">
-                        @csrf
-                        <select name="action_type" class="form-select form-select-sm" id="lop-quick-action-type">
-                            <option value="">No Action</option>
-                            <option value="delete">Xóa đã chọn</option>
-                        </select>
-                        <button type="button" id="lop-quick-action-apply" class="btn btn-primary" disabled>Áp dụng</button>
-                    </form>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-4 col-xl-3">
-                <div class="d-flex align-items-center gap-3 justify-content-end">
-                    <div class="d-flex justify-content-end">
-                        <div class="input-group input-group-search ms-2">
-                            <span class="input-group-text" id="lop-search-addon"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control dt-search-lop" placeholder="Search..."
-                                aria-label="Search" aria-describedby="lop-search-addon" aria-controls="lopsTable">
-                        </div>
-                    </div>
+        <div class="admin-toolbar admin-toolbar-list">
+            <form id="lop-quick-action-form" class="form-disabled quick-action-form admin-toolbar-list__actions">
+                @csrf
+                <select name="action_type" class="form-select form-select-sm" id="lop-quick-action-type">
+                    <option value="">No Action</option>
+                    <option value="delete">Xóa đã chọn</option>
+                </select>
+                <button type="button" id="lop-quick-action-apply" class="btn btn-primary btn-sm" disabled>Áp dụng</button>
+            </form>
+            <div class="admin-toolbar-list__search">
+                <div class="input-group input-group-search">
+                    <span class="input-group-text" id="lop-search-addon"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control dt-search-lop" placeholder="Search..."
+                        aria-label="Search" aria-describedby="lop-search-addon" aria-controls="lopsTable">
                 </div>
             </div>
         </div>
