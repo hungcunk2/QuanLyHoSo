@@ -127,10 +127,15 @@ class CourseOfferingChatService
             $offerings = array_values($row['offerings']);
             usort($offerings, fn (array $a, array $b) => strcmp($a['label'], $b['label']));
 
+            $labels = array_column($offerings, 'label');
+            $summaryLabel = count($offerings) === 1
+                ? $labels[0]
+                : implode(' · ', $labels);
+
             $options[] = [
                 'teacher_id' => $row['teacher_id'],
                 'teacher_name' => $row['teacher_name'],
-                'label' => '',
+                'label' => $summaryLabel,
                 'course_offering_id' => $offerings[0]['course_offering_id'],
                 'offerings' => $offerings,
             ];
