@@ -70,7 +70,15 @@ class CourseOfferingChatService
     }
 
     /**
-     * @return list<array{course_offering_id:int, teacher_id:int, label:string, teacher_name:string}>
+     * Một dòng / giáo viên (gộp nhiều học phần cùng kỳ).
+     *
+     * @return list<array{
+     *     teacher_id: int,
+     *     teacher_name: string,
+     *     label: string,
+     *     course_offering_id: int,
+     *     offerings: list<array{course_offering_id: int, label: string}>
+     * }>
      */
     public function newChatOptionsForStudent(Student $student): array
     {
@@ -81,7 +89,8 @@ class CourseOfferingChatService
             ->with(['courseOffering.subject', 'courseOffering.schedules'])
             ->get();
 
-        $options = [];
+        /** @var array<int, array{teacher_id: int, teacher_name: string, offerings: array<int, array{course_offering_id: int, label: string}>}> $byTeacher */
+        $byTeacher = [];
 
         foreach ($registrations as $registration) {
             $offering = $registration->courseOffering;
@@ -98,16 +107,41 @@ class CourseOfferingChatService
             $teachers = Teacher::query()->whereIn('id', $teacherIds)->orderBy('ho_ten')->get();
 
             foreach ($teachers as $teacher) {
-                $options[] = [
+                $tid = (int) $teacher->id;
+                if (! isset($byTeacher[$tid])) {
+                    $byTeacher[$tid] = [
+                        'teacher_id' => $tid,
+                        'teacher_name' => $teacher->ho_ten,
+                        'offerings' => [],
+                    ];
+                }
+                $byTeacher[$tid]['offerings'][(int) $offering->id] = [
                     'course_offering_id' => (int) $offering->id,
-                    'teacher_id' => (int) $teacher->id,
                     'label' => $offeringLabel,
-                    'teacher_name' => $teacher->ho_ten,
                 ];
             }
         }
 
-        usort($options, fn (array $a, array $b) => strcmp($a['label'].$a['teacher_name'], $b['label'].$b['teacher_name']));
+        $options = [];
+        foreach ($byTeacher as $row) {
+            $offerings = array_values($row['offerings']);
+            usort($offerings, fn (array $a, array $b) => strcmp($a['label'], $b['label']));
+
+            $labels = array_column($offerings, 'label');
+            $summaryLabel = count($offerings) === 1
+                ? $labels[0]
+                : count($offerings).' học phần · '.implode(' · ', $labels);
+
+            $options[] = [
+                'teacher_id' => $row['teacher_id'],
+                'teacher_name' => $row['teacher_name'],
+                'label' => $summaryLabel,
+                'course_offering_id' => $offerings[0]['course_offering_id'],
+                'offerings' => $offerings,
+            ];
+        }
+
+        usort($options, fn (array $a, array $b) => strcmp($a['teacher_name'], $b['teacher_name']));
 
         return $options;
     }

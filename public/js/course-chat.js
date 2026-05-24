@@ -29,6 +29,8 @@
     const newChatPickerEmptyEl = document.getElementById('newChatPickerEmpty');
     const newChatModalEl = document.getElementById('newChatModal');
     const newChatStartBtn = document.getElementById('newChatStartBtn');
+    const newChatOfferingChoiceEl = document.getElementById('newChatOfferingChoice');
+    const newChatOfferingButtonsEl = document.getElementById('newChatOfferingButtons');
 
     let activeConversationId = null;
     let lastMessageId = 0;
@@ -361,6 +363,64 @@
         }
     }
 
+    function parseOfferingsFromItem(item) {
+        try {
+            const raw = item?.dataset?.offerings || '[]';
+            const list = JSON.parse(raw);
+            return Array.isArray(list) ? list : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function setSelectedOfferingValue(courseOfferingId, peerId) {
+        if (!newChatSelectedValueEl || !courseOfferingId || !peerId) {
+            return;
+        }
+        newChatSelectedValueEl.value = String(courseOfferingId) + ':' + String(peerId);
+    }
+
+    function renderOfferingChoiceButtons(item) {
+        if (!newChatOfferingChoiceEl || !newChatOfferingButtonsEl) {
+            return;
+        }
+
+        const offerings = parseOfferingsFromItem(item);
+        const peerId = parseInt(item.dataset.peerId || '0', 10);
+
+        newChatOfferingButtonsEl.innerHTML = '';
+
+        if (offerings.length <= 1) {
+            newChatOfferingChoiceEl.hidden = true;
+            if (offerings.length === 1) {
+                setSelectedOfferingValue(offerings[0].course_offering_id, peerId);
+            } else if (item.dataset.value) {
+                newChatSelectedValueEl.value = item.dataset.value;
+            }
+            return;
+        }
+
+        newChatOfferingChoiceEl.hidden = false;
+        if (newChatSelectedValueEl) {
+            newChatSelectedValueEl.value = '';
+        }
+
+        offerings.forEach(function (offering) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-sm btn-outline-primary course-chat__offering-btn';
+            btn.textContent = offering.label || ('Học phần #' + offering.course_offering_id);
+            btn.addEventListener('click', function () {
+                newChatOfferingButtonsEl.querySelectorAll('.course-chat__offering-btn').forEach(function (b) {
+                    b.classList.remove('active');
+                });
+                btn.classList.add('active');
+                setSelectedOfferingValue(offering.course_offering_id, peerId);
+            });
+            newChatOfferingButtonsEl.appendChild(btn);
+        });
+    }
+
     function selectNewChatItem(item) {
         if (!item || !newChatPickerEl) {
             return;
@@ -371,9 +431,7 @@
         });
         item.classList.add('is-selected');
 
-        if (newChatSelectedValueEl) {
-            newChatSelectedValueEl.value = item.dataset.value || '';
-        }
+        renderOfferingChoiceButtons(item);
     }
 
     function resetNewChatPicker() {
@@ -382,6 +440,12 @@
         }
         if (newChatSelectedValueEl) {
             newChatSelectedValueEl.value = '';
+        }
+        if (newChatOfferingChoiceEl) {
+            newChatOfferingChoiceEl.hidden = true;
+        }
+        if (newChatOfferingButtonsEl) {
+            newChatOfferingButtonsEl.innerHTML = '';
         }
         if (newChatPickerEl) {
             newChatPickerEl.querySelectorAll('.course-chat__picker-item').forEach(function (item) {
@@ -409,7 +473,13 @@
     newChatStartBtn?.addEventListener('click', async function () {
         const raw = newChatSelectedValueEl?.value;
         if (!raw) {
-            alert('Vui lòng chọn người nhận trong danh sách.');
+            const selected = newChatPickerEl?.querySelector('.course-chat__picker-item.is-selected');
+            const offerings = selected ? parseOfferingsFromItem(selected) : [];
+            if (offerings.length > 1) {
+                alert('Vui lòng chọn học phần cần nhắn bên dưới.');
+            } else {
+                alert('Vui lòng chọn người nhận trong danh sách.');
+            }
             return;
         }
 
