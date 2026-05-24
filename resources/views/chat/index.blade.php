@@ -151,9 +151,7 @@
                                     'label' => $opt['label'],
                                 ]];
                                 $peerId = $chatRole === 'student' ? $opt['teacher_id'] : $opt['student_id'];
-                                $pickerValue = count($offerings) === 1
-                                    ? $offerings[0]['course_offering_id'].':'.$peerId
-                                    : '';
+                                $pickerValue = $offerings[0]['course_offering_id'].':'.$peerId;
                                 $searchLabels = implode(' ', array_column($offerings, 'label'));
                                 $searchHaystack = mb_strtolower($peerName.' '.$searchLabels, 'UTF-8');
                             @endphp
@@ -165,13 +163,11 @@
                                 data-search="{{ e($searchHaystack) }}"
                             >
                                 <span class="course-chat__picker-name">{{ $peerName }}</span>
-                                <span class="course-chat__picker-meta">{{ $opt['label'] }}</span>
+                                @if(!empty($opt['label']))
+                                    <span class="course-chat__picker-meta">{{ $opt['label'] }}</span>
+                                @endif
                             </button>
                         @endforeach
-                    </div>
-                    <div class="course-chat__offering-choice mt-2" id="newChatOfferingChoice" hidden>
-                        <div class="small text-muted mb-1">Chọn học phần cần nhắn:</div>
-                        <div class="d-flex flex-wrap gap-2" id="newChatOfferingButtons"></div>
                     </div>
                     <p class="text-muted small mt-2 mb-0" id="newChatPickerEmpty" hidden>Không tìm thấy kết quả phù hợp.</p>
                 @endif
@@ -180,7 +176,6 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                     <button type="button" class="btn btn-primary" id="newChatStartBtn">Bắt đầu</button>
-                    <p class="small text-muted w-100 mb-0 mt-2">Đã từng nhắn: chọn tên → Bắt đầu (hoặc chọn học phần nếu dạy nhiều môn).</p>
                 </div>
             @endif
         </div>
