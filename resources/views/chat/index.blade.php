@@ -115,18 +115,6 @@
                         @endif
                     </p>
                 @else
-                    @php
-                        $newChatOfferingsMap = [];
-                        foreach ($newChatOptions as $opt) {
-                            $mapPeerId = $chatRole === 'student' ? $opt['teacher_id'] : $opt['student_id'];
-                            $newChatOfferingsMap[$mapPeerId] = $opt['offerings'] ?? [[
-                                'course_offering_id' => $opt['course_offering_id'],
-                                'label' => $opt['label'],
-                            ]];
-                        }
-                    @endphp
-                    <script type="application/json" id="chatExistingByPeer">@json($existingConversationsByPeer ?? [])</script>
-                    <script type="application/json" id="newChatOfferingsMap">@json($newChatOfferingsMap)</script>
                     <label class="form-label" for="newChatSearch">
                         @if($chatRole === 'student')
                             Tìm giáo viên theo tên hoặc học phần
@@ -162,7 +150,8 @@
                                 class="course-chat__picker-item"
                                 data-value="{{ $pickerValue }}"
                                 data-peer-id="{{ $peerId }}"
-                                data-search="{{ e($searchHaystack) }}"
+                                data-offerings="{{ e(json_encode($offerings, JSON_UNESCAPED_UNICODE)) }}"
+                                data-search="{{ $searchHaystack }}"
                             >
                                 <span class="course-chat__picker-name">{{ $peerName }}</span>
                                 <span class="course-chat__picker-meta">{{ $opt['label'] }}</span>

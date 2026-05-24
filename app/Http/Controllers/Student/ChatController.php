@@ -33,7 +33,6 @@ class ChatController extends Controller
         return view('chat.index', [
             'chatRole' => 'student',
             'conversations' => $conversations,
-            'existingConversationsByPeer' => $this->existingConversationsByPeer('student', (int) $student->id),
             'newChatOptions' => $newChatOptions,
             'startUrl' => route('student.chat.start'),
             'messagesUrlTemplate' => url('/student/chat/conversations/__ID__/messages'),
