@@ -16,7 +16,6 @@
     data-messages-url-template="{{ $messagesUrlTemplate }}"
     data-send-url-template="{{ $sendUrlTemplate }}"
     data-csrf="{{ csrf_token() }}"
-    data-existing-by-peer="{{ e(json_encode($existingConversationsByPeer ?? [], JSON_UNESCAPED_UNICODE)) }}"
 >
     <div class="course-chat__shell card border-0 shadow-sm overflow-hidden">
     <div class="course-chat__layout">
@@ -116,6 +115,18 @@
                         @endif
                     </p>
                 @else
+                    @php
+                        $newChatOfferingsMap = [];
+                        foreach ($newChatOptions as $opt) {
+                            $mapPeerId = $chatRole === 'student' ? $opt['teacher_id'] : $opt['student_id'];
+                            $newChatOfferingsMap[$mapPeerId] = $opt['offerings'] ?? [[
+                                'course_offering_id' => $opt['course_offering_id'],
+                                'label' => $opt['label'],
+                            ]];
+                        }
+                    @endphp
+                    <script type="application/json" id="chatExistingByPeer">@json($existingConversationsByPeer ?? [])</script>
+                    <script type="application/json" id="newChatOfferingsMap">@json($newChatOfferingsMap)</script>
                     <label class="form-label" for="newChatSearch">
                         @if($chatRole === 'student')
                             Tìm giáo viên theo tên hoặc học phần
@@ -151,8 +162,7 @@
                                 class="course-chat__picker-item"
                                 data-value="{{ $pickerValue }}"
                                 data-peer-id="{{ $peerId }}"
-                                data-offerings="{{ e(json_encode($offerings, JSON_UNESCAPED_UNICODE)) }}"
-                                data-search="{{ $searchHaystack }}"
+                                data-search="{{ e($searchHaystack) }}"
                             >
                                 <span class="course-chat__picker-name">{{ $peerName }}</span>
                                 <span class="course-chat__picker-meta">{{ $opt['label'] }}</span>

@@ -10,11 +10,22 @@
     const sendUrlTemplate = app.dataset.sendUrlTemplate;
     const csrfToken = app.dataset.csrf || document.querySelector('meta[name="csrf-token"]')?.content;
     let existingByPeer = {};
-    try {
-        existingByPeer = JSON.parse(app.dataset.existingByPeer || '{}');
-    } catch (e) {
-        existingByPeer = {};
+    let offeringsByPeer = {};
+
+    function readJsonScript(id) {
+        const el = document.getElementById(id);
+        if (!el || !el.textContent) {
+            return null;
+        }
+        try {
+            return JSON.parse(el.textContent);
+        } catch (e) {
+            return null;
+        }
     }
+
+    existingByPeer = readJsonScript('chatExistingByPeer') || {};
+    offeringsByPeer = readJsonScript('newChatOfferingsMap') || {};
 
     const listEl = document.getElementById('chatConversationList');
     const placeholderEl = document.getElementById('chatPlaceholder');
@@ -356,7 +367,7 @@
         let visibleCount = 0;
 
         newChatPickerEl.querySelectorAll('.course-chat__picker-item').forEach(function (item) {
-            const haystack = foldSearchText(item.dataset.search || '');
+            const haystack = foldSearchText(item.dataset.search || item.textContent || '');
             const match = query === '' || haystack.includes(query);
             item.hidden = !match;
             if (match) {
@@ -370,13 +381,9 @@
     }
 
     function parseOfferingsFromItem(item) {
-        try {
-            const raw = item?.dataset?.offerings || '[]';
-            const list = JSON.parse(raw);
-            return Array.isArray(list) ? list : [];
-        } catch (e) {
-            return [];
-        }
+        const peerId = String(item?.dataset?.peerId || '');
+        const list = offeringsByPeer[peerId] ?? offeringsByPeer[parseInt(peerId, 10)];
+        return Array.isArray(list) ? list : [];
     }
 
     function getExistingForPeer(peerId) {
@@ -487,15 +494,6 @@
             el.classList.remove('is-selected');
         });
         item.classList.add('is-selected');
-
-        const peerId = parseInt(item.dataset.peerId || '0', 10);
-        const existing = getExistingForPeer(peerId);
-
-        if (existing.length === 1) {
-            openExistingConversation(existing[0].conversation_id);
-            return;
-        }
-
         renderOfferingChoiceButtons(item);
     }
 
@@ -534,7 +532,10 @@
         selectNewChatItem(item);
     });
 
-    newChatModalEl?.addEventListener('shown.bs.modal', resetNewChatPicker);
+    newChatModalEl?.addEventListener('shown.bs.modal', function () {
+        resetNewChatPicker();
+        filterNewChatPicker();
+    });
 
     newChatStartBtn?.addEventListener('click', async function () {
         const selected = newChatPickerEl?.querySelector('.course-chat__picker-item.is-selected');
