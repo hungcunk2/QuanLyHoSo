@@ -115,6 +115,18 @@
                         @endif
                     </p>
                 @else
+                    @php
+                        $newChatOfferingsMap = [];
+                        foreach ($newChatOptions as $opt) {
+                            $mapPeerId = $chatRole === 'student' ? $opt['teacher_id'] : $opt['student_id'];
+                            $newChatOfferingsMap[$mapPeerId] = $opt['offerings'] ?? [[
+                                'course_offering_id' => $opt['course_offering_id'],
+                                'label' => $opt['label'],
+                            ]];
+                        }
+                    @endphp
+                    <script type="application/json" id="chatExistingByPeer">@json($existingConversationsByPeer ?? [])</script>
+                    <script type="application/json" id="newChatOfferingsMap">@json($newChatOfferingsMap)</script>
                     <label class="form-label" for="newChatSearch">
                         @if($chatRole === 'student')
                             Tìm giáo viên theo tên hoặc học phần
@@ -150,8 +162,7 @@
                                 class="course-chat__picker-item"
                                 data-value="{{ $pickerValue }}"
                                 data-peer-id="{{ $peerId }}"
-                                data-offerings="{{ e(json_encode($offerings, JSON_UNESCAPED_UNICODE)) }}"
-                                data-search="{{ $searchHaystack }}"
+                                data-search="{{ e($searchHaystack) }}"
                             >
                                 <span class="course-chat__picker-name">{{ $peerName }}</span>
                                 <span class="course-chat__picker-meta">{{ $opt['label'] }}</span>
@@ -169,6 +180,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                     <button type="button" class="btn btn-primary" id="newChatStartBtn">Bắt đầu</button>
+                    <p class="small text-muted w-100 mb-0 mt-2">Đã từng nhắn: chọn tên → Bắt đầu (hoặc chọn học phần nếu dạy nhiều môn).</p>
                 </div>
             @endif
         </div>

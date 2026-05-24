@@ -10,6 +10,21 @@
     const sendUrlTemplate = app.dataset.sendUrlTemplate;
     const csrfToken = app.dataset.csrf || document.querySelector('meta[name="csrf-token"]')?.content;
 
+    function readJsonScript(id) {
+        const el = document.getElementById(id);
+        if (!el || !el.textContent.trim()) {
+            return null;
+        }
+        try {
+            return JSON.parse(el.textContent);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    const offeringsByPeer = readJsonScript('newChatOfferingsMap') || {};
+    const existingByPeer = readJsonScript('chatExistingByPeer') || {};
+
     const listEl = document.getElementById('chatConversationList');
     const placeholderEl = document.getElementById('chatPlaceholder');
     const activePanelEl = document.getElementById('chatActivePanel');
@@ -350,7 +365,7 @@
         let visibleCount = 0;
 
         newChatPickerEl.querySelectorAll('.course-chat__picker-item').forEach(function (item) {
-            const haystack = foldSearchText(item.dataset.search || '');
+            const haystack = foldSearchText(item.dataset.search || item.textContent || '');
             const match = query === '' || haystack.includes(query);
             item.hidden = !match;
             if (match) {
@@ -364,13 +379,36 @@
     }
 
     function parseOfferingsFromItem(item) {
-        try {
-            const raw = item?.dataset?.offerings || '[]';
-            const list = JSON.parse(raw);
-            return Array.isArray(list) ? list : [];
-        } catch (e) {
-            return [];
+        const peerId = String(item?.dataset?.peerId || '');
+        const list = offeringsByPeer[peerId] ?? offeringsByPeer[parseInt(peerId, 10)];
+        return Array.isArray(list) ? list : [];
+    }
+
+    function getExistingForPeer(peerId) {
+        const list = existingByPeer[String(peerId)] ?? existingByPeer[peerId];
+        return Array.isArray(list) ? list : [];
+    }
+
+    function hideNewChatModal() {
+        const modalEl = document.getElementById('newChatModal');
+        if (modalEl && window.bootstrap) {
+            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
         }
+    }
+
+    function openExistingConversation(conversationId) {
+        if (!conversationId) {
+            return;
+        }
+        hideNewChatModal();
+        resetNewChatPicker();
+        openConversation(conversationId);
+    }
+
+    function findExistingConversation(peerId, courseOfferingId) {
+        return getExistingForPeer(peerId).find(function (row) {
+            return row.course_offering_id === courseOfferingId;
+        });
     }
 
     function setSelectedOfferingValue(courseOfferingId, peerId) {
@@ -385,8 +423,9 @@
             return;
         }
 
-        const offerings = parseOfferingsFromItem(item);
         const peerId = parseInt(item.dataset.peerId || '0', 10);
+        const offerings = parseOfferingsFromItem(item);
+        const existing = getExistingForPeer(peerId);
 
         newChatOfferingButtonsEl.innerHTML = '';
 
@@ -406,11 +445,19 @@
         }
 
         offerings.forEach(function (offering) {
+            const hadChat = existing.some(function (row) {
+                return row.course_offering_id === offering.course_offering_id;
+            });
             const btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = 'btn btn-sm btn-outline-primary course-chat__offering-btn';
-            btn.textContent = offering.label || ('Học phần #' + offering.course_offering_id);
+            btn.className = 'btn btn-sm ' + (hadChat ? 'btn-outline-success' : 'btn-outline-primary') + ' course-chat__offering-btn';
+            btn.textContent = (offering.label || ('Học phần #' + offering.course_offering_id)) + (hadChat ? ' (đã có tin)' : '');
             btn.addEventListener('click', function () {
+                const row = findExistingConversation(peerId, offering.course_offering_id);
+                if (row) {
+                    openExistingConversation(row.conversation_id);
+                    return;
+                }
                 newChatOfferingButtonsEl.querySelectorAll('.course-chat__offering-btn').forEach(function (b) {
                     b.classList.remove('active');
                 });
@@ -468,15 +515,25 @@
         selectNewChatItem(item);
     });
 
-    newChatModalEl?.addEventListener('shown.bs.modal', resetNewChatPicker);
+    newChatModalEl?.addEventListener('shown.bs.modal', function () {
+        resetNewChatPicker();
+        filterNewChatPicker();
+    });
 
     newChatStartBtn?.addEventListener('click', async function () {
+        const selected = newChatPickerEl?.querySelector('.course-chat__picker-item.is-selected');
+        const peerId = selected ? parseInt(selected.dataset.peerId || '0', 10) : 0;
+
         const raw = newChatSelectedValueEl?.value;
         if (!raw) {
-            const selected = newChatPickerEl?.querySelector('.course-chat__picker-item.is-selected');
+            const existing = peerId ? getExistingForPeer(peerId) : [];
+            if (existing.length === 1) {
+                openExistingConversation(existing[0].conversation_id);
+                return;
+            }
             const offerings = selected ? parseOfferingsFromItem(selected) : [];
-            if (offerings.length > 1) {
-                alert('Vui lòng chọn học phần cần nhắn bên dưới.');
+            if (offerings.length > 1 || existing.length > 1) {
+                alert('Vui lòng chọn học phần bên dưới (môn đã có tin sẽ mở hội thoại cũ).');
             } else {
                 alert('Vui lòng chọn người nhận trong danh sách.');
             }
@@ -485,13 +542,19 @@
 
         const parts = raw.split(':');
         const courseOfferingId = parseInt(parts[0], 10);
-        const peerId = parseInt(parts[1], 10);
+        const peerIdFromValue = parseInt(parts[1], 10);
+
+        const existingRow = findExistingConversation(peerIdFromValue, courseOfferingId);
+        if (existingRow) {
+            openExistingConversation(existingRow.conversation_id);
+            return;
+        }
 
         const payload = { course_offering_id: courseOfferingId };
         if (role === 'student') {
-            payload.teacher_id = peerId;
+            payload.teacher_id = peerIdFromValue;
         } else {
-            payload.student_id = peerId;
+            payload.student_id = peerIdFromValue;
         }
 
         newChatStartBtn.disabled = true;
@@ -503,12 +566,7 @@
             }
 
             await ensureListItem(conversationId);
-
-            const modalEl = document.getElementById('newChatModal');
-            if (modalEl && window.bootstrap) {
-                bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-            }
-
+            hideNewChatModal();
             openConversation(conversationId);
         } finally {
             newChatStartBtn.disabled = false;

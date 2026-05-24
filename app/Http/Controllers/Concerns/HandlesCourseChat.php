@@ -95,6 +95,34 @@ trait HandlesCourseChat
         });
     }
 
+    /**
+     * @return array<string, list<array{conversation_id: int, course_offering_id: int}>>
+     */
+    protected function existingConversationsByPeer(string $role, int $profileId): array
+    {
+        $query = ChatConversation::query()->orderByDesc('updated_at');
+
+        if ($role === 'student') {
+            $query->where('student_id', $profileId);
+        } else {
+            $query->where('teacher_id', $profileId);
+        }
+
+        $map = [];
+        foreach ($query->get(['id', 'student_id', 'teacher_id', 'course_offering_id']) as $conversation) {
+            $peerKey = $role === 'student'
+                ? (string) $conversation->teacher_id
+                : (string) $conversation->student_id;
+
+            $map[$peerKey][] = [
+                'conversation_id' => (int) $conversation->id,
+                'course_offering_id' => (int) $conversation->course_offering_id,
+            ];
+        }
+
+        return $map;
+    }
+
     public function startConversation(Request $request): JsonResponse
     {
         $role = $this->chatRole();
