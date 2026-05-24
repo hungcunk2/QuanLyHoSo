@@ -16,6 +16,7 @@
     data-messages-url-template="{{ $messagesUrlTemplate }}"
     data-send-url-template="{{ $sendUrlTemplate }}"
     data-csrf="{{ csrf_token() }}"
+    data-existing-by-peer="{{ e(json_encode($existingConversationsByPeer ?? [], JSON_UNESCAPED_UNICODE)) }}"
 >
     <div class="course-chat__shell card border-0 shadow-sm overflow-hidden">
     <div class="course-chat__layout">
