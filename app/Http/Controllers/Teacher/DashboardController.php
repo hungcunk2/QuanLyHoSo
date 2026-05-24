@@ -313,8 +313,9 @@ class DashboardController extends Controller
             ->where('course_offering_id', $courseOffering->id)
             ->where('status', '!=', 'cancelled')
             ->with('student')
-            ->orderBy('created_at')
-            ->get();
+            ->get()
+            ->sortBy(fn ($reg) => mb_strtolower($reg->student?->ho_ten ?? 'zzz'))
+            ->values();
 
         $lopNameByCode = \App\Models\Lop::query()->pluck('ten_lop', 'ma_lop')->all();
 
