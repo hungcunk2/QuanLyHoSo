@@ -20,12 +20,18 @@ class Subject extends Model
     protected $fillable = [
         'ma_mon_hoc',
         'ten_mon_hoc',
+        'mon_tien_quyet_id',
         'so_tin_chi',
         'so_tiet_ly_thuyet',
         'so_tiet_thuc_hanh',
         'nhom_thuc_hanh',
         'so_tc_bat_buoc_cua_nhom',
     ];
+
+    public function monTienQuyet()
+    {
+        return $this->belongsTo(self::class, 'mon_tien_quyet_id');
+    }
 
     public function curriculumTerms()
     {

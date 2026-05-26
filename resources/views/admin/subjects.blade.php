@@ -60,14 +60,15 @@
             <table id="subjectsTable" class="table table-striped border w-100 mb-0 admin-dt-table">
                 <colgroup>
                     <col style="width: 3%">
+                    <col style="width: 9%">
+                    <col style="width: 18%">
+                    <col style="width: 16%">
+                    <col style="width: 6%">
+                    <col style="width: 8%">
+                    <col style="width: 8%">
+                    <col style="width: 8%">
                     <col style="width: 10%">
-                    <col style="width: 22%">
-                    <col style="width: 7%">
-                    <col style="width: 9%">
-                    <col style="width: 9%">
-                    <col style="width: 9%">
-                    <col style="width: 12%">
-                    <col style="width: 11%">
+                    <col style="width: 10%">
                 </colgroup>
                 <thead>
                     <tr>
@@ -76,6 +77,7 @@
                         </th>
                         <th>Mã môn học</th>
                         <th>Tên môn học</th>
+                        <th>Môn tiên quyết</th>
                         <th>Số tín chỉ</th>
                         <th>Số tiết lý thuyết</th>
                         <th>Số tiết thực hành</th>
@@ -108,6 +110,12 @@
                     <div class="mb-3">
                         <label for="create_ten_mon_hoc" class="form-label">Tên môn học <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="create_ten_mon_hoc" name="ten_mon_hoc" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="create_mon_tien_quyet_id" class="form-label">Môn tiên quyết</label>
+                        <select class="form-select" id="create_mon_tien_quyet_id" name="mon_tien_quyet_id">
+                            <option value="">— Không có —</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="create_so_tin_chi" class="form-label">Số tín chỉ <span class="text-danger">*</span></label>
@@ -157,6 +165,12 @@
                     <div class="mb-3">
                         <label for="edit_ten_mon_hoc" class="form-label">Tên môn học <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="edit_ten_mon_hoc" name="ten_mon_hoc" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_mon_tien_quyet_id" class="form-label">Môn tiên quyết</label>
+                        <select class="form-select" id="edit_mon_tien_quyet_id" name="mon_tien_quyet_id">
+                            <option value="">— Không có —</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="edit_so_tin_chi" class="form-label">Số tín chỉ <span class="text-danger">*</span></label>
@@ -211,7 +225,26 @@
 
 @push('scripts')
 <script>
+    var SUBJECT_OPTIONS = @json($subjectOptions->map(fn ($s) => [
+        'id' => $s->id,
+        'label' => $s->ma_mon_hoc.' - '.$s->ten_mon_hoc,
+    ])->values());
+
+    function fillPrerequisiteSelect($select, excludeId, selectedId) {
+        var html = '<option value="">— Không có —</option>';
+        SUBJECT_OPTIONS.forEach(function(opt) {
+            if (excludeId && String(opt.id) === String(excludeId)) {
+                return;
+            }
+            var selected = selectedId && String(opt.id) === String(selectedId) ? ' selected' : '';
+            html += '<option value="' + opt.id + '"' + selected + '>' + $('<div>').text(opt.label).html() + '</option>';
+        });
+        $select.html(html);
+    }
+
     $(document).ready(function() {
+        fillPrerequisiteSelect($('#create_mon_tien_quyet_id'), null, null);
+
         var table = $('#subjectsTable').DataTable({
             processing: true,
             serverSide: true,
@@ -234,6 +267,12 @@
                 {
                     data: 'ten_mon_hoc',
                     name: 'ten_mon_hoc'
+                },
+                {
+                    data: 'mon_tien_quyet_label',
+                    name: 'mon_tien_quyet_label',
+                    orderable: false,
+                    searchable: false
                 },
                 {
                     data: 'so_tin_chi',
@@ -297,6 +336,11 @@
         // Reset create form when modal is closed
         $('#createSubjectModal').on('hidden.bs.modal', function() {
             $('#createSubjectForm')[0].reset();
+            fillPrerequisiteSelect($('#create_mon_tien_quyet_id'), null, null);
+        });
+
+        $('#createSubjectModal').on('show.bs.modal', function() {
+            fillPrerequisiteSelect($('#create_mon_tien_quyet_id'), null, null);
         });
 
         // Create form submit
@@ -311,9 +355,18 @@
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                success: function(response) {
+                    success: function(response) {
                     var createModal = bootstrap.Modal.getInstance(document.getElementById('createSubjectModal'));
                     createModal.hide();
+                    if (response.data) {
+                        SUBJECT_OPTIONS.push({
+                            id: response.data.id,
+                            label: response.data.ma_mon_hoc + ' - ' + response.data.ten_mon_hoc
+                        });
+                        SUBJECT_OPTIONS.sort(function(a, b) {
+                            return a.label.localeCompare(b.label, 'vi');
+                        });
+                    }
                     table.ajax.reload();
                     alert('Tạo môn học mới thành công!');
                 },
@@ -332,7 +385,8 @@
                                           field === 'so_tiet_ly_thuyet' ? 'Số tiết lý thuyết' :
                                           field === 'so_tiet_thuc_hanh' ? 'Số tiết thực hành' :
                                           field === 'nhom_thuc_hanh' ? 'Nhóm tự chọn' :
-                                          field === 'so_tc_bat_buoc_cua_nhom' ? 'Số TC bắt buộc của nhóm' : field;
+                                          field === 'so_tc_bat_buoc_cua_nhom' ? 'Số TC bắt buộc của nhóm' :
+                                          field === 'mon_tien_quyet_id' ? 'Môn tiên quyết' : field;
                             errorMsg += '• ' + fieldName + ': ' + errors[field][0] + '\n';
                         }
                     }
@@ -357,7 +411,12 @@
                     $('#edit_so_tiet_thuc_hanh').val(response.so_tiet_thuc_hanh ?? 0);
                     $('#edit_nhom_thuc_hanh').val((response.nhom_thuc_hanh ?? 0) > 0 ? response.nhom_thuc_hanh : '');
                     $('#edit_so_tc_bat_buoc_cua_nhom').val((response.so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? response.so_tc_bat_buoc_cua_nhom : '');
-                    
+                    fillPrerequisiteSelect(
+                        $('#edit_mon_tien_quyet_id'),
+                        response.id,
+                        response.mon_tien_quyet_id || null
+                    );
+
                     var editModal = new bootstrap.Modal(document.getElementById('editSubjectModal'));
                     editModal.show();
                 },

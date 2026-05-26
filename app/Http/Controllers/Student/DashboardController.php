@@ -11,6 +11,7 @@ use App\Models\Student;
 use App\Models\User;
 use App\Services\CourseOfferingScheduleConflictService;
 use App\Support\OfferingWeekCalendar;
+use App\Support\StudentPrerequisiteChecker;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -642,7 +643,7 @@ class DashboardController extends Controller
             'subjectRegistrations as registrations_count' => function ($q) {
                 $q->where('status', '!=', 'cancelled');
             }
-        ])->with(['schedules', 'subject'])->findOrFail($courseOfferingId);
+        ])->with(['schedules', 'subject.monTienQuyet'])->findOrFail($courseOfferingId);
 
         if ($offering->is_cancelled) {
             return back()->with('error', $offering->cancel_reason ?: 'Học phần đã bị hủy.');
@@ -659,6 +660,14 @@ class DashboardController extends Controller
         $conLai = (int) $offering->si_so_lop - (int) $offering->registrations_count;
         if ($conLai <= 0) {
             return back()->with('error', 'Lớp đã đủ sĩ số.');
+        }
+
+        $prerequisiteMessage = StudentPrerequisiteChecker::prerequisiteBlockMessage(
+            $student->id,
+            $offering->subject
+        );
+        if ($prerequisiteMessage) {
+            return back()->with('error', $prerequisiteMessage);
         }
 
         // Chặn đăng ký trùng cùng môn học trong cùng học kỳ/khóa học
