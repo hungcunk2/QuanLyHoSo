@@ -495,14 +495,10 @@ class SubjectRegistrationController extends Controller
             return response()->json(['message' => 'Buổi cần dời không hợp lệ.'], 422);
         }
 
-        // Reload & chặn nếu tự trùng lịch nội bộ (cùng thứ giao nhau tiết)
+        // Chỉ kiểm tra buổi lặp hàng tuần (không tính buổi học bù theo ngày vừa tạo).
         $offering->load('schedules');
-        $slots = CourseOfferingScheduleConflictService::slotsFromRequestArrays(
-            [$offering->thu_ly_thuyet, ...collect($offering->schedules ?? [])->where('loai', 'ly_thuyet')->pluck('thu')->all()],
-            [$offering->tiet_ly_thuyet, ...collect($offering->schedules ?? [])->where('loai', 'ly_thuyet')->pluck('tiet')->all()],
-            [$offering->thu_thuc_hanh, ...collect($offering->schedules ?? [])->where('loai', 'thuc_hanh')->pluck('thu')->all()],
-            [$offering->tiet_thuc_hanh, ...collect($offering->schedules ?? [])->where('loai', 'thuc_hanh')->pluck('tiet')->all()],
-        );
+        $slots = CourseOfferingScheduleConflictService::recurringSlotsFromOffering($offering);
+        $weekdays = CourseOffering::weekdays();
         for ($i = 0; $i < count($slots); $i++) {
             for ($j = $i + 1; $j < count($slots); $j++) {
                 if ($slots[$i]['thu'] !== $slots[$j]['thu']) {
@@ -510,12 +506,92 @@ class SubjectRegistrationController extends Controller
                 }
                 $intersect = array_values(array_intersect($slots[$i]['periods'], $slots[$j]['periods']));
                 if ($intersect !== []) {
-                    return response()->json(['message' => 'Lịch bị trùng nội bộ sau khi dời (trùng tiết cùng thứ).'], 422);
+                    $thuLabel = $weekdays[$slots[$i]['thu']] ?? ('Thứ '.$slots[$i]['thu']);
+                    $tietStr = implode(', ', $intersect);
+
+                    return response()->json([
+                        'message' => 'Lịch cố định của học phần bị trùng: '.$thuLabel.', tiết '.$tietStr
+                            .'. Hai buổi LT/TH (hoặc nhiều buổi LT) không được trùng khung giờ cùng thứ trong tuần. Chọn ngày/tiết khác khi dời.',
+                    ], 422);
                 }
             }
         }
 
+        $newThu = $thu;
+        $newPeriods = $newSlot['periods'];
+        foreach ($slots as $slot) {
+            if ($slot['thu'] !== $newThu) {
+                continue;
+            }
+            $intersect = array_values(array_intersect($slot['periods'], $newPeriods));
+            if ($intersect !== []) {
+                $thuLabel = $weekdays[$newThu] ?? ('Thứ '.$newThu);
+                $tietStr = implode(', ', $intersect);
+
+                return response()->json([
+                    'message' => 'Ngày dời trùng lịch cố định: '.$thuLabel.', tiết '.$tietStr
+                        .'. Buổi học bù không được trùng khung giờ với buổi LT/TH lặp hàng tuần của cùng học phần.',
+                ], 422);
+            }
+        }
+
         return response()->json(['message' => 'Đã dời lịch thành công.']);
+    }
+
+    public function cancelReschedule(Request $request, int $id)
+    {
+        $offering = CourseOffering::query()->with('schedules')->findOrFail($id);
+        $hasEffectiveDateCols = Schema::hasColumn('course_offering_schedules', 'ngay_ap_dung');
+        if (! $hasEffectiveDateCols) {
+            return response()->json([
+                'message' => 'Cần chạy migration (ngay_ap_dung) để dời/hủy dời lịch từng buổi. Chạy: php artisan migrate',
+            ], 422);
+        }
+
+        $data = $request->validate([
+            'moved_key' => ['required', 'string', 'max:50'],
+        ]);
+
+        $movedKey = (string) $data['moved_key'];
+        if (! str_starts_with($movedKey, 'one_')) {
+            return response()->json(['message' => 'Buổi học bù không hợp lệ.'], 422);
+        }
+        $sid = (int) substr($movedKey, 4);
+        if ($sid <= 0) {
+            return response()->json(['message' => 'Buổi học bù không hợp lệ.'], 422);
+        }
+
+        $moved = CourseOfferingSchedule::query()
+            ->where('course_offering_id', $offering->id)
+            ->where('id', $sid)
+            ->whereNotNull('ngay_ap_dung')
+            ->first();
+        if (! $moved) {
+            return response()->json(['message' => 'Buổi học bù không tồn tại hoặc đã bị xóa.'], 422);
+        }
+
+        $originKey = trim((string) ($moved->origin_session_key ?? ''));
+        if ($originKey === '') {
+            return response()->json(['message' => 'Không xác định được buổi gốc để hủy dời lịch.'], 422);
+        }
+
+        // Xóa buổi học bù theo ngày
+        $moved->delete();
+
+        // Xóa bản ghi tạm ngưng buổi gốc tương ứng (tạo lúc dời lịch).
+        // Nếu có nhiều bản ghi (trường hợp dời nhiều lần), ưu tiên xóa bản ghi mới nhất.
+        $pause = CourseOfferingSchedule::query()
+            ->where('course_offering_id', $offering->id)
+            ->where('loai', 'tam_ngung')
+            ->whereNotNull('ngay_ap_dung')
+            ->where('paused_session_key', $originKey)
+            ->orderByDesc('id')
+            ->first();
+        if ($pause) {
+            $pause->delete();
+        }
+
+        return response()->json(['message' => 'Đã hủy dời lịch.']);
     }
 
     public function pauseSession(Request $request, int $id)

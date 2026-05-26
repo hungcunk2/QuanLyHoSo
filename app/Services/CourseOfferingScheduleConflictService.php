@@ -128,6 +128,61 @@ class CourseOfferingScheduleConflictService
     }
 
     /**
+     * Buổi lặp hàng tuần (lịch gốc trên học phần + schedule không gắn ngày cụ thể).
+     * Không tính học bù / tạm ngưng theo ngày — dùng sau khi dời một buổi.
+     *
+     * @return list<array{thu: int, periods: int[]}>
+     */
+    public static function recurringSlotsFromOffering(CourseOffering $o): array
+    {
+        $o->loadMissing('schedules');
+        $thuLt = [];
+        $tietLt = [];
+        $thuTh = [];
+        $tietTh = [];
+
+        if ($o->thu_ly_thuyet && ($o->tiet_ly_thuyet ?? '') !== '') {
+            $thuLt[] = $o->thu_ly_thuyet;
+            $tietLt[] = $o->tiet_ly_thuyet;
+        }
+        if ($o->thu_thuc_hanh && ($o->tiet_thuc_hanh ?? '') !== '') {
+            $thuTh[] = $o->thu_thuc_hanh;
+            $tietTh[] = $o->tiet_thuc_hanh;
+        }
+
+        foreach ($o->schedules as $s) {
+            if ($s->ngay_ap_dung || ($s->moved_from && ! $s->ngay_ap_dung)) {
+                continue;
+            }
+            if (($s->loai ?? '') === 'tam_ngung') {
+                continue;
+            }
+            if (! $s->thu || ($s->tiet ?? '') === '') {
+                continue;
+            }
+            if ($s->loai === 'ly_thuyet') {
+                if ($o->thu_ly_thuyet
+                    && (int) $s->thu === (int) $o->thu_ly_thuyet
+                    && (string) $s->tiet === (string) $o->tiet_ly_thuyet) {
+                    continue;
+                }
+                $thuLt[] = $s->thu;
+                $tietLt[] = $s->tiet;
+            } elseif ($s->loai === 'thuc_hanh') {
+                if ($o->thu_thuc_hanh
+                    && (int) $s->thu === (int) $o->thu_thuc_hanh
+                    && (string) $s->tiet === (string) $o->tiet_thuc_hanh) {
+                    continue;
+                }
+                $thuTh[] = $s->thu;
+                $tietTh[] = $s->tiet;
+            }
+        }
+
+        return self::slotsFromRequestArrays($thuLt, $tietLt, $thuTh, $tietTh);
+    }
+
+    /**
      * @param  list<array{thu: int, periods: int[]}>  $newSlots
      * @param  int[]  $teacherIds
      * @return string|null Thông báo lỗi tiếng Việt nếu trùng lịch

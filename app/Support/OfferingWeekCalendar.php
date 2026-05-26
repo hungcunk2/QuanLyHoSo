@@ -597,7 +597,8 @@ class OfferingWeekCalendar
 
                 return array_merge($base, [
                     'session_key' => 'one_'.$scheduleId,
-                    'selectable' => false,
+                    // Cho phép chọn để "hủy dời lịch" (xóa buổi học bù).
+                    'selectable' => true,
                     'pick_label' => $label,
                 ]);
             }

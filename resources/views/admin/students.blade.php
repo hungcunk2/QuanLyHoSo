@@ -525,12 +525,6 @@
                     name: 'ngay_sinh'
                 },
                 {
-                    data: 'created_at',
-                    name: 'created_at',
-                    visible: false,
-                    searchable: false
-                },
-                {
                     data: 'action',
                     name: 'action',
                     orderable: false,
@@ -540,7 +534,7 @@
             ],
             responsive: false,
             scrollX: false,
-            order: [[7, 'desc']],
+            order: [],
             pageLength: 10,
             language: {
                 processing: "Đang xử lý...",

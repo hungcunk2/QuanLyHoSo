@@ -448,7 +448,7 @@
 </div>
 
 <!-- Modal Dời lịch -->
-<div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
+<div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -512,9 +512,13 @@
                             </div>
 
                             <div class="text-danger small mt-2 d-none" id="rsError"></div>
+                            <div class="text-success small mt-2 d-none" id="rsSuccess"></div>
                             <div class="mt-3 d-grid">
                                 <button type="button" class="btn btn-warning" id="btnSaveReschedule">
                                     Lưu dời lịch
+                                </button>
+                                <button type="button" class="btn btn-outline-warning mt-2 d-none" id="btnCancelReschedule">
+                                    Hủy dời lịch
                                 </button>
                                 <button type="button" class="btn btn-outline-danger mt-2" id="btnForceReschedule">
                                     Dời lịch bắt buộc
@@ -529,6 +533,9 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>
@@ -1200,7 +1207,39 @@
             }
             return dIndexFromThuVn(thuVnFromIsoDate(iso));
         }
-        var rescheduleModal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
+        var rescheduleModalEl = document.getElementById('rescheduleModal');
+        var rescheduleModal = bootstrap.Modal.getOrCreateInstance(rescheduleModalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+
+        function resetRescheduleSelection() {
+            $('#rsSessionKey').val('');
+            $('#rsDateOld').val('');
+            $('#rsSelectedLabel').text('—');
+            $('#rsDateNew').val('');
+            $('#rsTiet').val('');
+            $('#rsError').addClass('d-none').text('');
+            $('#btnUnpauseSession').addClass('d-none');
+            $('#btnCancelReschedule').addClass('d-none');
+            $('#btnSaveReschedule').removeClass('d-none').prop('disabled', false);
+            $('#btnForceReschedule').prop('disabled', false);
+            $('#btnPauseSession').prop('disabled', false);
+            $('#rsDateNew').prop('disabled', false);
+            $('#rsTiet').prop('disabled', false);
+            $('#rsScheduleGridHost .schedule-slot').removeClass('schedule-slot--selected');
+        }
+
+        function afterRescheduleActionSuccess(message) {
+            table.ajax.reload(null, false);
+            $('#rsSuccess').removeClass('d-none').text(message || 'Đã lưu.');
+            setTimeout(function () { $('#rsSuccess').addClass('d-none').text(''); }, 4000);
+            resetRescheduleSelection();
+            var offeringId = $('#rsOfferingId').val();
+            if (offeringId && rsCurrentDate) {
+                loadRescheduleWeek(offeringId, rsCurrentDate);
+            }
+        }
         var offeringStart = null;
         var offeringEnd = null;
         var rsCurrentDate = null; // ISO date inside the week being displayed
@@ -1252,7 +1291,9 @@
             });
         }
 
-        $(document).on('click', '.reschedule-offering-btn', function() {
+        $(document).on('click', '.reschedule-offering-btn', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             var id = $(this).data('id');
             $('#rsOfferingId').val(id);
             $('#rsSessionKey').val('');
@@ -1261,9 +1302,13 @@
             $('#rsTiet').val('');
             $('#rsError').addClass('d-none').text('');
             $('#btnUnpauseSession').addClass('d-none');
+            $('#btnCancelReschedule').addClass('d-none');
+            $('#btnSaveReschedule').removeClass('d-none');
             $('#btnSaveReschedule').prop('disabled', false);
             $('#btnForceReschedule').prop('disabled', false);
             $('#btnPauseSession').prop('disabled', false);
+            $('#rsDateNew').prop('disabled', false);
+            $('#rsTiet').prop('disabled', false);
 
             rsCurrentDate = toLocalDateIso(new Date());
             $('#rsDateNew').val('');
@@ -1282,6 +1327,12 @@
             $('#rsDateOld').val('');
             $('#rsSelectedLabel').text('—');
             $('#rsError').addClass('d-none').text('');
+            $('#btnCancelReschedule').addClass('d-none');
+            $('#btnSaveReschedule').removeClass('d-none').prop('disabled', false);
+            $('#btnForceReschedule').prop('disabled', false);
+            $('#btnPauseSession').prop('disabled', false);
+            $('#rsDateNew').prop('disabled', false);
+            $('#rsTiet').prop('disabled', false);
             loadRescheduleWeek(offeringId, rsCurrentDate);
         });
         $('#rsNextWeek').on('click', function () {
@@ -1292,12 +1343,21 @@
             $('#rsDateOld').val('');
             $('#rsSelectedLabel').text('—');
             $('#rsError').addClass('d-none').text('');
+            $('#btnCancelReschedule').addClass('d-none');
+            $('#btnSaveReschedule').removeClass('d-none').prop('disabled', false);
+            $('#btnForceReschedule').prop('disabled', false);
+            $('#btnPauseSession').prop('disabled', false);
+            $('#rsDateNew').prop('disabled', false);
+            $('#rsTiet').prop('disabled', false);
             loadRescheduleWeek(offeringId, rsCurrentDate);
         });
 
-        $(document).on('click', '#rsScheduleGridHost .schedule-slot', function() {
+        $(document).on('click', '#rsScheduleGridHost .schedule-slot', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             var key = String($(this).data('session-key') || '');
             var isPause = key.startsWith('pause_') || $(this).data('kind') === 'pause';
+            var isMoved = key.startsWith('one_');
             var selectable = String($(this).data('selectable')) === '1';
             if (!selectable && !isPause) {
                 return;
@@ -1315,9 +1375,16 @@
             $('#rsTiet').val(String(tiet || ''));
             $('#rsError').addClass('d-none').text('');
             $('#btnUnpauseSession').toggleClass('d-none', !isPause);
-            $('#btnSaveReschedule').prop('disabled', isPause);
-            $('#btnForceReschedule').prop('disabled', isPause);
-            $('#btnPauseSession').prop('disabled', isPause);
+            $('#btnSaveReschedule').toggleClass('d-none', isMoved);
+            $('#btnCancelReschedule').toggleClass('d-none', !isMoved);
+            $('#btnCancelReschedule').prop('disabled', isPause);
+            $('#btnSaveReschedule').prop('disabled', isPause || isMoved);
+            $('#btnForceReschedule').prop('disabled', isPause || isMoved);
+            $('#btnPauseSession').prop('disabled', isPause || isMoved);
+
+            // Khi chọn buổi đã dời (học bù), không cho sửa ngày/tiết; chỉ cho "hủy dời".
+            $('#rsDateNew').prop('disabled', isMoved);
+            $('#rsTiet').prop('disabled', isMoved);
         });
 
         $(document).on('click', '.rs-quick', function() {
@@ -1360,8 +1427,7 @@
                     force: force ? 1 : 0
                 },
                 success: function(resp){
-                    rescheduleModal.hide();
-                    table.ajax.reload(null, false);
+                    afterRescheduleActionSuccess((resp && resp.message) ? resp.message : 'Đã dời lịch thành công.');
                 },
                 error: function(xhr){
                     var msg = 'Không dời được lịch.';
@@ -1373,6 +1439,34 @@
 
         $('#btnSaveReschedule').on('click', function() { doReschedule(false); });
         $('#btnForceReschedule').on('click', function() { doReschedule(true); });
+
+        $('#btnCancelReschedule').on('click', function () {
+            var offeringId = $('#rsOfferingId').val();
+            var movedKey = $('#rsSessionKey').val();
+            if (!movedKey || !String(movedKey).startsWith('one_')) {
+                $('#rsError').removeClass('d-none').text('Hãy chọn 1 buổi học bù (đã dời) để hủy.');
+                return;
+            }
+            if (!confirm('Hủy dời lịch buổi này?')) {
+                return;
+            }
+            $.ajax({
+                url: '{{ route("admin.subject-registrations.cancel-reschedule", ["id" => "__ID__"]) }}'.replace('__ID__', String(offeringId)),
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    moved_key: movedKey
+                },
+                success: function (resp) {
+                    afterRescheduleActionSuccess((resp && resp.message) ? resp.message : 'Đã hủy dời lịch.');
+                },
+                error: function (xhr) {
+                    var msg = 'Không hủy dời được.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                    $('#rsError').removeClass('d-none').text(msg);
+                }
+            });
+        });
 
         $('#btnPauseSession').on('click', function () {
             var offeringId = $('#rsOfferingId').val();
@@ -1401,9 +1495,8 @@
                     session_key: sessionKey,
                     date_old: dateOld
                 },
-                success: function () {
-                    rescheduleModal.hide();
-                    table.ajax.reload(null, false);
+                success: function (resp) {
+                    afterRescheduleActionSuccess((resp && resp.message) ? resp.message : 'Đã tạm ngưng buổi học.');
                 },
                 error: function (xhr) {
                     var msg = 'Không tạm ngưng được.';
@@ -1430,9 +1523,8 @@
                     _token: '{{ csrf_token() }}',
                     pause_key: key
                 },
-                success: function () {
-                    rescheduleModal.hide();
-                    table.ajax.reload(null, false);
+                success: function (resp) {
+                    afterRescheduleActionSuccess((resp && resp.message) ? resp.message : 'Đã bỏ tạm ngưng.');
                 },
                 error: function (xhr) {
                     var msg = 'Không bỏ tạm ngưng được.';

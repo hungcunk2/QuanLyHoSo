@@ -32,10 +32,10 @@ class SubjectController extends Controller
         return DataTables::of($query)
             ->orderColumn('created_at', 'subjects.created_at $1')
             ->editColumn('nhom_thuc_hanh', function ($subject) {
-                return (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (string) $subject->nhom_thuc_hanh : '';
+                return (string) (int) ($subject->nhom_thuc_hanh ?? 0);
             })
             ->editColumn('so_tc_bat_buoc_cua_nhom', function ($subject) {
-                return (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0) > 0 ? (string) $subject->so_tc_bat_buoc_cua_nhom : '';
+                return (string) (int) ($subject->so_tc_bat_buoc_cua_nhom ?? 0);
             })
             ->addColumn('check', function ($subject) {
                 return '<input type="checkbox" class="form-check-input row-checkbox" name="selected_ids[]" value="' . $subject->id . '">';

@@ -3,6 +3,21 @@
 @section('title', 'Quản lý môn học')
 @section('page-title', '')
 
+@push('styles')
+<style>
+    #subjectsTable thead th {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        line-height: 1.3;
+        vertical-align: middle;
+    }
+    #subjectsTable tbody td.col-num {
+        text-align: center;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -42,7 +57,18 @@
         </div>
 
         <div class="table-responsive mt-3 admin-table-wrap">
-            <table id="subjectsTable" class="table table-striped border w-100 mb-0">
+            <table id="subjectsTable" class="table table-striped border w-100 mb-0 admin-dt-table">
+                <colgroup>
+                    <col style="width: 3%">
+                    <col style="width: 10%">
+                    <col style="width: 22%">
+                    <col style="width: 7%">
+                    <col style="width: 9%">
+                    <col style="width: 9%">
+                    <col style="width: 9%">
+                    <col style="width: 12%">
+                    <col style="width: 11%">
+                </colgroup>
                 <thead>
                     <tr>
                         <th width="50">
@@ -202,12 +228,6 @@
                     width: '50px'
                 },
                 {
-                    data: 'created_at',
-                    name: 'created_at',
-                    visible: false,
-                    searchable: false
-                },
-                {
                     data: 'ma_mon_hoc',
                     name: 'ma_mon_hoc'
                 },
@@ -217,23 +237,28 @@
                 },
                 {
                     data: 'so_tin_chi',
-                    name: 'so_tin_chi'
+                    name: 'so_tin_chi',
+                    className: 'col-num'
                 },
                 {
                     data: 'so_tiet_ly_thuyet',
-                    name: 'so_tiet_ly_thuyet'
+                    name: 'so_tiet_ly_thuyet',
+                    className: 'col-num'
                 },
                 {
                     data: 'so_tiet_thuc_hanh',
-                    name: 'so_tiet_thuc_hanh'
+                    name: 'so_tiet_thuc_hanh',
+                    className: 'col-num'
                 },
                 {
                     data: 'nhom_thuc_hanh',
-                    name: 'nhom_thuc_hanh'
+                    name: 'nhom_thuc_hanh',
+                    className: 'col-num'
                 },
                 {
                     data: 'so_tc_bat_buoc_cua_nhom',
-                    name: 'so_tc_bat_buoc_cua_nhom'
+                    name: 'so_tc_bat_buoc_cua_nhom',
+                    className: 'col-num'
                 },
                 {
                     data: 'action',
@@ -244,7 +269,7 @@
             ],
             responsive: false,
             scrollX: false,
-            order: [[1, 'desc']],
+            order: [],
             pageLength: 10,
             language: {
                 processing: "Đang xử lý...",

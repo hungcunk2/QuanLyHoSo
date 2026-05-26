@@ -294,13 +294,12 @@
                 { data: 'email', name: 'email', width: '22%' },
                 { data: 'sdt', name: 'sdt', width: '12%' },
                 { data: 'ngay_sinh', name: 'ngay_sinh', width: '10%' },
-                { data: 'created_at', name: 'created_at', visible: false, searchable: false },
                 { data: 'action', name: 'action', orderable: false, searchable: false, width: '120px' }
             ],
             responsive: false,
             scrollX: false,
             autoWidth: false,
-            order: [[7, 'desc']],
+            order: [],
             pageLength: 10,
             language: {
                 processing: "Đang xử lý...",
