@@ -58,7 +58,10 @@ class StudentController extends Controller
             $query->where('lop', trim($filterLop));
         }
 
+        $query->orderByDesc('created_at');
+
         return DataTables::of($query)
+            ->orderColumn('created_at', 'students.created_at $1')
             ->skipAutoFilter()
             ->addColumn('check', function ($student) {
                 return '<input type="checkbox" class="form-check-input row-checkbox" name="selected_ids[]" value="' . $student->id . '">';

@@ -3,11 +3,14 @@
 namespace App\Support;
 
 use App\Models\CourseOffering;
+use App\Models\CourseOfferingSchedule;
+use App\Models\Subject;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
  * Lưới tuần (Sáng / Chiều / Tối × 7 ngày) từ lịch học phần trong khoảng ngày bắt đầu – kết thúc học.
+ * Ngày kết thúc học được tính từ số tiết môn học và số tiết học mỗi tuần (nhiều nhóm TH cùng tuần chỉ tính 1 lần).
  * Dời / tạm ngưng theo ngày (course_offering_schedules.ngay_ap_dung) chỉ áp dụng đúng ngày đó.
  */
 class OfferingWeekCalendar
@@ -103,6 +106,177 @@ class OfferingWeekCalendar
      *
      * @return list<array{loai: string, thu: int, tiet: string, thi_buoi_thu: int|null}>
      */
+    public static function countTietInSlot(?string $tiet): int
+    {
+        $n = count(self::parseTietPeriods($tiet));
+
+        return $n > 0 ? $n : 1;
+    }
+
+    /**
+     * Tổng tiết lý thuyết học mỗi tuần (cộng tất cả buổi LT trong tuần).
+     */
+    public static function weeklyLyThuyetTiet(CourseOffering $o): int
+    {
+        $total = 0;
+        foreach (self::recurringSessionsForExams($o) as $sess) {
+            if (($sess['loai'] ?? '') === 'ly_thuyet') {
+                $total += self::countTietInSlot($sess['tiet'] ?? null);
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Tiết thực hành mỗi tuần: có nhóm TH thì chỉ tính một buổi/tuần (nhiều nhóm học cùng nội dung tiết đó).
+     */
+    public static function weeklyThucHanhTiet(CourseOffering $o): int
+    {
+        foreach (self::recurringSessionsForExams($o) as $sess) {
+            if (($sess['loai'] ?? '') === 'thuc_hanh') {
+                return self::countTietInSlot($sess['tiet'] ?? null);
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param  list<array{thu: int, tiet?: string}>  $sessions
+     */
+    public static function lastSessionDateForTietBudget(
+        Carbon $start,
+        int $soTiet,
+        int $weeklyTiet,
+        array $sessions
+    ): ?Carbon {
+        if ($soTiet <= 0 || $weeklyTiet <= 0 || $sessions === []) {
+            return null;
+        }
+
+        $weeksNeeded = (int) ceil($soTiet / $weeklyTiet);
+        $horizon = $start->copy()->addYears(3);
+        $dates = [];
+        foreach ($sessions as $sess) {
+            $d = self::nthOccurrenceDate($start, $horizon, (int) $sess['thu'], $weeksNeeded);
+            if ($d) {
+                $dates[] = $d;
+            }
+        }
+
+        return $dates === [] ? null : collect($dates)->max();
+    }
+
+    /**
+     * Tính ngày kết thúc học từ ngày bắt đầu, số tiết môn học và lịch tuần.
+     */
+    public static function computeNgayKetThucHoc(CourseOffering $o, ?Subject $subject = null): ?Carbon
+    {
+        $start = $o->ngay_bat_dau_hoc?->copy()->startOfDay();
+        if (! $start) {
+            return null;
+        }
+
+        if ($subject === null) {
+            $o->loadMissing('subject');
+            $subject = $o->subject;
+        }
+
+        $soLt = (int) ($subject?->so_tiet_ly_thuyet ?? 0);
+        $soTh = (int) ($subject?->so_tiet_thuc_hanh ?? 0);
+
+        $all = self::recurringSessionsForExams($o);
+        $ltSessions = array_values(array_filter($all, fn (array $s): bool => ($s['loai'] ?? '') === 'ly_thuyet'));
+        $thSessions = array_values(array_filter($all, fn (array $s): bool => ($s['loai'] ?? '') === 'thuc_hanh'));
+
+        $weeklyLt = self::weeklyLyThuyetTiet($o);
+        $weeklyTh = self::weeklyThucHanhTiet($o);
+
+        $ends = [];
+        $ltEnd = self::lastSessionDateForTietBudget($start, $soLt, $weeklyLt, $ltSessions);
+        if ($ltEnd) {
+            $ends[] = $ltEnd;
+        }
+
+        if ($soTh > 0 && $weeklyTh > 0 && $thSessions !== []) {
+            $thEnd = self::lastSessionDateForTietBudget($start, $soTh, $weeklyTh, [$thSessions[0]]);
+            if ($thEnd) {
+                $ends[] = $thEnd;
+            }
+        }
+
+        if ($ends === []) {
+            if ($ltSessions !== []) {
+                return self::nthOccurrenceDate($start, $start->copy()->addYear(), (int) $ltSessions[0]['thu'], 1);
+            }
+
+            return $start->copy();
+        }
+
+        return collect($ends)->max();
+    }
+
+    /**
+     * Dựng học phần tạm từ dữ liệu form (trước khi lưu) để tính ngày kết thúc / kiểm tra trùng lịch.
+     *
+     * @param  list<int|string|null>  $thuLt
+     * @param  list<string|null>  $tietLt
+     * @param  list<int|string|null>  $thuTh
+     * @param  list<string|null>  $tietTh
+     */
+    public static function offeringFromScheduleDraft(
+        Carbon $ngayBatDau,
+        array $thuLt,
+        array $tietLt,
+        array $thuTh,
+        array $tietTh
+    ): CourseOffering {
+        $o = new CourseOffering([
+            'ngay_bat_dau_hoc' => $ngayBatDau->toDateString(),
+            'thu_ly_thuyet' => isset($thuLt[0]) && $thuLt[0] !== '' ? (int) $thuLt[0] : null,
+            'tiet_ly_thuyet' => $tietLt[0] ?? '',
+            'thu_thuc_hanh' => isset($thuTh[0]) && $thuTh[0] !== '' ? (int) $thuTh[0] : null,
+            'tiet_thuc_hanh' => isset($tietTh[0]) && ($tietTh[0] ?? '') !== '' ? (string) $tietTh[0] : null,
+        ]);
+
+        $schedules = collect();
+        for ($i = 1; $i < count($thuLt); $i++) {
+            if (($thuLt[$i] ?? '') === '' || ($tietLt[$i] ?? '') === '') {
+                continue;
+            }
+            $schedules->push(new CourseOfferingSchedule([
+                'loai' => 'ly_thuyet',
+                'thu' => (int) $thuLt[$i],
+                'tiet' => (string) $tietLt[$i],
+            ]));
+        }
+        for ($i = 1; $i < count($thuTh); $i++) {
+            if (($thuTh[$i] ?? '') === '' || ($tietTh[$i] ?? '') === '') {
+                continue;
+            }
+            $schedules->push(new CourseOfferingSchedule([
+                'loai' => 'thuc_hanh',
+                'thu' => (int) $thuTh[$i],
+                'tiet' => (string) $tietTh[$i],
+            ]));
+        }
+        $o->setRelation('schedules', $schedules);
+
+        return $o;
+    }
+
+    public static function effectiveEndDate(CourseOffering $o): ?Carbon
+    {
+        if ($o->ngay_ket_thuc_hoc) {
+            return $o->ngay_ket_thuc_hoc->copy()->endOfDay();
+        }
+
+        $computed = self::computeNgayKetThucHoc($o);
+
+        return $computed?->copy()->endOfDay();
+    }
+
     public static function recurringSessionsForExams(CourseOffering $o): array
     {
         $o->loadMissing('schedules');
@@ -326,7 +500,7 @@ class OfferingWeekCalendar
         $o->loadMissing('schedules.teacher', 'schedules.classRoom', 'classRoom', 'classRoomThucHanh', 'teacherLyThuyet', 'teacherThucHanh');
         $weekStart = $anchorDate->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
         $start = $o->ngay_bat_dau_hoc?->copy()->startOfDay();
-        $end = $o->ngay_ket_thuc_hoc?->copy()->endOfDay();
+        $end = self::effectiveEndDate($o);
         $sessions = [];
 
         for ($d = 0; $d < 7; $d++) {
@@ -507,7 +681,7 @@ class OfferingWeekCalendar
 
         foreach ($offerings as $offering) {
             $start = $offering->ngay_bat_dau_hoc?->copy()->startOfDay();
-            $end = $offering->ngay_ket_thuc_hoc?->copy()->endOfDay();
+            $end = self::effectiveEndDate($offering);
             if (! $start || ! $end) {
                 continue;
             }

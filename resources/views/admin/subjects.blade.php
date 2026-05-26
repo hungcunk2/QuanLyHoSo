@@ -97,12 +97,11 @@
                     </div>
                     <div class="mb-3">
                         <label for="create_nhom_thuc_hanh" class="form-label">Nhóm tự chọn</label>
-                        <input type="number" class="form-control" id="create_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100" placeholder="Để trống nếu không dùng nhóm">
-                        <div class="form-text">Chỉ các môn có cùng số nhóm (&gt;0) mới gộp tính một lần TC khi là học phần tự chọn trong chương trình khung.</div>
+                        <input type="number" class="form-control" id="create_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100">
                     </div>
                     <div class="mb-3">
                         <label for="create_so_tc_bat_buoc_cua_nhom" class="form-label">Số TC bắt buộc của nhóm</label>
-                        <input type="number" class="form-control" id="create_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100" placeholder="Để trống nếu không áp dụng">
+                        <input type="number" class="form-control" id="create_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -147,12 +146,11 @@
                     </div>
                     <div class="mb-3">
                         <label for="edit_nhom_thuc_hanh" class="form-label">Nhóm tự chọn</label>
-                        <input type="number" class="form-control" id="edit_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100" placeholder="Để trống nếu không dùng nhóm">
-                        <div class="form-text">Chỉ các môn có cùng số nhóm (&gt;0) mới gộp tính một lần TC khi là học phần tự chọn trong chương trình khung.</div>
+                        <input type="number" class="form-control" id="edit_nhom_thuc_hanh" name="nhom_thuc_hanh" min="0" max="100">
                     </div>
                     <div class="mb-3">
                         <label for="edit_so_tc_bat_buoc_cua_nhom" class="form-label">Số TC bắt buộc của nhóm</label>
-                        <input type="number" class="form-control" id="edit_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100" placeholder="Để trống nếu không áp dụng">
+                        <input type="number" class="form-control" id="edit_so_tc_bat_buoc_cua_nhom" name="so_tc_bat_buoc_cua_nhom" min="0" max="100">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -204,6 +202,12 @@
                     width: '50px'
                 },
                 {
+                    data: 'created_at',
+                    name: 'created_at',
+                    visible: false,
+                    searchable: false
+                },
+                {
                     data: 'ma_mon_hoc',
                     name: 'ma_mon_hoc'
                 },
@@ -240,7 +244,7 @@
             ],
             responsive: false,
             scrollX: false,
-            order: [[1, 'asc']],
+            order: [[1, 'desc']],
             pageLength: 10,
             language: {
                 processing: "Đang xử lý...",

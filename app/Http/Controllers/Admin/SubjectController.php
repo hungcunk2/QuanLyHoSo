@@ -27,9 +27,10 @@ class SubjectController extends Controller
             'so_tc_bat_buoc_cua_nhom',
             'created_at',
             'updated_at'
-        );
+        )->orderByDesc('created_at');
 
         return DataTables::of($query)
+            ->orderColumn('created_at', 'subjects.created_at $1')
             ->editColumn('nhom_thuc_hanh', function ($subject) {
                 return (int) ($subject->nhom_thuc_hanh ?? 0) > 0 ? (string) $subject->nhom_thuc_hanh : '';
             })

@@ -37,7 +37,10 @@ class TeacherController extends Controller
             $query->where('chuyen_mon', $filterChuyenMon);
         }
 
+        $query->orderByDesc('created_at');
+
         return DataTables::of($query)
+            ->orderColumn('created_at', 'teachers.created_at $1')
             ->skipAutoFilter()
             ->addColumn('check', function ($teacher) {
                 return '<input type="checkbox" class="form-check-input row-checkbox" name="selected_ids[]" value="' . $teacher->id . '">';

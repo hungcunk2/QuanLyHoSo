@@ -21,7 +21,9 @@ class SubjectRegistrationController extends Controller
     public function index()
     {
         $classes = ClassRoom::orderBy('ma_lop')->get(['id', 'ma_lop', 'ten_lop']);
-        $subjects = Subject::orderBy('ma_mon_hoc')->get(['id', 'ma_mon_hoc', 'ten_mon_hoc']);
+        $subjects = Subject::orderBy('ma_mon_hoc')->get([
+            'id', 'ma_mon_hoc', 'ten_mon_hoc', 'so_tiet_ly_thuyet', 'so_tiet_thuc_hanh',
+        ]);
         $teachers = Teacher::orderBy('ho_ten')->get(['id', 'msgv', 'ho_ten']);
         $weekdays = CourseOffering::weekdays();
         $periodLabels = CourseOffering::periodLabels();
@@ -31,7 +33,7 @@ class SubjectRegistrationController extends Controller
     public function getData(Request $request)
     {
         $query = CourseOffering::with(['subject', 'classRoom', 'teacherLyThuyet', 'teacherThucHanh'])
-            ->orderBy('created_at', 'desc');
+            ->orderByDesc('created_at');
 
         $weekdays = CourseOffering::weekdays();
 
@@ -73,7 +75,7 @@ class SubjectRegistrationController extends Controller
                     });
                 });
             })
-            ->orderColumn('created_at_formatted', 'created_at $1')
+            ->orderColumn('created_at', 'course_offerings.created_at $1')
             ->addColumn('created_at_formatted', function ($row) {
                 return $row->created_at ? $row->created_at->format('d/m/Y H:i') : '—';
             })
@@ -99,8 +101,10 @@ class SubjectRegistrationController extends Controller
             })
             ->addColumn('date_range', function ($row) {
                 $start = $row->ngay_bat_dau_hoc ? $row->ngay_bat_dau_hoc->format('d/m/Y') : '—';
-                $end = $row->ngay_ket_thuc_hoc ? $row->ngay_ket_thuc_hoc->format('d/m/Y') : '—';
-                return $start . ' → ' . $end;
+                $end = OfferingWeekCalendar::effectiveEndDate($row);
+                $endStr = $end ? $end->format('d/m/Y') : '—';
+
+                return $start.' → '.$endStr;
             })
             ->addColumn('schedule_summary', function ($row) use ($weekdays) {
                 $parts = [];
@@ -132,14 +136,15 @@ class SubjectRegistrationController extends Controller
                 $daBatDau = $row->ngay_bat_dau_hoc && $row->ngay_bat_dau_hoc->lte(Carbon::today());
                 $nameAttr = e($row->ten_hoc_phan);
 
-                return '<div class="d-inline-flex gap-2 align-items-center flex-wrap">'
-                    . ($daBatDau
-                        ? '<span class="text-muted small me-1" title="Đã bắt đầu học"><i class="fas fa-lock me-1"></i>Đã bắt đầu</span>'
-                        : '<button type="button" class="btn btn-sm btn-primary edit-offering-btn" data-id="' . $row->id . '" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>'
-                    )
-                    . '<button type="button" class="btn btn-sm btn-warning reschedule-offering-btn" data-id="' . $row->id . '" title="Dời lịch"><i class="fas fa-random"></i></button>'
-                    . '<button type="button" class="btn btn-sm btn-danger delete-offering-btn" data-id="' . $row->id . '" data-name="' . $nameAttr . '" title="Xóa học phần"><i class="fas fa-trash"></i></button>'
-                    . '</div>';
+                $html = '<div class="d-inline-flex gap-2 align-items-center flex-wrap">';
+                if (! $daBatDau) {
+                    $html .= '<button type="button" class="btn btn-sm btn-primary edit-offering-btn" data-id="'.$row->id.'" title="Chỉnh sửa"><i class="fas fa-edit"></i></button>';
+                }
+                $html .= '<button type="button" class="btn btn-sm btn-warning reschedule-offering-btn" data-id="'.$row->id.'" title="Dời lịch"><i class="fas fa-random"></i></button>'
+                    .'<button type="button" class="btn btn-sm btn-danger delete-offering-btn" data-id="'.$row->id.'" data-name="'.$nameAttr.'" title="Xóa học phần"><i class="fas fa-trash"></i></button>'
+                    .'</div>';
+
+                return $html;
             })
             ->rawColumns(['teacher_info', 'offering_status', 'action'])
             ->make(true);
@@ -176,9 +181,9 @@ class SubjectRegistrationController extends Controller
                 'ten_hoc_phan' => $offering->ten_hoc_phan,
                 'subject' => $offering->subject?->ma_mon_hoc ? ($offering->subject->ma_mon_hoc.' - '.$offering->subject->ten_mon_hoc) : '',
                 'class' => $offering->classRoom?->ma_lop ? ($offering->classRoom->ma_lop.' - '.$offering->classRoom->ten_lop) : '',
-                'date_range' => (optional($offering->ngay_bat_dau_hoc)->format('d/m/Y') ?? '—').' → '.(optional($offering->ngay_ket_thuc_hoc)->format('d/m/Y') ?? '—'),
+                'date_range' => (optional($offering->ngay_bat_dau_hoc)->format('d/m/Y') ?? '—').' → '.(optional(OfferingWeekCalendar::effectiveEndDate($offering))->format('d/m/Y') ?? '—'),
                 'start_date' => optional($offering->ngay_bat_dau_hoc)->toDateString(),
-                'end_date' => optional($offering->ngay_ket_thuc_hoc)->toDateString(),
+                'end_date' => optional(OfferingWeekCalendar::effectiveEndDate($offering))->toDateString(),
             ],
             'week_start' => $weekStart->toDateString(),
             'week_label' => $weekStart->format('d/m/Y').' → '.$weekEnd->format('d/m/Y'),
@@ -217,7 +222,7 @@ class SubjectRegistrationController extends Controller
 
         $today = Carbon::today()->toDateString();
         $start = $offering->ngay_bat_dau_hoc?->toDateString();
-        $end = $offering->ngay_ket_thuc_hoc?->toDateString();
+        $end = OfferingWeekCalendar::effectiveEndDate($offering)?->toDateString();
         if ($end && $dateNew > $end) {
             return response()->json(['message' => 'Ngày dời phải trước hoặc bằng ngày kết thúc học.'], 422);
         }
@@ -299,7 +304,7 @@ class SubjectRegistrationController extends Controller
                 }
 
                 $startA = $offering->ngay_bat_dau_hoc;
-                $endA = $offering->ngay_ket_thuc_hoc;
+                $endA = OfferingWeekCalendar::effectiveEndDate($offering);
 
                 $conflictCount = 0;
                 foreach ($studentIds as $sid) {
@@ -313,7 +318,7 @@ class SubjectRegistrationController extends Controller
 
                         // One-off theo ngày: nếu ngày dời không nằm trong thời gian học của môn kia thì bỏ qua
                         $startB = $other->ngay_bat_dau_hoc;
-                        $endB = $other->ngay_ket_thuc_hoc;
+                        $endB = OfferingWeekCalendar::effectiveEndDate($other);
                         if ($startB && $endB) {
                             $dNew = Carbon::parse($dateNew);
                             if ($dNew->lt($startB) || $dNew->gt($endB)) {
@@ -533,7 +538,7 @@ class SubjectRegistrationController extends Controller
 
         $today = Carbon::today()->toDateString();
         $start = $offering->ngay_bat_dau_hoc?->toDateString();
-        $end = $offering->ngay_ket_thuc_hoc?->toDateString();
+        $end = OfferingWeekCalendar::effectiveEndDate($offering)?->toDateString();
         if ($end && $dateOld > $end) {
             return response()->json(['message' => 'Ngày tạm ngưng phải trước hoặc bằng ngày kết thúc học.'], 422);
         }

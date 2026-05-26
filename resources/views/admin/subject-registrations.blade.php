@@ -163,7 +163,9 @@
                             <select class="form-select" id="subject_id" name="subject_id" required>
                                 <option value="">-- Chọn môn học --</option>
                                 @foreach($subjects ?? [] as $s)
-                                    <option value="{{ $s->id }}">{{ $s->ma_mon_hoc }} - {{ $s->ten_mon_hoc }}</option>
+                                    <option value="{{ $s->id }}"
+                                        data-so-tiet-lt="{{ (int) ($s->so_tiet_ly_thuyet ?? 0) }}"
+                                        data-so-tiet-th="{{ (int) ($s->so_tiet_thuc_hanh ?? 0) }}">{{ $s->ma_mon_hoc }} - {{ $s->ten_mon_hoc }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -179,13 +181,13 @@
                             <label for="ngay_bat_dau_hoc" class="form-label">Ngày bắt đầu học <span class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="ngay_bat_dau_hoc" name="ngay_bat_dau_hoc" required>
                         </div>
-                        <div class="col-md-6">
-                            <label for="ngay_ket_thuc_hoc" class="form-label">Ngày kết thúc học <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="ngay_ket_thuc_hoc" name="ngay_ket_thuc_hoc" required>
+                        <div class="col-md-6" id="preview-ngay-ket-thuc-wrap" style="display: none;">
+                            <label class="form-label">Ngày kết thúc học (ước tính)</label>
+                            <div class="form-control bg-light" id="preview-ngay-ket-thuc" readonly>—</div>
                         </div>
                         <div class="col-12" id="preview-ngay-hoc-wrap" style="display: none;">
                             <div class="card border-primary">
-                                <div class="card-header py-2 bg-light small fw-bold">Xem trước các ngày học</div>
+                                <div class="card-header py-2 bg-light small fw-bold">Xem trước lịch học</div>
                                 <div class="card-body py-2 small" id="preview-ngay-hoc"></div>
                             </div>
                         </div>
@@ -240,7 +242,7 @@
                                     <input type="hidden" name="tiet_ly_thuyet[]" class="tiet-lt-hidden" value="">
                                 </div>
                                 <div class="col-md-4 mt-2">
-                                    <label class="form-label">Thi lý thuyết vào buổi thứ mấy <span class="text-danger">*</span></label>
+                                    <label class="form-label">Thi giữa kì lý thuyết vào buổi thứ mấy <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control" name="ngay_thi_ly_thuyet_buoi_thu[]" min="1" required placeholder="VD: 5">
                                 </div>
                             </div>
@@ -295,7 +297,7 @@
                                     <input type="hidden" name="tiet_ly_thuyet[]" class="tiet-lt-hidden" value="">
                                 </div>
                                 <div class="col-md-4 mt-2">
-                                    <label class="form-label">Thi lý thuyết vào buổi thứ mấy <span class="text-danger">*</span></label>
+                                    <label class="form-label">Thi giữa kì lý thuyết vào buổi thứ mấy <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control" name="ngay_thi_ly_thuyet_buoi_thu[]" min="1" required placeholder="VD: 5">
                                 </div>
                             </div>
@@ -307,7 +309,6 @@
                     <input type="hidden" id="si_so_lop" name="si_so_lop" value="">
                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                         <button type="button" class="btn btn-sm btn-outline-primary" id="btn-them-buoi-thuc-hanh"><i class="fas fa-plus me-1"></i> Thêm nhóm thực hành</button>
-                        <span class="small text-muted">Có nhóm TH: sĩ số = tổng các nhóm. Không có TH: nhập sĩ số ở mục lý thuyết.</span>
                     </div>
                     <div id="blockThucHanh">
                         <div id="buoi-thuc-hanh-list">
@@ -366,7 +367,7 @@
                                         <input type="hidden" name="tiet_thuc_hanh[]" class="tiet-th-hidden" value="">
                                     </div>
                                     <div class="col-md-4 mt-2">
-                                        <label class="form-label">Thi TH vào buổi thứ mấy</label>
+                                        <label class="form-label">Thi giữa kì thực hành vào buổi thứ mấy</label>
                                         <input type="number" class="form-control" name="ngay_thi_thuc_hanh_buoi_thu[]" min="1" placeholder="VD: 3">
                                     </div>
                                     <div class="col-md-4 mt-2">
@@ -425,7 +426,7 @@
                                         <input type="hidden" name="tiet_thuc_hanh[]" class="tiet-th-hidden" value="">
                                     </div>
                                     <div class="col-md-4 mt-2">
-                                        <label class="form-label">Thi TH vào buổi thứ mấy</label>
+                                        <label class="form-label">Thi giữa kì thực hành vào buổi thứ mấy</label>
                                         <input type="number" class="form-control" name="ngay_thi_thuc_hanh_buoi_thu[]" min="1" placeholder="VD: 3">
                                     </div>
                                     <div class="col-md-4 mt-2">
@@ -518,7 +519,6 @@
                                 <button type="button" class="btn btn-outline-danger mt-2" id="btnForceReschedule">
                                     Dời lịch bắt buộc
                                 </button>
-                                <div class="small text-muted mt-1">Chỉ bỏ qua quy tắc 50% học sinh; vẫn chặn nếu giáo viên trùng lịch.</div>
                                 <button type="button" class="btn btn-danger mt-2" id="btnPauseSession">
                                     Tạm ngưng buổi này
                                 </button>
@@ -655,45 +655,115 @@
             }, 300);
         });
 
-        // Xem trước các ngày học: thứ (2-8 VN) → getDay() (0=CN, 1=T2, ..., 6=T7)
+        // Xem trước lịch: ngày kết thúc tính từ số tiết môn + lịch tuần (2 nhóm TH = 1 tiết/tuần)
         var thuVNToJS = { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 0 };
-        function getDatesForWeekday(weekdayJS, startStr, endStr) {
-            if (!startStr || !endStr) return [];
-            var start = new Date(startStr), end = new Date(endStr);
-            if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) return [];
+        function countTietInSlot(tietStr) {
+            if (!tietStr) return 0;
+            var n = 0;
+            tietStr.split(',').forEach(function(p) {
+                p = p.trim();
+                if (p && /^\d+$/.test(p)) n++;
+            });
+            return n > 0 ? n : 1;
+        }
+        function nthOccurrenceDate(startStr, thuVn, nth) {
+            if (!startStr || !nth || nth < 1) return null;
+            var start = new Date(startStr + 'T12:00:00');
+            if (isNaN(start.getTime())) return null;
+            var jsTarget = thuVNToJS[parseInt(thuVn, 10)];
+            if (jsTarget === undefined) return null;
             var d = new Date(start);
-            if (d.getDay() !== weekdayJS) {
-                var diff = (weekdayJS - d.getDay() + 7) % 7;
+            if (d.getDay() !== jsTarget) {
+                var diff = (jsTarget - d.getDay() + 7) % 7;
                 d.setDate(d.getDate() + diff);
             }
-            var list = [];
-            while (d <= end) {
-                list.push(new Date(d));
+            var count = 1;
+            while (count < nth) {
                 d.setDate(d.getDate() + 7);
+                count++;
             }
-            return list;
+            return d;
         }
-        function fmt(d) { return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth()+1)).slice(-2) + '/' + d.getFullYear(); }
-        function updatePreviewNgayHoc() {
-            var startStr = $('#ngay_bat_dau_hoc').val(), endStr = $('#ngay_ket_thuc_hoc').val();
-            var html = [];
-            var firstLt = $('#buoi-ly-thuyet-list .buoi-ly-thuyet-row').first();
-            var thuLt = firstLt.find('select[name="thu_ly_thuyet[]"]').val();
-            var tietLt = firstLt.find('.tiet-lt-hidden').val();
-            if (thuLt && tietLt && startStr && endStr) {
-                var jsDay = thuVNToJS[parseInt(thuLt, 10)];
-                var dates = getDatesForWeekday(jsDay, startStr, endStr);
-                var label = firstLt.find('select[name="thu_ly_thuyet[]"] option:selected').text();
-                html.push('<strong>Lý thuyết</strong> (' + label + ', tiết ' + tietLt + '): ' + (dates.length ? dates.slice(0, 10).map(fmt).join(', ') + (dates.length > 10 ? ' … (tổng ' + dates.length + ' buổi)' : '') : '—'));
+        function collectLtSlots() {
+            var slots = [];
+            $('#buoi-ly-thuyet-list .buoi-ly-thuyet-row').each(function() {
+                var thu = $(this).find('select[name="thu_ly_thuyet[]"]').val();
+                var tiet = $(this).find('.tiet-lt-hidden').val();
+                if (thu && tiet) slots.push({ thu: parseInt(thu, 10), tiet: tiet });
+            });
+            return slots;
+        }
+        function collectThSlots() {
+            var slots = [];
+            $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').each(function() {
+                var thu = $(this).find('select[name="thu_thuc_hanh[]"]').val();
+                var tiet = $(this).find('.tiet-th-hidden').val();
+                if (thu && tiet) slots.push({ thu: parseInt(thu, 10), tiet: tiet });
+            });
+            return slots;
+        }
+        function computeEndDateFromSchedule(startStr, soLt, soTh) {
+            var ltSlots = collectLtSlots();
+            var thSlots = collectThSlots();
+            var weeklyLt = 0;
+            ltSlots.forEach(function(s) { weeklyLt += countTietInSlot(s.tiet); });
+            var weeklyTh = thSlots.length ? countTietInSlot(thSlots[0].tiet) : 0;
+            var ends = [];
+            if (soLt > 0 && weeklyLt > 0) {
+                var weeksLt = Math.ceil(soLt / weeklyLt);
+                ltSlots.forEach(function(s) {
+                    var d = nthOccurrenceDate(startStr, s.thu, weeksLt);
+                    if (d) ends.push(d);
+                });
             }
-            var firstTh = $('#buoi-thuc-hanh-list .buoi-thuc-hanh-row').first();
-            var thuTh = firstTh.find('select[name="thu_thuc_hanh[]"]').val();
-            var tietTh = firstTh.find('.tiet-th-hidden').val();
-            if (thuTh && tietTh && startStr && endStr) {
-                var jsDay = thuVNToJS[parseInt(thuTh, 10)];
-                var dates = getDatesForWeekday(jsDay, startStr, endStr);
-                var label = firstTh.find('select[name="thu_thuc_hanh[]"] option:selected').text();
-                html.push('<strong>Thực hành</strong> (' + label + ', tiết ' + tietTh + '): ' + (dates.length ? dates.slice(0, 10).map(fmt).join(', ') + (dates.length > 10 ? ' … (tổng ' + dates.length + ' buổi)' : '') : '—'));
+            if (soTh > 0 && weeklyTh > 0 && thSlots.length) {
+                var weeksTh = Math.ceil(soTh / weeklyTh);
+                var d = nthOccurrenceDate(startStr, thSlots[0].thu, weeksTh);
+                if (d) ends.push(d);
+            }
+            if (!ends.length) return null;
+            return new Date(Math.max.apply(null, ends.map(function(d) { return d.getTime(); })));
+        }
+        function fmt(d) {
+            if (!d || isNaN(d.getTime())) return '—';
+            return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth()+1)).slice(-2) + '/' + d.getFullYear();
+        }
+        function selectedSubjectTiet() {
+            var opt = $('#subject_id option:selected');
+            return {
+                lt: parseInt(opt.data('so-tiet-lt') || 0, 10),
+                th: parseInt(opt.data('so-tiet-th') || 0, 10)
+            };
+        }
+        function updatePreviewNgayHoc() {
+            var startStr = $('#ngay_bat_dau_hoc').val();
+            var tiet = selectedSubjectTiet();
+            var endDate = startStr ? computeEndDateFromSchedule(startStr, tiet.lt, tiet.th) : null;
+            var endStr = endDate ? endDate.toISOString().slice(0, 10) : '';
+            if (endDate) {
+                $('#preview-ngay-ket-thuc').text(fmt(endDate));
+                $('#preview-ngay-ket-thuc-wrap').show();
+            } else {
+                $('#preview-ngay-ket-thuc').text('—');
+                $('#preview-ngay-ket-thuc-wrap').hide();
+            }
+            var html = [];
+            if (startStr && tiet.lt > 0) {
+                html.push('Môn: <strong>' + tiet.lt + ' tiết LT</strong>'
+                    + (tiet.th > 0 ? ', <strong>' + tiet.th + ' tiết TH</strong>' : '')
+                    + (collectThSlots().length > 1 ? ' (nhiều nhóm TH, 1 tiết/tuần)' : ''));
+            }
+            var ltSlots = collectLtSlots();
+            if (ltSlots.length && startStr && endStr) {
+                var weeklyLt = 0;
+                ltSlots.forEach(function(s) { weeklyLt += countTietInSlot(s.tiet); });
+                var weeksLt = Math.ceil(tiet.lt / weeklyLt);
+                html.push('Lý thuyết: ~' + weeksLt + ' tuần (' + weeklyLt + ' tiết/tuần), buổi cuối là thi giữa kì');
+            }
+            if (collectThSlots().length && startStr && tiet.th > 0) {
+                var weeklyTh = countTietInSlot(collectThSlots()[0].tiet);
+                var weeksTh = Math.ceil(tiet.th / weeklyTh);
+                html.push('Thực hành: ~' + weeksTh + ' tuần (' + weeklyTh + ' tiết/tuần, gộp nhóm), buổi cuối là thi giữa kì');
             }
             if (html.length) {
                 $('#preview-ngay-hoc').html(html.join('<br>'));
@@ -702,7 +772,7 @@
                 $('#preview-ngay-hoc-wrap').hide();
             }
         }
-        $('#ngay_bat_dau_hoc, #ngay_ket_thuc_hoc').on('change', updatePreviewNgayHoc);
+        $('#ngay_bat_dau_hoc, #subject_id').on('change', updatePreviewNgayHoc);
         $(document).on('change', '#buoi-ly-thuyet-list select[name="thu_ly_thuyet[]"], #buoi-thuc-hanh-list select[name="thu_thuc_hanh[]"]', updatePreviewNgayHoc);
         $(document).on('change', '.tiet-ly-thuyet, .tiet-thuc-hanh', function() {
             setTimeout(updatePreviewNgayHoc, 50);
@@ -888,7 +958,10 @@
                     $('#ngay_mo_dang_ky').val(res.ngay_mo_dang_ky);
                     $('#ngay_ket_thuc_dang_ky').val(res.ngay_ket_thuc_dang_ky);
                     $('#ngay_bat_dau_hoc').val(res.ngay_bat_dau_hoc);
-                    $('#ngay_ket_thuc_hoc').val(res.ngay_ket_thuc_hoc);
+                    if (res.so_tiet_ly_thuyet !== undefined) {
+                        $('#subject_id option:selected').data('so-tiet-lt', res.so_tiet_ly_thuyet);
+                        $('#subject_id option:selected').data('so-tiet-th', res.so_tiet_thuc_hanh);
+                    }
 
                     var thuLt = res.thu_ly_thuyet || [];
                     var tietLt = res.tiet_ly_thuyet || [];
@@ -1022,6 +1095,11 @@
             });
             if (invalidLtTeacher) {
                 alert('Vui lòng chọn giáo viên cho từng buổi lý thuyết.');
+                return;
+            }
+            var subjectTiet = selectedSubjectTiet();
+            if (subjectTiet.th > 0 && countActiveThGroups() === 0) {
+                alert('Vui lòng thêm nhóm thực hành vì môn này có tiết thực hành.');
                 return;
             }
             var data = $(this).serializeArray();

@@ -8,6 +8,7 @@ use App\Models\CourseOfferingSchedule;
 use App\Models\Subject;
 use App\Models\SubjectRegistration;
 use App\Services\CourseOfferingScheduleConflictService;
+use App\Support\OfferingWeekCalendar;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -30,7 +31,11 @@ class CourseOfferingController extends Controller
         $data['ngay_mo_dang_ky'] = $offering->ngay_mo_dang_ky?->format('Y-m-d');
         $data['ngay_ket_thuc_dang_ky'] = $offering->ngay_ket_thuc_dang_ky?->format('Y-m-d');
         $data['ngay_bat_dau_hoc'] = $offering->ngay_bat_dau_hoc?->format('Y-m-d');
-        $data['ngay_ket_thuc_hoc'] = $offering->ngay_ket_thuc_hoc?->format('Y-m-d');
+        $end = OfferingWeekCalendar::effectiveEndDate($offering);
+        $data['ngay_ket_thuc_hoc'] = $end?->toDateString();
+        $offering->loadMissing('subject');
+        $data['so_tiet_ly_thuyet'] = (int) ($offering->subject?->so_tiet_ly_thuyet ?? 0);
+        $data['so_tiet_thuc_hanh'] = (int) ($offering->subject?->so_tiet_thuc_hanh ?? 0);
 
         $data['thu_ly_thuyet'] = array_merge(
             [$offering->thu_ly_thuyet],
@@ -93,7 +98,6 @@ class CourseOfferingController extends Controller
             'ngay_mo_dang_ky' => 'required|date',
             'ngay_ket_thuc_dang_ky' => 'required|date|after_or_equal:ngay_mo_dang_ky|before:ngay_bat_dau_hoc',
             'ngay_bat_dau_hoc' => 'required|date|after:ngay_ket_thuc_dang_ky',
-            'ngay_ket_thuc_hoc' => 'required|date|after_or_equal:ngay_bat_dau_hoc',
             'thu_ly_thuyet' => 'required|array|min:1',
             'thu_ly_thuyet.*' => 'required|integer|in:2,3,4,5,6,7,8',
             'tiet_ly_thuyet' => 'required|array|min:1',
@@ -120,14 +124,12 @@ class CourseOfferingController extends Controller
             'ngay_ket_thuc_dang_ky.before' => 'Ngày kết thúc đăng ký phải trước ngày bắt đầu học.',
             'ngay_bat_dau_hoc.required' => 'Vui lòng chọn ngày bắt đầu học.',
             'ngay_bat_dau_hoc.after' => 'Ngày bắt đầu học phải sau ngày kết thúc đăng ký.',
-            'ngay_ket_thuc_hoc.required' => 'Vui lòng chọn ngày kết thúc học.',
-            'ngay_ket_thuc_hoc.after_or_equal' => 'Ngày kết thúc học phải bằng hoặc sau ngày bắt đầu học.',
             'thu_ly_thuyet.required' => 'Vui lòng chọn ít nhất một buổi lý thuyết.',
             'tiet_ly_thuyet.required' => 'Vui lòng chọn tiết cho mỗi buổi lý thuyết.',
             'teacher_id_ly_thuyet.required' => 'Vui lòng chọn giáo viên cho từng buổi lý thuyết.',
             'teacher_id_ly_thuyet.*.required' => 'Vui lòng chọn giáo viên cho từng buổi lý thuyết.',
-            'ngay_thi_ly_thuyet_buoi_thu.required' => 'Vui lòng nhập buổi thi lý thuyết cho từng buổi học.',
-            'ngay_thi_ly_thuyet_buoi_thu.*.required' => 'Vui lòng nhập buổi thi lý thuyết cho từng buổi học.',
+            'ngay_thi_ly_thuyet_buoi_thu.required' => 'Vui lòng nhập buổi thi giữa kì lý thuyết cho từng buổi học.',
+            'ngay_thi_ly_thuyet_buoi_thu.*.required' => 'Vui lòng nhập buổi thi giữa kì lý thuyết cho từng buổi học.',
         ]);
 
         $thuLt = $request->input('thu_ly_thuyet', []);
@@ -153,7 +155,7 @@ class CourseOfferingController extends Controller
             $hasTh = ($thuTh[$i] ?? '') !== '' && ($tietTh[$i] ?? '') !== '';
             if ($hasTh && (($thiTh[$i] ?? '') === '')) {
                 throw ValidationException::withMessages([
-                    'ngay_thi_thuc_hanh_buoi_thu.'.$i => ['Vui lòng nhập buổi thi thực hành cho buổi TH '.($i + 1).'.'],
+                    'ngay_thi_thuc_hanh_buoi_thu.'.$i => ['Vui lòng nhập buổi thi giữa kì thực hành cho buổi TH '.($i + 1).'.'],
                 ]);
             }
             if ($hasTh && (int) ($roomTh[$i] ?? 0) < 1) {
@@ -168,6 +170,10 @@ class CourseOfferingController extends Controller
             }
         }
 
+        $subject = Subject::findOrFail((int) $request->subject_id);
+        $this->assertThGroupsRequiredForSubject($subject, $thuTh, $tietTh);
+        $ngayKetThuc = $this->resolveNgayKetThucHocFromRequest($request, $subject, $thuLt, $tietLt, $thuTh, $tietTh);
+
         $slots = CourseOfferingScheduleConflictService::slotsFromRequestArrays($thuLt, $tietLt, $thuTh, $tietTh);
         $teacherIds = array_merge(
             array_map('intval', array_filter($teacherLt, fn ($x) => $x !== null && $x !== '')),
@@ -178,7 +184,7 @@ class CourseOfferingController extends Controller
             $teacherIds,
             (int) $request->class_room_id,
             Carbon::parse($request->ngay_bat_dau_hoc),
-            Carbon::parse($request->ngay_ket_thuc_hoc),
+            $ngayKetThuc,
             null
         );
         if ($conflict !== null) {
@@ -190,13 +196,13 @@ class CourseOfferingController extends Controller
         $data = $request->only([
             'hoc_ky', 'khoa_hoc', 'class_room_id', 'class_room_id_thuc_hanh', 'subject_id',
             'si_so_thuc_hanh_nhom_1', 'si_so_thuc_hanh_nhom_2',
-            'ngay_mo_dang_ky', 'ngay_ket_thuc_dang_ky', 'ngay_bat_dau_hoc', 'ngay_ket_thuc_hoc',
+            'ngay_mo_dang_ky', 'ngay_ket_thuc_dang_ky', 'ngay_bat_dau_hoc',
         ]);
+        $data['ngay_ket_thuc_hoc'] = $ngayKetThuc->toDateString();
         $data['si_so_lop'] = $siSoLop;
         // Map first 2 group sizes to existing columns
         $data['si_so_thuc_hanh_nhom_1'] = isset($sizeTh[0]) && $sizeTh[0] !== '' ? (int) $sizeTh[0] : null;
         $data['si_so_thuc_hanh_nhom_2'] = isset($sizeTh[1]) && $sizeTh[1] !== '' ? (int) $sizeTh[1] : null;
-        $subject = Subject::findOrFail((int) $request->subject_id);
         $data['ten_hoc_phan'] = (string) ($subject->ten_mon_hoc ?? '');
         // room TH: store first group on offering, rest on schedules
         $data['class_room_id_thuc_hanh'] = isset($roomTh[0]) && $roomTh[0] !== '' ? (int) $roomTh[0] : null;
@@ -264,7 +270,6 @@ class CourseOfferingController extends Controller
             'ngay_mo_dang_ky' => 'required|date',
             'ngay_ket_thuc_dang_ky' => 'required|date|after_or_equal:ngay_mo_dang_ky|before:ngay_bat_dau_hoc',
             'ngay_bat_dau_hoc' => 'required|date|after:ngay_ket_thuc_dang_ky',
-            'ngay_ket_thuc_hoc' => 'required|date|after_or_equal:ngay_bat_dau_hoc',
             'thu_ly_thuyet' => 'required|array|min:1',
             'thu_ly_thuyet.*' => 'required|integer|in:2,3,4,5,6,7,8',
             'tiet_ly_thuyet' => 'required|array|min:1',
@@ -291,14 +296,12 @@ class CourseOfferingController extends Controller
             'ngay_ket_thuc_dang_ky.before' => 'Ngày kết thúc đăng ký phải trước ngày bắt đầu học.',
             'ngay_bat_dau_hoc.required' => 'Vui lòng chọn ngày bắt đầu học.',
             'ngay_bat_dau_hoc.after' => 'Ngày bắt đầu học phải sau ngày kết thúc đăng ký.',
-            'ngay_ket_thuc_hoc.required' => 'Vui lòng chọn ngày kết thúc học.',
-            'ngay_ket_thuc_hoc.after_or_equal' => 'Ngày kết thúc học phải bằng hoặc sau ngày bắt đầu học.',
             'thu_ly_thuyet.required' => 'Vui lòng chọn ít nhất một buổi lý thuyết.',
             'tiet_ly_thuyet.required' => 'Vui lòng chọn tiết cho mỗi buổi lý thuyết.',
             'teacher_id_ly_thuyet.required' => 'Vui lòng chọn giáo viên cho từng buổi lý thuyết.',
             'teacher_id_ly_thuyet.*.required' => 'Vui lòng chọn giáo viên cho từng buổi lý thuyết.',
-            'ngay_thi_ly_thuyet_buoi_thu.required' => 'Vui lòng nhập buổi thi lý thuyết cho từng buổi học.',
-            'ngay_thi_ly_thuyet_buoi_thu.*.required' => 'Vui lòng nhập buổi thi lý thuyết cho từng buổi học.',
+            'ngay_thi_ly_thuyet_buoi_thu.required' => 'Vui lòng nhập buổi thi giữa kì lý thuyết cho từng buổi học.',
+            'ngay_thi_ly_thuyet_buoi_thu.*.required' => 'Vui lòng nhập buổi thi giữa kì lý thuyết cho từng buổi học.',
         ]);
 
         $thuLt = $request->input('thu_ly_thuyet', []);
@@ -324,7 +327,7 @@ class CourseOfferingController extends Controller
             $hasTh = ($thuTh[$i] ?? '') !== '' && ($tietTh[$i] ?? '') !== '';
             if ($hasTh && (($thiTh[$i] ?? '') === '')) {
                 throw ValidationException::withMessages([
-                    'ngay_thi_thuc_hanh_buoi_thu.'.$i => ['Vui lòng nhập buổi thi thực hành cho buổi TH '.($i + 1).'.'],
+                    'ngay_thi_thuc_hanh_buoi_thu.'.$i => ['Vui lòng nhập buổi thi giữa kì thực hành cho buổi TH '.($i + 1).'.'],
                 ]);
             }
             if ($hasTh && (int) ($roomTh[$i] ?? 0) < 1) {
@@ -339,6 +342,10 @@ class CourseOfferingController extends Controller
             }
         }
 
+        $subject = Subject::findOrFail((int) $request->subject_id);
+        $this->assertThGroupsRequiredForSubject($subject, $thuTh, $tietTh);
+        $ngayKetThuc = $this->resolveNgayKetThucHocFromRequest($request, $subject, $thuLt, $tietLt, $thuTh, $tietTh);
+
         $slots = CourseOfferingScheduleConflictService::slotsFromRequestArrays($thuLt, $tietLt, $thuTh, $tietTh);
         $teacherIds = array_merge(
             array_map('intval', array_filter($teacherLt, fn ($x) => $x !== null && $x !== '')),
@@ -349,7 +356,7 @@ class CourseOfferingController extends Controller
             $teacherIds,
             (int) $request->class_room_id,
             Carbon::parse($request->ngay_bat_dau_hoc),
-            Carbon::parse($request->ngay_ket_thuc_hoc),
+            $ngayKetThuc,
             (int) $id
         );
         if ($conflict !== null) {
@@ -361,13 +368,13 @@ class CourseOfferingController extends Controller
         $data = $request->only([
             'hoc_ky', 'khoa_hoc', 'class_room_id', 'subject_id',
             'si_so_thuc_hanh_nhom_1', 'si_so_thuc_hanh_nhom_2',
-            'ngay_mo_dang_ky', 'ngay_ket_thuc_dang_ky', 'ngay_bat_dau_hoc', 'ngay_ket_thuc_hoc',
+            'ngay_mo_dang_ky', 'ngay_ket_thuc_dang_ky', 'ngay_bat_dau_hoc',
         ]);
+        $data['ngay_ket_thuc_hoc'] = $ngayKetThuc->toDateString();
         $data['si_so_lop'] = $siSoLop;
         // Map first 2 group sizes to existing columns
         $data['si_so_thuc_hanh_nhom_1'] = isset($sizeTh[0]) && $sizeTh[0] !== '' ? (int) $sizeTh[0] : null;
         $data['si_so_thuc_hanh_nhom_2'] = isset($sizeTh[1]) && $sizeTh[1] !== '' ? (int) $sizeTh[1] : null;
-        $subject = Subject::findOrFail((int) $request->subject_id);
         $data['ten_hoc_phan'] = (string) ($subject->ten_mon_hoc ?? '');
         $data['class_room_id_thuc_hanh'] = isset($roomTh[0]) && $roomTh[0] !== '' ? (int) $roomTh[0] : null;
         $data['teacher_id'] = (int) ($teacherLt[0] ?? 0);
@@ -441,6 +448,15 @@ class CourseOfferingController extends Controller
         return false;
     }
 
+    private function assertThGroupsRequiredForSubject(Subject $subject, array $thuTh, array $tietTh): void
+    {
+        if ((int) $subject->so_tiet_thuc_hanh > 0 && ! $this->offeringHasThGroups($thuTh, $tietTh)) {
+            throw ValidationException::withMessages([
+                'thu_thuc_hanh' => ['Vui lòng thêm nhóm thực hành vì môn này có tiết thực hành.'],
+            ]);
+        }
+    }
+
     private function resolveSiSoLopFromRequest(Request $request): int
     {
         $thuTh = $request->input('thu_thuc_hanh', []);
@@ -475,5 +491,52 @@ class CourseOfferingController extends Controller
         }
 
         return $lt;
+    }
+
+    /**
+     * @param  list<int|string|null>  $thuLt
+     * @param  list<string|null>  $tietLt
+     * @param  list<int|string|null>  $thuTh
+     * @param  list<string|null>  $tietTh
+     */
+    private function resolveNgayKetThucHocFromRequest(
+        Request $request,
+        Subject $subject,
+        array $thuLt,
+        array $tietLt,
+        array $thuTh,
+        array $tietTh
+    ): Carbon {
+        $draft = OfferingWeekCalendar::offeringFromScheduleDraft(
+            Carbon::parse($request->ngay_bat_dau_hoc),
+            $thuLt,
+            $tietLt,
+            $thuTh,
+            $tietTh
+        );
+        $end = OfferingWeekCalendar::computeNgayKetThucHoc($draft, $subject);
+        if (! $end) {
+            throw ValidationException::withMessages([
+                'ngay_bat_dau_hoc' => ['Không tính được ngày kết thúc học. Kiểm tra lịch và số tiết môn học.'],
+            ]);
+        }
+
+        $soLt = (int) $subject->so_tiet_ly_thuyet;
+        $soTh = (int) $subject->so_tiet_thuc_hanh;
+        $weeklyLt = OfferingWeekCalendar::weeklyLyThuyetTiet($draft);
+        if ($soLt > 0 && $weeklyLt < 1) {
+            throw ValidationException::withMessages([
+                'tiet_ly_thuyet' => ['Môn có '.$soLt.' tiết lý thuyết — cần chọn lịch lý thuyết hợp lệ.'],
+            ]);
+        }
+        $weeklyTh = OfferingWeekCalendar::weeklyThucHanhTiet($draft);
+        $hasTh = $this->offeringHasThGroups($thuTh, $tietTh);
+        if ($hasTh && $soTh > 0 && $weeklyTh < 1) {
+            throw ValidationException::withMessages([
+                'tiet_thuc_hanh' => ['Môn có '.$soTh.' tiết thực hành — cần chọn lịch thực hành hợp lệ.'],
+            ]);
+        }
+
+        return $end->copy()->startOfDay();
     }
 }
