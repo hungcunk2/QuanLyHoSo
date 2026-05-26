@@ -128,6 +128,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('/subject-registrations/data', [SubjectRegistrationController::class, 'getData'])->name('subject-registrations.data');
     Route::get('/subject-registrations/course-offerings/{id}/sessions', [SubjectRegistrationController::class, 'offeringSessions'])->name('subject-registrations.offering-sessions');
     Route::post('/subject-registrations/course-offerings/{id}/reschedule-session', [SubjectRegistrationController::class, 'rescheduleSession'])->name('subject-registrations.reschedule-session');
+    Route::post('/subject-registrations/course-offerings/{id}/cancel-reschedule', [SubjectRegistrationController::class, 'cancelReschedule'])->name('subject-registrations.cancel-reschedule');
     Route::post('/subject-registrations/course-offerings/{id}/pause-session', [SubjectRegistrationController::class, 'pauseSession'])->name('subject-registrations.pause-session');
     Route::post('/subject-registrations/course-offerings/{id}/unpause-session', [SubjectRegistrationController::class, 'unpauseSession'])->name('subject-registrations.unpause-session');
     Route::get('/lops', [LopController::class, 'index'])->name('lops');
