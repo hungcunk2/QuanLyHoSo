@@ -60,18 +60,6 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('admin.curriculum-terms.index') }}" class="nav-link">
-                                <i class="fas fa-sitemap"></i>
-                                <span>Quản Lý Chương Trình Khung</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.subject-registrations') }}" class="nav-link">
-                                <i class="fas fa-clipboard-list"></i>
-                                <span>Quản Lý Đăng Ký Học Phần</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a href="{{ route('admin.reports.index') }}" class="nav-link">
                                 <i class="fas fa-chart-pie"></i>
                                 <span>Báo cáo / Thống kê</span>
